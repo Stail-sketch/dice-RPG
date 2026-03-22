@@ -256,11 +256,12 @@ export function TutorialScreen() {
 
     const handleAttack = () => {
       setHurtEnemy1v1(true);
+      setSubStep(99); // 攻撃演出中（ダイアログ非表示）
       setTimeout(() => {
         setEnemyHp1v1(0);
         setHurtEnemy1v1(false);
         setSubStep(3);
-      }, 600);
+      }, 800);
     };
 
     return (
@@ -307,8 +308,13 @@ export function TutorialScreen() {
             <div style={{ fontSize: 12, color: '#705828' }}>ダイスが回転中...</div>
           </div>
         )}
-        {subStep === 2 && !defeated && (
+        {subStep === 2 && (
           <PipDialogue text="3の面が出た！3つのスキルが一斉に発動するよ！" onNext={handleAttack} buttonLabel="攻撃！" />
+        )}
+        {subStep === 99 && (
+          <div style={{ position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center' }}>
+            <div style={{ fontSize: 14, color: '#b04030', fontWeight: 'bold' }}>スキル発動！</div>
+          </div>
         )}
         {subStep === 3 && <PipDialogue text="やった！出た面のスキルが全部発動するんだ。面の数字が大きいほど穴が多いけど、出にくいよ。" onNext={nextStep} />}
       </>
