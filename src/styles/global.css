@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+:root {
+  /* ===== 背景 ===== */
+  --bg-primary: #f5f0e8;
+  --bg-secondary: #ece5d8;
+  --bg-white: #ffffff;
+  --bg-overlay: rgba(90, 64, 48, 0.08);
+
+  /* ===== 枠線 ===== */
+  --border-light: #d8d0c4;
+  --border-medium: #c0b8a8;
+  --border-strong: #8a7050;
+  --border-gold: #b09050;
+
+  /* ===== テキスト ===== */
+  --text-primary: #3a2a1a;
+  --text-secondary: #6a5a4a;
+  --text-tertiary: #998a78;
+  --text-gold: #705828;
+  --text-damage: #b04030;
+  --text-heal: #308050;
+
+  /* ===== ボタン ===== */
+  --btn-bg: #e8e0d4;
+  --btn-border: #c0b8a8;
+  --btn-text: #6a5a48;
+  --btn-hover-border: #8a7050;
+  --btn-hover-text: #5a4030;
+
+  /* ===== 属性6色（SFC風） ===== */
+  --el-blaze: #c05030;
+  --el-frost: #3070a0;
+  --el-volt: #a08820;
+  --el-venom: #408030;
+  --el-alloy: #686868;
+  --el-mirage: #7050a0;
+
+  /* ===== 属性の薄い版 ===== */
+  --el-blaze-light: #f0e0d8;
+  --el-frost-light: #d8e8f0;
+  --el-volt-light: #f0ead0;
+  --el-venom-light: #dce8d8;
+  --el-alloy-light: #e4e4e4;
+  --el-mirage-light: #e8e0f0;
+
+  /* ===== HPバー ===== */
+  --hp-enemy: #b85040;
+  --hp-player: #4070a0;
+  --hp-track: #e0d8cc;
+  --hp-border: #c8c0b0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DotGothic16', monospace, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* RPGウィンドウ枠 */
+.rpg-panel {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-medium);
+  border-radius: 3px;
+  padding: 12px;
+  margin: 6px;
+}
+
+.rpg-panel-title {
+  font-size: 14px;
+  color: var(--text-gold);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* ボタン */
+.rpg-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin: 6px 0;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: 2px solid var(--btn-border);
+  border-radius: 2px;
+  font-family: 'DotGothic16', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.rpg-btn:hover {
+  border-color: var(--btn-hover-border);
+  color: var(--btn-hover-text);
+}
+
+.rpg-btn:active {
+  transform: scale(0.97);
+}
+
+.rpg-btn-primary {
+  background: var(--bg-white);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.rpg-btn-danger {
+  border-color: var(--text-damage);
+  color: var(--text-damage);
+}
+
+/* HPバー */
+.hp-bar-container {
+  width: 100%;
+  height: 14px;
+  background: var(--hp-track);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--hp-border);
+}
+
+.hp-bar-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.5s ease;
+}
+
+.hp-bar-fill.hp-high { background: var(--hp-player); }
+.hp-bar-fill.hp-mid { background: #a08830; }
+.hp-bar-fill.hp-low { background: var(--hp-enemy); }
+
+/* 属性バッジ */
+.element-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid;
+}
+
+.element-badge.blaze { background: var(--el-blaze-light); color: var(--el-blaze); border-color: var(--el-blaze); }
+.element-badge.frost { background: var(--el-frost-light); color: var(--el-frost); border-color: var(--el-frost); }
+.element-badge.volt { background: var(--el-volt-light); color: var(--el-volt); border-color: var(--el-volt); }
+.element-badge.venom { background: var(--el-venom-light); color: var(--el-venom); border-color: var(--el-venom); }
+.element-badge.alloy { background: var(--el-alloy-light); color: var(--el-alloy); border-color: var(--el-alloy); }
+.element-badge.mirage { background: var(--el-mirage-light); color: var(--el-mirage); border-color: var(--el-mirage); }
+
+/* レアリティ */
+.rarity { color: var(--text-gold); }
+
+/* ===== アニメーション ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.05); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes popupFloat {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { opacity: 1; transform: translateY(-16px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-30px) scale(0.9); }
+}
+
+@keyframes synergyFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes centerFlash {
+  0% { opacity: 0; transform: scale(0.7); }
+  30% { opacity: 1; transform: scale(1.05); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+@keyframes skillPop {
+  0% { opacity: 0; transform: scale(0.7) translateY(6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes spriteIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes spriteHurt {
+  0% { transform: translateX(0); opacity: 0.3; }
+  25% { transform: translateX(-5px); opacity: 0.6; }
+  50% { transform: translateX(5px); opacity: 0.3; }
+  75% { transform: translateX(-3px); opacity: 0.6; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes effectFlash {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cutInLine {
+  0% { transform: scaleX(0); opacity: 0; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes cutInText {
+  0% { opacity: 0; transform: translateX(-20px); }
+  15% { opacity: 1; transform: translateX(0); }
+  75% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(20px); }
+}
+
+@keyframes particleFly {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx, 20px), var(--dy, -30px)) scale(0); }
+}
+
+@keyframes diceBounceLand {
+  0% { transform: translateY(-16px) rotate(180deg) scale(0.8); opacity: 0; }
+  60% { transform: translateY(3px) rotate(360deg) scale(1.03); opacity: 1; }
+  80% { transform: translateY(-1px) scale(0.98); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); opacity: 1; }
+}
+
+@keyframes sealShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-4px) rotate(-2deg); }
+  40% { transform: translateX(4px) rotate(2deg); }
+  60% { transform: translateX(-3px) rotate(-1deg); }
+  80% { transform: translateX(3px) rotate(1deg); }
+}
+
+@keyframes sealRing {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.7; }
+}
+
+.shake { animation: shake 0.4s ease; }
+.fade-in { animation: fadeIn 0.4s ease; }
+.dice-rolling { animation: diceRoll 0.5s ease infinite; }
+.dice-land { animation: diceBounceLand 0.5s ease both; }
+.synergy-flash { animation: synergyFlash 0.5s ease 3; }
+.pulse-glow { animation: pulseGlow 0.8s ease infinite; }
+
+/* ダイスビジュアル */
+.dice-face {
+  width: 60px;
+  height: 60px;
+  background: var(--bg-white);
+  border: 2px solid var(--border-medium);
+  border-radius: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+}
+
+.dice-pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+
+.dice-pip.filled { background: var(--text-gold); }
+.dice-pip.empty { background: var(--bg-secondary); border: 1px solid var(--border-light); }
+
+/* スクロールバー */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px; }

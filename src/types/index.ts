@@ -1,0 +1,246 @@
+// ==============================
+// 属性システム
+// ==============================
+export type Element = 'blaze' | 'frost' | 'volt' | 'venom' | 'alloy' | 'mirage';
+
+export const ELEMENT_NAMES: Record<Element, string> = {
+  blaze: '炎',
+  frost: '氷',
+  volt: '雷',
+  venom: '毒',
+  alloy: '鋼',
+  mirage: '幻',
+};
+
+// 属性相性 ◎=1.5, ✕=0.5, ==1.0
+export const ELEMENT_CHART: Record<Element, Record<Element, number>> = {
+  blaze:  { blaze: 1.0, frost: 1.5, volt: 0.5, venom: 0.5, alloy: 1.5, mirage: 1.0 },
+  frost:  { blaze: 0.5, frost: 1.0, volt: 1.5, venom: 1.5, alloy: 1.0, mirage: 0.5 },
+  volt:   { blaze: 1.5, frost: 0.5, volt: 1.0, venom: 1.0, alloy: 0.5, mirage: 1.5 },
+  venom:  { blaze: 1.5, frost: 0.5, volt: 1.0, venom: 1.0, alloy: 0.5, mirage: 1.5 },
+  alloy:  { blaze: 0.5, frost: 1.0, volt: 1.5, venom: 1.5, alloy: 1.0, mirage: 0.5 },
+  mirage: { blaze: 1.0, frost: 1.5, volt: 0.5, venom: 0.5, alloy: 1.5, mirage: 1.0 },
+};
+
+// ==============================
+// ダイス確率テーブル
+// ==============================
+export const DICE_PROBABILITY: Record<number, number> = {
+  1: 0.10,
+  2: 0.12,
+  3: 0.15,
+  4: 0.18,
+  5: 0.22,
+  6: 0.23,
+};
+
+// ==============================
+// スキル関連
+// ==============================
+export type SkillTier = 'common' | 'rare' | 'epic' | 'legendary';
+export type SocketTier = 'bronze' | 'silver' | 'gold';
+
+export type SkillEffectType =
+  | 'damage'        // 直接ダメージ
+  | 'heal'          // 回復
+  | 'dot'           // 継続ダメージ (毒/燃焼)
+  | 'buff'          // バフ
+  | 'debuff'        // デバフ
+  | 'shield';       // シールド
+
+export interface SkillEffect {
+  type: SkillEffectType;
+  power: number;          // 威力/効果量
+  duration?: number;      // 継続ターン数 (dot/buff/debuff)
+  description: string;
+}
+
+export interface SkillRune {
+  id: string;
+  name: string;
+  element: Element;
+  tier: SkillTier;
+  effect: SkillEffect;
+  description: string;
+}
+
+// ==============================
+// ダイスの面 (Face)
+// ==============================
+export interface FixedSocket {
+  skillId: string;
+  element: Element;
+}
+
+export interface FixedFace {
+  faceNumber: number;       // 1-6
+  sockets: FixedSocket[];   // 固有スキル (変更不可)
+}
+
+export interface CustomSocket {
+  skillRuneId: string | null;
+  socketTier: SocketTier;
+}
+
+export interface CustomFace {
+  faceNumber: number;       // 1-6
+  sockets: CustomSocket[];
+}
+
+export type DiceFace = FixedFace | CustomFace;
+
+export function isFixedFace(face: DiceFace): face is FixedFace {
+  return 'sockets' in face && face.sockets.length > 0 && 'skillId' in face.sockets[0];
+}
+
+// ==============================
+// モンスターダイス
+// ==============================
+export interface MonsterDice {
+  id: string;
+  name: string;
+  element: Element;
+  rarity: 1 | 2 | 3 | 4 | 5;
+  fixedFaces: FixedFace[];
+  customFaces: CustomFace[];
+  baseStats: {
+    captureRate: number;   // 捕獲率 (%)
+  };
+  description: string;
+}
+
+// 全6面を取得するヘルパー
+export function getAllFaces(dice: MonsterDice): DiceFace[] {
+  const faces: DiceFace[] = [];
+  const faceMap = new Map<number, DiceFace>();
+  for (const f of dice.fixedFaces) faceMap.set(f.faceNumber, f);
+  for (const f of dice.customFaces) faceMap.set(f.faceNumber, f);
+  for (let i = 1; i <= 6; i++) {
+    const face = faceMap.get(i);
+    if (face) faces.push(face);
+  }
+  return faces;
+}
+
+// ==============================
+// バトルステート
+// ==============================
+export interface StatusEffect {
+  type: 'burn' | 'poison' | 'freeze' | 'slow' | 'atkUp' | 'defUp' | 'atkDown' | 'defDown' | 'shield' | 'confusion';
+  power: number;
+  remainingTurns: number;
+  element: Element;
+}
+
+export interface Combatant {
+  hp: number;
+  maxHp: number;
+  dice: MonsterDice[];
+  statusEffects: StatusEffect[];
+  damageMultiplier: number;
+  defenseMultiplier: number;
+}
+
+export interface DiceRollResult {
+  diceIndex: number;
+  faceNumber: number;
+  face: DiceFace;
+}
+
+export interface TurnResult {
+  turn: number;
+  playerRolls: DiceRollResult[];
+  enemyRolls: DiceRollResult[];
+  playerFirst: boolean;
+  firstActions: SkillAction[];
+  secondActions: SkillAction[];
+  // ターン開始前のHP
+  prePlayerHp: number;
+  preEnemyHp: number;
+  // 先攻攻撃後のHP
+  midPlayerHp: number;
+  midEnemyHp: number;
+  // ターン終了時のHP
+  playerHp: number;
+  enemyHp: number;
+  synergies: SynergyActivation[];
+}
+
+export interface SkillAction {
+  skillId: string;
+  skillName: string;
+  element: Element;
+  effectType: SkillEffectType;
+  rawDamage: number;
+  elementMultiplier: number;
+  synergyMultiplier: number;
+  finalDamage: number;
+  targetIsPlayer: boolean;
+}
+
+export interface SynergyActivation {
+  type: 'same-face' | 'cross-dice' | 'recipe';
+  name: string;
+  description: string;
+}
+
+export interface BattleState {
+  player: Combatant;
+  enemy: Combatant;
+  turn: number;
+  maxTurns: number;
+  log: TurnResult[];
+  status: 'ongoing' | 'player-win' | 'enemy-win' | 'draw';
+}
+
+// ==============================
+// シナジー
+// ==============================
+export interface RecipeSynergy {
+  id: string;
+  name: string;
+  requiredElements: Element[];
+  effect: SkillEffect;
+  description: string;
+}
+
+export interface CrossDiceSynergy {
+  element: Element;
+  name: string;
+  effect: SkillEffect;
+  description: string;
+}
+
+// ==============================
+// セーブデータ
+// ==============================
+export interface SaveData {
+  player: {
+    name: string;
+    maxHp: number;
+    gold: number;
+    gems: number;
+    points: number;
+  };
+  monsterDice: {
+    owned: MonsterDice[];
+    party: [string, string, string];
+  };
+  skillRunes: {
+    owned: SkillRune[];
+  };
+  progress: {
+    currentChapter: number;
+    capturedMonsters: string[];
+  };
+  gacha: {
+    pityCountDice: number;
+    pityCountRune: number;
+  };
+  pvp: {
+    totalWins: number;
+    currentStreak: number;
+    bestStreak: number;
+    points: number;
+  };
+}
