@@ -288,38 +288,12 @@ export function TownScreen() {
     drawDecorations(ctx);
 
     for (const b of BUILDINGS) {
-      // 暗め表示（disabled）
       if (b.disabled) ctx.globalAlpha = 0.5;
       b.draw(ctx, b.x, b.y, b.w, b.h);
       ctx.globalAlpha = 1;
-
-      // ラベル背景
-      ctx.fillStyle = '#4a3828e0';
-      const lw = b.label.length * 7 + 8;
-      const lx = b.x + (b.w - lw) / 2;
-      ctx.fillRect(lx, b.y - 14, lw, 13);
-      // ラベルテキスト
-      ctx.fillStyle = '#f0e8d0';
-      ctx.font = 'bold 9px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(b.label, b.x + b.w / 2, b.y - 4);
-      // サブテキスト
-      ctx.fillStyle = '#d0c8b0';
-      ctx.font = '7px monospace';
-      ctx.fillText(b.sub, b.x + b.w / 2, b.y + b.h + 10);
-      ctx.textAlign = 'start';
     }
-
-    // ロゴ
-    ctx.fillStyle = '#3a3a1a';
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('PIP SOCKET CHRONICLE', W / 2, 18);
-    ctx.font = '7px monospace';
-    ctx.fillStyle = '#606050';
-    ctx.fillText(`Chapter ${currentChapter}`, W / 2, 30);
-    ctx.textAlign = 'start';
-  }, [currentChapter]);
+    // テキストはCanvas外のHTML overlayで描画
+  }, []);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -351,19 +325,78 @@ export function TownScreen() {
       display: 'flex', flexDirection: 'column', height: '100vh',
       background: GRASS, alignItems: 'center',
     }}>
-      <canvas
-        ref={canvasRef}
-        width={W}
-        height={H}
-        onClick={handleClick}
-        style={{
-          width: '100%',
-          maxWidth: 400,
-          flex: 1,
-          imageRendering: 'pixelated',
-          cursor: 'pointer',
-        }}
-      />
+      {/* マップコンテナ（Canvas + HTMLオーバーレイ） */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: 400, flex: 1 }}>
+        <canvas
+          ref={canvasRef}
+          width={W}
+          height={H}
+          onClick={handleClick}
+          style={{
+            width: '100%',
+            height: '100%',
+            imageRendering: 'pixelated',
+            cursor: 'pointer',
+            display: 'block',
+          }}
+        />
+
+        {/* HTMLオーバーレイ: テキストラベル（ドット化されない） */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          pointerEvents: 'none',
+        }}>
+          {/* ロゴ */}
+          <div style={{
+            position: 'absolute', top: '1.5%', left: 0, right: 0,
+            textAlign: 'center', fontFamily: "'DotGothic16', monospace",
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 'bold', color: '#3a3a1a', letterSpacing: 1.5 }}>
+              PIP SOCKET CHRONICLE
+            </div>
+            <div style={{ fontSize: 9, color: '#606050', marginTop: 1 }}>
+              Chapter {currentChapter}
+            </div>
+          </div>
+
+          {/* 建物ラベル */}
+          {BUILDINGS.map(b => {
+            // Canvas座標→%座標に変換
+            const left = ((b.x + b.w / 2) / W) * 100;
+            const topLabel = ((b.y - 4) / H) * 100;
+            const topSub = ((b.y + b.h + 2) / H) * 100;
+            return (
+              <div key={b.id}>
+                {/* メインラベル */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${left}%`, top: `${topLabel}%`,
+                  transform: 'translate(-50%, -100%)',
+                  background: '#4a3828e0', color: '#f0e8d0',
+                  padding: '1px 6px', borderRadius: 2,
+                  fontSize: 10, fontWeight: 'bold', fontFamily: "'DotGothic16', monospace",
+                  letterSpacing: 0.5, whiteSpace: 'nowrap',
+                  opacity: b.disabled ? 0.5 : 1,
+                }}>
+                  {b.label}
+                </div>
+                {/* サブラベル */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${left}%`, top: `${topSub}%`,
+                  transform: 'translateX(-50%)',
+                  color: '#4a3828', fontSize: 9,
+                  fontFamily: "'DotGothic16', monospace",
+                  whiteSpace: 'nowrap',
+                  opacity: b.disabled ? 0.4 : 0.8,
+                }}>
+                  {b.sub}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ステータスバー */}
       <div style={{
@@ -372,7 +405,7 @@ export function TownScreen() {
         borderTop: '2px solid #a89870',
         padding: '6px 12px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: 11, color: '#3a3018', fontFamily: 'monospace',
+        fontSize: 11, color: '#3a3018', fontFamily: "'DotGothic16', monospace",
       }}>
         <span>HP {playerMaxHp}</span>
         <span style={{ color: '#705828', fontWeight: 'bold' }}>{gold}G</span>
@@ -381,7 +414,7 @@ export function TownScreen() {
         <span
           onClick={handleSave}
           style={{
-            cursor: 'pointer', padding: '2px 8px',
+            cursor: 'pointer', padding: '2px 8px', pointerEvents: 'auto',
             background: saveMsg ? '#b0c8a0' : '#c8c0a8',
             border: '1px solid #a09878', borderRadius: 2,
             color: saveMsg ? '#305028' : '#605838', fontWeight: 'bold',
