@@ -518,78 +518,81 @@ export function BattleScreen() {
       }
     }
 
-    // Re-apply damage based on modified actions
-    // Reset HP to pre-turn values and re-apply
-    battle.player.hp = result.prePlayerHp;
-    battle.enemy.hp = result.preEnemyHp;
+    // マジックダイス効果でアクションが変更された場合のみHP再計算
+    const hasMagicMod = magicEffect !== null || isUnleash;
+    if (hasMagicMod) {
+      // Reset HP to pre-turn values and re-apply
+      battle.player.hp = result.prePlayerHp;
+      battle.enemy.hp = result.preEnemyHp;
 
-    // Apply first actions
-    for (const a of result.firstActions) {
-      if (a.effectType === 'damage' && a.finalDamage > 0) {
-        if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
-        else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
-      } else if (a.effectType === 'heal') {
-        if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
-        else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+      // Apply first actions
+      for (const a of result.firstActions) {
+        if (a.effectType === 'damage' && a.finalDamage > 0) {
+          if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
+          else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
+        } else if (a.effectType === 'heal') {
+          if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
+          else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+        }
       }
-    }
-    result.midPlayerHp = battle.player.hp;
-    result.midEnemyHp = battle.enemy.hp;
+      result.midPlayerHp = battle.player.hp;
+      result.midEnemyHp = battle.enemy.hp;
 
-    // Apply second actions
-    for (const a of result.secondActions) {
-      if (a.effectType === 'damage' && a.finalDamage > 0) {
-        if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
-        else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
-      } else if (a.effectType === 'heal') {
-        if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
-        else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+      // Apply second actions
+      for (const a of result.secondActions) {
+        if (a.effectType === 'damage' && a.finalDamage > 0) {
+          if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
+          else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
+        } else if (a.effectType === 'heal') {
+          if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
+          else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+        }
       }
-    }
 
-    // Drain effect: heal 40% of damage dealt
-    if (magicEffect === 'drain') {
-      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
-      const totalDmg = playerActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
-      const healAmt = Math.round(totalDmg * 0.4);
-      if (healAmt > 0) {
-        battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + healAmt);
-        addLog(`  DRAIN: +${healAmt}HP`);
+      // Drain effect: heal 40% of damage dealt
+      if (magicEffect === 'drain') {
+        const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+        const totalDmg = playerActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+        const healAmt = Math.round(totalDmg * 0.4);
+        if (healAmt > 0) {
+          battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + healAmt);
+          addLog(`  DRAIN: +${healAmt}HP`);
+        }
       }
-    }
 
-    // Reflect effect: 30% of damage taken reflected to enemy
-    if (magicEffect === 'reflect') {
-      const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
-      const totalDmg = enemyActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
-      const reflectAmt = Math.round(totalDmg * 0.3);
-      if (reflectAmt > 0) {
-        battle.enemy.hp = Math.max(0, battle.enemy.hp - reflectAmt);
-        addLog(`  REFLECT: ${reflectAmt}dmg`);
+      // Reflect effect: 30% of damage taken reflected to enemy
+      if (magicEffect === 'reflect') {
+        const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
+        const totalDmg = enemyActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+        const reflectAmt = Math.round(totalDmg * 0.3);
+        if (reflectAmt > 0) {
+          battle.enemy.hp = Math.max(0, battle.enemy.hp - reflectAmt);
+          addLog(`  REFLECT: ${reflectAmt}dmg`);
+        }
       }
-    }
 
-    // Revive effect: survive lethal at HP 1
-    if (magicEffect === 'revive' && battle.player.hp <= 0) {
-      battle.player.hp = 1;
-      addLog('  REVIVE: HP1 survived!');
-    }
-
-    // Sacrifice buff: double all damage next turn was set in useMagicDice
-    if (magicEffect === 'sacrifice') {
-      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
-      for (const a of playerActions) {
-        if (a.effectType === 'damage') a.finalDamage = a.finalDamage * 2;
+      // Revive effect: survive lethal at HP 1
+      if (magicEffect === 'revive' && battle.player.hp <= 0) {
+        battle.player.hp = 1;
+        addLog('  REVIVE: HP1 survived!');
       }
+
+      // Sacrifice buff: double all damage
+      if (magicEffect === 'sacrifice') {
+        const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+        for (const a of playerActions) {
+          if (a.effectType === 'damage') a.finalDamage = a.finalDamage * 2;
+        }
+      }
+
+      // Update final HP
+      result.playerHp = battle.player.hp;
+      result.enemyHp = battle.enemy.hp;
+
+      // Re-check win condition
+      if (battle.enemy.hp <= 0) battle.status = 'player-win';
+      else if (battle.player.hp <= 0) battle.status = 'enemy-win';
     }
-
-    // Update final HP
-    result.playerHp = battle.player.hp;
-    result.enemyHp = battle.enemy.hp;
-
-    // Re-check win condition
-    if (battle.enemy.hp <= 0) battle.status = 'player-win';
-    else if (battle.player.hp <= 0) battle.status = 'enemy-win';
 
     setBattle({ ...battle });
     setLastTurn(result);
@@ -719,6 +722,8 @@ export function BattleScreen() {
       setCurrentRolls(pRolls);
       setEnemyRolls(eRolls);
       setSelectedDice(new Set());
+      setMagicUsedThisTurn(false);
+      setMagicEffect(null);
       setDiceLanded(true);
       sfx.diceLand();
       setPhase('selecting');
