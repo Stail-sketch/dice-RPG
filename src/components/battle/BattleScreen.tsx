@@ -760,13 +760,16 @@ export function BattleScreen() {
   let displayPlayerHp = battle?.player.hp ?? 0;
   let displayEnemyHp = battle?.enemy.hp ?? 0;
   if (lastTurn) {
-    if (['selecting', 'rolling', 'first-label'].includes(phase)) {
+    if (phase === 'first-label') {
+      // 先攻演出前: ターン開始時のHP
       displayPlayerHp = lastTurn.prePlayerHp;
       displayEnemyHp = lastTurn.preEnemyHp;
     } else if (['first-attack', 'second-label'].includes(phase)) {
+      // 先攻演出中/後攻ラベル: 先攻アクション適用後のHP
       displayPlayerHp = lastTurn.midPlayerHp;
       displayEnemyHp = lastTurn.midEnemyHp;
     }
+    // selecting, rolling, turn-end, result: battle.player.hpをそのまま表示
   }
 
   return (
