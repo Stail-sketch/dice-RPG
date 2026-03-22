@@ -78,11 +78,13 @@ function getSkillsFromFace(
   } else {
     const custom = face as CustomFace;
     const filledSockets = custom.sockets.filter(s => s.skillRuneId !== null);
-    const totalPips = filledSockets.length;
+    const totalPips = Math.max(1, filledSockets.length);
     const decayMult = calcDecayMultiplier(totalPips);
 
+    let hasAnySkill = false;
     for (const socket of custom.sockets) {
       if (!socket.skillRuneId) continue;
+      hasAnySkill = true;
       const rune = getSkillRune(socket.skillRuneId);
       if (!rune) continue;
       const tierMult = SOCKET_TIER_MULTIPLIER[socket.socketTier];
@@ -95,6 +97,17 @@ function getSkillsFromFace(
         effectType: rune.effect.type, rawDamage: rawDmg,
         elementMultiplier: elementMult, synergyMultiplier: synergyMult,
         finalDamage: finalDmg, targetIsPlayer,
+      });
+    }
+
+    // 空ソケットのみの面でも「素振り」で最低ダメージ
+    if (!hasAnySkill) {
+      const baseDmg = Math.max(1, Math.round(2 * chargeBonusMult));
+      actions.push({
+        skillId: 'basic-hit', skillName: '素振り', element: 'alloy' as Element,
+        effectType: 'damage', rawDamage: 2,
+        elementMultiplier: 1.0, synergyMultiplier: 1.0,
+        finalDamage: baseDmg, targetIsPlayer,
       });
     }
   }
@@ -293,6 +306,28 @@ export function executeTurnFull(
   const enemyChargedPips = enemyRolls[enemySelection.chargeIndex].faceNumber;
   state.player.charge = processCharge(state.player.charge, playerChargedPips);
   state.enemy.charge = processCharge(state.enemy.charge, enemyChargedPips);
+
+  // チャージ追加ダメージ: 現在のチャージ値の半分を相手にダメージ
+  const playerChargeDmg = Math.floor(state.player.charge.current / 2);
+  const enemyChargeDmg = Math.floor(state.enemy.charge.current / 2);
+  if (playerChargeDmg > 0) {
+    state.enemy.hp = Math.max(0, state.enemy.hp - playerChargeDmg);
+    playerActions.push({
+      skillId: 'charge-pulse', skillName: 'チャージ波', element: 'alloy' as Element,
+      effectType: 'damage', rawDamage: playerChargeDmg,
+      elementMultiplier: 1, synergyMultiplier: 1,
+      finalDamage: playerChargeDmg, targetIsPlayer: false,
+    });
+  }
+  if (enemyChargeDmg > 0) {
+    state.player.hp = Math.max(0, state.player.hp - enemyChargeDmg);
+    enemyActions.push({
+      skillId: 'charge-pulse', skillName: 'チャージ波', element: 'alloy' as Element,
+      effectType: 'damage', rawDamage: enemyChargeDmg,
+      elementMultiplier: 1, synergyMultiplier: 1,
+      finalDamage: enemyChargeDmg, targetIsPlayer: true,
+    });
+  }
 
   // ステータス効果
   processStatusEffects(state.player);

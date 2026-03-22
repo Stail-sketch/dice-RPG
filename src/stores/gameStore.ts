@@ -391,8 +391,24 @@ export const useGameStore = create<GameState>((set, get) => ({
       .filter(r => r.tier === 'common')
       .flatMap(r => [{ ...r }, { ...r }]);
 
+    // 主人公ダイスに初期ルーンをプリセット
+    const protoDice = { ...PROTAGONIST_DICE };
+    protoDice.customFaces = protoDice.customFaces.map(f => {
+      if (f.faceNumber === 1) return { ...f, sockets: [{ skillRuneId: 'iron-bash', socketTier: 'gold' as const }] };
+      if (f.faceNumber === 2) return { ...f, sockets: [
+        { skillRuneId: 'blaze-strike', socketTier: 'gold' as const },
+        { skillRuneId: 'ice-shard', socketTier: 'gold' as const },
+      ]};
+      if (f.faceNumber === 3) return { ...f, sockets: [
+        { skillRuneId: 'spark', socketTier: 'gold' as const },
+        { skillRuneId: 'poison-fang', socketTier: 'gold' as const },
+        { skillRuneId: 'guard', socketTier: 'gold' as const },
+      ]};
+      return f;
+    });
+
     set({
-      protagonistDice: { ...PROTAGONIST_DICE },
+      protagonistDice: protoDice,
       ownedDice: starterDice,
       party: ['protagonist', 'pyrachnid_001', 'frost-jelly_001'],
       ownedRunes: starterRunes,
