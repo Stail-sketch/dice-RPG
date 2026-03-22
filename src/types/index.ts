@@ -154,6 +154,20 @@ export interface StatusEffect {
   element: Element;
 }
 
+export interface ChargeGauge {
+  current: number;
+  max: number;
+  bonusActive: boolean;
+}
+
+export const CHARGE_MAX = 10;
+export const CHARGE_BONUS_MULTIPLIER = 1.5;
+
+export interface TurnSelection {
+  activateIndices: [number, number];
+  chargeIndex: number;
+}
+
 export interface Combatant {
   hp: number;
   maxHp: number;
@@ -161,6 +175,7 @@ export interface Combatant {
   statusEffects: StatusEffect[];
   damageMultiplier: number;
   defenseMultiplier: number;
+  charge: ChargeGauge;
 }
 
 export interface DiceRollResult {
@@ -173,18 +188,21 @@ export interface TurnResult {
   turn: number;
   playerRolls: DiceRollResult[];
   enemyRolls: DiceRollResult[];
+  playerSelection: TurnSelection;
+  enemySelection: TurnSelection;
   playerFirst: boolean;
   firstActions: SkillAction[];
   secondActions: SkillAction[];
-  // ターン開始前のHP
   prePlayerHp: number;
   preEnemyHp: number;
-  // 先攻攻撃後のHP
   midPlayerHp: number;
   midEnemyHp: number;
-  // ターン終了時のHP
   playerHp: number;
   enemyHp: number;
+  playerCharge: ChargeGauge;
+  enemyCharge: ChargeGauge;
+  chargedUsedPlayer: boolean;
+  chargedUsedEnemy: boolean;
   synergies: SynergyActivation[];
 }
 

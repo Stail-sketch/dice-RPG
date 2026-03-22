@@ -302,6 +302,31 @@ body {
 .dice-pip.filled { background: var(--text-gold); }
 .dice-pip.empty { background: var(--bg-secondary); border: 1px solid var(--border-light); }
 
+/* 充填ゲージ */
+.charge-bar {
+  height: 5px;
+  background: var(--hp-track);
+  border: 1px solid var(--hp-border);
+  border-radius: 1px;
+  margin: 2px 0;
+}
+
+.charge-fill {
+  height: 100%;
+  background: var(--border-gold);
+  transition: width 0.4s ease;
+  border-radius: 1px;
+}
+
+.charge-fill.max {
+  animation: chargePulse 0.6s ease infinite alternate;
+}
+
+@keyframes chargePulse {
+  from { opacity: 0.6; }
+  to { opacity: 1.0; }
+}
+
 /* スクロールバー */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }

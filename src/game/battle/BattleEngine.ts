@@ -1,16 +1,20 @@
 import type {
   MonsterDice, BattleState, Combatant, DiceRollResult,
   SkillAction, TurnResult, Element, DiceFace, FixedFace, CustomFace,
-  StatusEffect,
+  StatusEffect, TurnSelection, ChargeGauge,
 } from '../../types';
-import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE } from '../../types';
-import { rollParty, determineFirstAttacker } from '../dice/DiceEngine';
+import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE, CHARGE_MAX, CHARGE_BONUS_MULTIPLIER } from '../../types';
+import { rollParty } from '../dice/DiceEngine';
 import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
 import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } from '../synergy/SynergyEngine';
 
 // ==============================
 // バトル初期化
 // ==============================
+function newChargeGauge(): ChargeGauge {
+  return { current: 0, max: CHARGE_MAX, bonusActive: false };
+}
+
 export function createBattleState(
   playerDice: MonsterDice[],
   enemyDice: MonsterDice[],
@@ -19,42 +23,34 @@ export function createBattleState(
 ): BattleState {
   return {
     player: {
-      hp: playerMaxHp,
-      maxHp: playerMaxHp,
-      dice: playerDice,
-      statusEffects: [],
-      damageMultiplier: 1.0,
-      defenseMultiplier: 1.0,
+      hp: playerMaxHp, maxHp: playerMaxHp, dice: playerDice,
+      statusEffects: [], damageMultiplier: 1.0, defenseMultiplier: 1.0,
+      charge: newChargeGauge(),
     },
     enemy: {
-      hp: enemyMaxHp,
-      maxHp: enemyMaxHp,
-      dice: enemyDice,
-      statusEffects: [],
-      damageMultiplier: 1.0,
-      defenseMultiplier: 1.0,
+      hp: enemyMaxHp, maxHp: enemyMaxHp, dice: enemyDice,
+      statusEffects: [], damageMultiplier: 1.0, defenseMultiplier: 1.0,
+      charge: newChargeGauge(),
     },
-    turn: 0,
-    maxTurns: 30,
-    log: [],
-    status: 'ongoing',
+    turn: 0, maxTurns: 30, log: [], status: 'ongoing',
   };
 }
 
 // ==============================
-// 同面スキル威力減衰を計算
+// 同面スキル威力減衰
 // ==============================
-function calcDecayMultiplier(totalPipsOnFace: number): number {
-  return Math.max(0.1, 1 - (totalPipsOnFace - 1) * PIP_DECAY_RATE);
+function calcDecayMultiplier(totalPips: number): number {
+  return Math.max(0.1, 1 - (totalPips - 1) * PIP_DECAY_RATE);
 }
 
 // ==============================
-// 面からスキルアクションを生成
+// 面からスキルアクション生成
 // ==============================
 function getSkillsFromFace(
   face: DiceFace,
   targetElement: Element | null,
-  targetIsPlayer: boolean
+  targetIsPlayer: boolean,
+  chargeBonusMult: number, // 1.0 or CHARGE_BONUS_MULTIPLIER
 ): SkillAction[] {
   const actions: SkillAction[] = [];
   const { multiplier: synergyMult } = calcSameFaceSynergyMultiplier(face);
@@ -63,7 +59,6 @@ function getSkillsFromFace(
     const fixed = face as FixedFace;
     const totalPips = fixed.sockets.length;
     const decayMult = calcDecayMultiplier(totalPips);
-    // 固有面はgold品質相当
     const tierMult = SOCKET_TIER_MULTIPLIER['gold'];
 
     for (const socket of fixed.sockets) {
@@ -71,18 +66,13 @@ function getSkillsFromFace(
       if (!skill) continue;
       const elementMult = targetElement ? ELEMENT_CHART[socket.element][targetElement] : 1.0;
       const rawDmg = skill.effect.power;
-      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult * chargeBonusMult);
 
       actions.push({
-        skillId: socket.skillId,
-        skillName: skill.name,
-        element: socket.element,
-        effectType: skill.effect.type,
-        rawDamage: rawDmg,
-        elementMultiplier: elementMult,
-        synergyMultiplier: synergyMult,
-        finalDamage: finalDmg,
-        targetIsPlayer,
+        skillId: socket.skillId, skillName: skill.name, element: socket.element,
+        effectType: skill.effect.type, rawDamage: rawDmg,
+        elementMultiplier: elementMult, synergyMultiplier: synergyMult,
+        finalDamage: finalDmg, targetIsPlayer,
       });
     }
   } else {
@@ -98,22 +88,16 @@ function getSkillsFromFace(
       const tierMult = SOCKET_TIER_MULTIPLIER[socket.socketTier];
       const elementMult = targetElement ? ELEMENT_CHART[rune.element][targetElement] : 1.0;
       const rawDmg = rune.effect.power;
-      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult * chargeBonusMult);
 
       actions.push({
-        skillId: rune.id,
-        skillName: rune.name,
-        element: rune.element,
-        effectType: rune.effect.type,
-        rawDamage: rawDmg,
-        elementMultiplier: elementMult,
-        synergyMultiplier: synergyMult,
-        finalDamage: finalDmg,
-        targetIsPlayer,
+        skillId: rune.id, skillName: rune.name, element: rune.element,
+        effectType: rune.effect.type, rawDamage: rawDmg,
+        elementMultiplier: elementMult, synergyMultiplier: synergyMult,
+        finalDamage: finalDmg, targetIsPlayer,
       });
     }
   }
-
   return actions;
 }
 
@@ -121,50 +105,27 @@ function getSkillsFromFace(
 // スキルアクション適用
 // ==============================
 function applyActions(
-  actions: SkillAction[],
-  attacker: Combatant,
-  defender: Combatant,
-  crossDiceMult: number
+  actions: SkillAction[], attacker: Combatant, defender: Combatant, crossDiceMult: number,
 ): void {
   for (const action of actions) {
     const damage = Math.round(action.finalDamage * attacker.damageMultiplier * crossDiceMult / defender.defenseMultiplier);
-
     switch (action.effectType) {
-      case 'damage':
-        defender.hp = Math.max(0, defender.hp - damage);
+      case 'damage': defender.hp = Math.max(0, defender.hp - damage); break;
+      case 'heal': attacker.hp = Math.min(attacker.maxHp, attacker.hp + action.rawDamage); break;
+      case 'dot':
+        defender.statusEffects.push({ type: 'poison', power: action.rawDamage, remainingTurns: 3, element: action.element });
         break;
-      case 'heal':
-        attacker.hp = Math.min(attacker.maxHp, attacker.hp + action.rawDamage);
-        break;
-      case 'dot': {
-        defender.statusEffects.push({
-          type: 'poison',
-          power: action.rawDamage,
-          remainingTurns: 3,
-          element: action.element,
-        });
-        break;
-      }
-      case 'buff':
-        attacker.damageMultiplier *= action.rawDamage > 1 ? action.rawDamage : 1.3;
-        break;
-      case 'debuff':
-        defender.damageMultiplier *= action.rawDamage < 1 ? action.rawDamage : 0.7;
-        break;
+      case 'buff': attacker.damageMultiplier *= action.rawDamage > 1 ? action.rawDamage : 1.3; break;
+      case 'debuff': defender.damageMultiplier *= action.rawDamage < 1 ? action.rawDamage : 0.7; break;
       case 'shield':
-        attacker.statusEffects.push({
-          type: 'shield',
-          power: action.rawDamage,
-          remainingTurns: 2,
-          element: action.element,
-        });
+        attacker.statusEffects.push({ type: 'shield', power: action.rawDamage, remainingTurns: 2, element: action.element });
         break;
     }
   }
 }
 
 // ==============================
-// ステータス効果の処理
+// ステータス効果処理
 // ==============================
 function processStatusEffects(combatant: Combatant): void {
   const remaining: StatusEffect[] = [];
@@ -173,77 +134,145 @@ function processStatusEffects(combatant: Combatant): void {
       combatant.hp = Math.max(0, combatant.hp - effect.power);
     }
     effect.remainingTurns--;
-    if (effect.remainingTurns > 0) {
-      remaining.push(effect);
-    }
+    if (effect.remainingTurns > 0) remaining.push(effect);
   }
   combatant.statusEffects = remaining;
-
-  // バフ/デバフリセット（毎ターン徐々に戻す）
   combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, combatant.damageMultiplier));
   combatant.defenseMultiplier = Math.min(2.0, Math.max(0.3, combatant.defenseMultiplier));
 }
 
 // ==============================
-// クロスダイスシナジーの倍率取得
+// クロスダイスシナジー（発動2個 + 充填1個の属性で属性一致判定）
 // ==============================
-function getCrossDiceMultiplier(rolls: DiceRollResult[]): number {
-  if (rolls.length < 3) return 1.0;
+function getCrossDiceMultiplier(
+  activeRolls: DiceRollResult[],
+  allRolls: DiceRollResult[], // 属性一致は3個全部見る
+): number {
+  if (activeRolls.length < 2) return 1.0;
 
-  const elementSets = rolls.map(r => new Set(getFaceElements(r.face)));
+  // 属性一致は全3個で判定
+  const allElementSets = allRolls.map(r => new Set(getFaceElements(r.face)));
   const allElements: Element[] = ['blaze', 'frost', 'volt', 'venom', 'alloy', 'mirage'];
 
   for (const element of allElements) {
-    if (elementSets.every(set => set.has(element))) {
-      if (element === 'blaze') return 3.0;   // 業火: 全ダメージ3倍
-      if (element === 'volt') return 2.0;    // 神雷: 全ダメージ2倍
+    if (allElementSets.every(set => set.has(element))) {
+      if (element === 'blaze') return 3.0;
+      if (element === 'volt') return 2.0;
     }
   }
   return 1.0;
 }
 
 // ==============================
-// 1ターン実行
+// 充填処理
 // ==============================
-export function executeTurn(state: BattleState): TurnResult {
-  state.turn++;
+function processCharge(gauge: ChargeGauge, chargedFacePips: number): ChargeGauge {
+  const newCurrent = Math.min(gauge.current + chargedFacePips, CHARGE_MAX);
+  return { current: newCurrent, max: CHARGE_MAX, bonusActive: newCurrent >= CHARGE_MAX };
+}
 
-  // ターン開始前のHP
+function consumeCharge(gauge: ChargeGauge): { mult: number; used: boolean; after: ChargeGauge } {
+  if (gauge.bonusActive) {
+    return { mult: CHARGE_BONUS_MULTIPLIER, used: true, after: { current: 0, max: CHARGE_MAX, bonusActive: false } };
+  }
+  return { mult: 1.0, used: false, after: gauge };
+}
+
+// ==============================
+// 敵AI選択ロジック
+// ==============================
+export function aiSelectDice(
+  _dice: MonsterDice[],
+  rolls: DiceRollResult[],
+  gauge: ChargeGauge,
+  enemyHp: number,
+): TurnSelection {
+  const combos: [number, number, number][] = [[0, 1, 2], [0, 2, 1], [1, 2, 0]];
+  let bestScore = -Infinity;
+  let best = combos[0];
+
+  for (const [a, b, c] of combos) {
+    let score = 0;
+    // 発動面のスキル数 × 出目で雑に威力見積もり
+    score += rolls[a].faceNumber * 2;
+    score += rolls[b].faceNumber * 2;
+    // 充填価値
+    const chargeVal = rolls[c].faceNumber;
+    const gaugeFill = gauge.current + chargeVal;
+    if (gaugeFill >= CHARGE_MAX) score += 8;
+    // 瀕死なら火力優先
+    if (enemyHp < 15) score -= chargeVal * 0.5;
+
+    if (score > bestScore) { bestScore = score; best = [a, b, c]; }
+  }
+  return { activateIndices: [best[0], best[1]], chargeIndex: best[2] };
+}
+
+// ==============================
+// ダイスロール（外部から呼べるよう公開）
+// ==============================
+export { rollParty };
+
+// ==============================
+// 先攻判定（発動2個の出目合計）
+// ==============================
+function determineFirst(
+  playerRolls: DiceRollResult[], playerSel: TurnSelection,
+  enemyRolls: DiceRollResult[], enemySel: TurnSelection,
+): boolean {
+  const pSum = playerSel.activateIndices.reduce((s, i) => s + playerRolls[i].faceNumber, 0);
+  const eSum = enemySel.activateIndices.reduce((s, i) => s + enemyRolls[i].faceNumber, 0);
+  if (pSum === eSum) return Math.random() < 0.5;
+  return pSum > eSum;
+}
+
+export function executeTurnFull(
+  state: BattleState,
+  playerRolls: DiceRollResult[],
+  enemyRolls: DiceRollResult[],
+  playerSelection: TurnSelection,
+  enemySelection: TurnSelection,
+): TurnResult {
+  state.turn++;
   const prePlayerHp = state.player.hp;
   const preEnemyHp = state.enemy.hp;
 
-  // ダイスを振る
-  const playerRolls = rollParty(state.player.dice);
-  const enemyRolls = rollParty(state.enemy.dice);
+  // 充填ボーナス判定（ターン開始時にMAXなら使う）
+  const pCharge = consumeCharge(state.player.charge);
+  const eCharge = consumeCharge(state.enemy.charge);
+  state.player.charge = pCharge.after;
+  state.enemy.charge = eCharge.after;
 
-  // 先攻判定
-  const playerFirst = determineFirstAttacker(playerRolls, enemyRolls);
+  // 先攻判定（発動2個の出目合計）
+  const playerFirst = determineFirst(playerRolls, playerSelection, enemyRolls, enemySelection);
 
-  // 敵の主属性（属性相性計算に使用）
+  // 発動するロールだけ抽出
+  const playerActiveRolls = playerSelection.activateIndices.map(i => playerRolls[i]);
+  const enemyActiveRolls = enemySelection.activateIndices.map(i => enemyRolls[i]);
+
   const enemyMainElement = state.enemy.dice[0]?.element || null;
   const playerMainElement = state.player.dice[0]?.element || null;
 
-  // スキルアクション生成
+  // スキルアクション生成（発動2個のみ）
   const playerActions: SkillAction[] = [];
-  for (const roll of playerRolls) {
-    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false));
+  for (const roll of playerActiveRolls) {
+    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false, pCharge.mult));
   }
-
   const enemyActions: SkillAction[] = [];
-  for (const roll of enemyRolls) {
-    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true));
+  for (const roll of enemyActiveRolls) {
+    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true, eCharge.mult));
   }
 
-  // クロスダイスシナジー倍率
-  const playerCrossMult = getCrossDiceMultiplier(playerRolls);
-  const enemyCrossMult = getCrossDiceMultiplier(enemyRolls);
+  // クロスダイスシナジー（属性一致は3個全部で判定）
+  const playerCrossMult = getCrossDiceMultiplier(playerActiveRolls, playerRolls);
+  const enemyCrossMult = getCrossDiceMultiplier(enemyActiveRolls, enemyRolls);
 
-  // シナジー判定
-  const playerSynergies = checkAllSynergies(playerRolls);
-  const enemySynergies = checkAllSynergies(enemyRolls);
+  // シナジー判定（発動2個のみ）
+  const playerSynergies = checkAllSynergies(playerActiveRolls);
+  const enemySynergies = checkAllSynergies(enemyActiveRolls);
   const allSynergies = [...playerSynergies, ...enemySynergies];
 
-  // 先攻→後攻の順にアクション適用
+  // 先攻→後攻
   const firstActions = playerFirst ? playerActions : enemyActions;
   const secondActions = playerFirst ? enemyActions : playerActions;
   const firstAttacker = playerFirst ? state.player : state.enemy;
@@ -252,17 +281,20 @@ export function executeTurn(state: BattleState): TurnResult {
   const secondCrossMult = playerFirst ? enemyCrossMult : playerCrossMult;
 
   applyActions(firstActions, firstAttacker, firstDefender, firstCrossMult);
-
-  // 先攻攻撃後の中間HP
   const midPlayerHp = state.player.hp;
   const midEnemyHp = state.enemy.hp;
 
-  // 先攻で倒れていなければ後攻
   if (firstDefender.hp > 0) {
     applyActions(secondActions, firstDefender, firstAttacker, secondCrossMult);
   }
 
-  // ステータス効果処理
+  // 充填処理（捨てたダイスの出目=ピップ数を加算）
+  const playerChargedPips = playerRolls[playerSelection.chargeIndex].faceNumber;
+  const enemyChargedPips = enemyRolls[enemySelection.chargeIndex].faceNumber;
+  state.player.charge = processCharge(state.player.charge, playerChargedPips);
+  state.enemy.charge = processCharge(state.enemy.charge, enemyChargedPips);
+
+  // ステータス効果
   processStatusEffects(state.player);
   processStatusEffects(state.enemy);
 
@@ -273,32 +305,32 @@ export function executeTurn(state: BattleState): TurnResult {
     state.status = state.player.hp >= state.enemy.hp ? 'player-win' : 'enemy-win';
   }
 
-  const turnResult: TurnResult = {
+  const result: TurnResult = {
     turn: state.turn,
-    playerRolls,
-    enemyRolls,
+    playerRolls, enemyRolls,
+    playerSelection, enemySelection,
     playerFirst,
     firstActions: playerFirst ? playerActions : enemyActions,
     secondActions: playerFirst ? enemyActions : playerActions,
-    prePlayerHp,
-    preEnemyHp,
-    midPlayerHp,
-    midEnemyHp,
-    playerHp: state.player.hp,
-    enemyHp: state.enemy.hp,
+    prePlayerHp, preEnemyHp, midPlayerHp, midEnemyHp,
+    playerHp: state.player.hp, enemyHp: state.enemy.hp,
+    playerCharge: { ...state.player.charge },
+    enemyCharge: { ...state.enemy.charge },
+    chargedUsedPlayer: pCharge.used,
+    chargedUsedEnemy: eCharge.used,
     synergies: allSynergies,
   };
 
-  state.log.push(turnResult);
-  return turnResult;
+  state.log.push(result);
+  return result;
 }
 
-// ==============================
-// バトル全体を実行
-// ==============================
-export function runBattle(state: BattleState): BattleState {
-  while (state.status === 'ongoing') {
-    executeTurn(state);
-  }
-  return state;
+// 後方互換: 旧executeTurn（AI自動選択で3個中2個選ぶ）
+export function executeTurn(state: BattleState): TurnResult {
+  const playerRolls = rollParty(state.player.dice);
+  const enemyRolls = rollParty(state.enemy.dice);
+  // AI選択（プレイヤー側もAI自動 — シミュレーション用）
+  const pSel = aiSelectDice(state.player.dice, playerRolls, state.player.charge, state.player.hp);
+  const eSel = aiSelectDice(state.enemy.dice, enemyRolls, state.enemy.charge, state.enemy.hp);
+  return executeTurnFull(state, playerRolls, enemyRolls, pSel, eSel);
 }
