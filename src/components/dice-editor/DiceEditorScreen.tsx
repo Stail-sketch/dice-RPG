@@ -34,6 +34,11 @@ export function DiceEditorScreen() {
 
   const swapDice = (slotIndex: number, diceId: string) => {
     const newParty = [...party] as [string, string, string];
+    // 既に別スロットにいる場合は入れ替え
+    const existingSlot = newParty.indexOf(diceId);
+    if (existingSlot !== -1 && existingSlot !== slotIndex) {
+      newParty[existingSlot] = newParty[slotIndex]; // 元のスロットに今のダイスを移動
+    }
     newParty[slotIndex] = diceId;
     setParty(newParty);
     setSelectedFace(null);

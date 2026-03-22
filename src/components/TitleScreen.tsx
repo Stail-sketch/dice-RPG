@@ -3,7 +3,7 @@ import { useGameStore } from '../stores/gameStore';
 import { hasSaveData } from '../stores/saveSystem';
 
 export function TitleScreen() {
-  const { initNewGame, load } = useGameStore();
+  const { initNewGame, load, startTutorial } = useGameStore();
   const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -42,8 +42,11 @@ export function TitleScreen() {
       </div>
 
       <div style={{ width: '100%', maxWidth: 280 }}>
-        <button className="rpg-btn rpg-btn-primary" onClick={initNewGame}>
+        <button className="rpg-btn rpg-btn-primary" onClick={startTutorial}>
           はじめから
+        </button>
+        <button className="rpg-btn" onClick={initNewGame} style={{ fontSize: 11 }}>
+          チュートリアルスキップ
         </button>
         <button className="rpg-btn"
           onClick={handleContinue}

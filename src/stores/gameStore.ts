@@ -7,7 +7,12 @@ import { SKILL_RUNES } from '../data/skill-runes';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
-export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture';
+export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial';
+
+interface TutorialState {
+  completed: boolean;
+  currentStep: number; // 0=not started, 1-4=steps
+}
 
 interface Materials {
   'forge-stone': number;
@@ -35,6 +40,12 @@ interface GameState {
   currentChapter: number;
   clearedDungeons: string[]; // クリア済みダンジョンID
   capturedMonsters: string[];
+
+  // チュートリアル
+  tutorial: TutorialState;
+  setTutorialStep: (step: number) => void;
+  completeTutorial: () => void;
+  startTutorial: () => void;
 
   // ガチャ天井
   gachaPityDice: number;
@@ -101,6 +112,7 @@ function getSaveableState(s: GameState) {
     capturedMonsters: s.capturedMonsters,
     gachaPityDice: s.gachaPityDice,
     gachaPityRune: s.gachaPityRune,
+    tutorial: s.tutorial,
   };
 }
 
@@ -126,6 +138,39 @@ export const useGameStore = create<GameState>((set, get) => ({
       goldMultiplier: hasProtagonist ? 1.2 : 1.0,
       captureBonus: hasProtagonist ? 10 : 0,
     };
+  },
+
+  tutorial: { completed: true, currentStep: 0 },
+
+  setTutorialStep: (step) => set((s) => ({
+    tutorial: { ...s.tutorial, currentStep: step },
+  })),
+
+  completeTutorial: () => set((s) => ({
+    tutorial: { completed: true, currentStep: 0 },
+    gold: s.gold + 500,
+    gems: s.gems + 30,
+    materials: { 'forge-stone': s.materials['forge-stone'] + 3, 'rare-ore': s.materials['rare-ore'] },
+    currentScreen: 'town' as Screen,
+  })),
+
+  startTutorial: () => {
+    set({
+      protagonistDice: { ...PROTAGONIST_DICE },
+      ownedDice: [],
+      party: ['protagonist', '', ''],
+      ownedRunes: [],
+      gold: 0,
+      gems: 0,
+      materials: { 'forge-stone': 0, 'rare-ore': 0 },
+      currentChapter: 1,
+      clearedDungeons: [],
+      capturedMonsters: [],
+      gachaPityDice: 0,
+      gachaPityRune: 0,
+      tutorial: { completed: false, currentStep: 1 },
+      currentScreen: 'tutorial' as Screen,
+    });
   },
 
   currentChapter: 1,
@@ -359,6 +404,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       capturedMonsters: ['pyrachnid', 'frost-jelly', 'salamander-v2'],
       gachaPityDice: 0,
       gachaPityRune: 0,
+      tutorial: { completed: true, currentStep: 0 },
       currentScreen: 'town',
     });
   },
