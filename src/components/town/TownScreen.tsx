@@ -2,231 +2,270 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { useGameStore, type Screen } from '../../stores/gameStore';
 
 // ==============================
-// 定数
+// Canvas設定
 // ==============================
-const W = 160; // 内部解像度
-const H = 280;
-const SCALE = 2;
+const W = 320;
+const H = 520;
 
-const GRASS = '#a0b868';
-const PATH_COLOR = '#c8b898';
-const LABEL_BG = '#4a3828';
-const LABEL_FG = '#f0e8d0';
-const BADGE_COLOR = '#c04030';
+const GRASS = '#88a848';
+const GRASS2 = '#80a040';
+const GRASS3 = '#90b050';
+const PATH = '#c8b890';
+const PATH_EDGE = '#b8a880';
 
 // ==============================
-// 建物定義
+// 建物
 // ==============================
 interface Building {
   id: string;
-  name: string;
+  label: string;
+  sub: string;
   screen: Screen;
   x: number; y: number; w: number; h: number;
-  draw: (ctx: CanvasRenderingContext2D, x: number, y: number) => void;
-  badge?: boolean;
+  draw: (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => void;
+  disabled?: boolean;
 }
 
-// ドット絵の建物描画関数
-function drawStoneGate(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 石壁
-  ctx.fillStyle = '#787068'; ctx.fillRect(x, y + 4, 28, 20);
-  ctx.fillStyle = '#908878'; ctx.fillRect(x + 2, y + 6, 24, 16);
+function rect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) {
+  ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+}
+
+// --- ダンジョン: 石造りの門 ---
+function drawDungeon(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  rect(ctx, x, y + 8, w, h - 8, '#707068');
+  rect(ctx, x + 3, y + 11, w - 6, h - 14, '#888078');
   // アーチ門
-  ctx.fillStyle = '#3a3028'; ctx.fillRect(x + 8, y + 10, 12, 14);
-  ctx.fillStyle = '#504838'; ctx.fillRect(x + 10, y + 10, 8, 12);
+  rect(ctx, x + w / 2 - 10, y + 18, 20, h - 18, '#2a2420');
+  rect(ctx, x + w / 2 - 7, y + 20, 14, h - 22, '#3a3430');
   // 松明
-  ctx.fillStyle = '#c05030'; ctx.fillRect(x + 3, y + 2, 3, 3);
-  ctx.fillStyle = '#c05030'; ctx.fillRect(x + 22, y + 2, 3, 3);
-  ctx.fillStyle = '#705030'; ctx.fillRect(x + 4, y + 5, 1, 5);
-  ctx.fillStyle = '#705030'; ctx.fillRect(x + 23, y + 5, 1, 5);
+  rect(ctx, x + 6, y + 2, 5, 6, '#d06030');
+  rect(ctx, x + 7, y, 3, 3, '#e0a030');
+  rect(ctx, x + w - 11, y + 2, 5, 6, '#d06030');
+  rect(ctx, x + w - 10, y, 3, 3, '#e0a030');
+  // 煉瓦ライン
+  rect(ctx, x, y + 8, w, 2, '#606058');
+  rect(ctx, x, y + 20, w, 1, '#606058');
 }
 
-function drawSmithy(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 壁
-  ctx.fillStyle = '#906848'; ctx.fillRect(x, y + 6, 26, 18);
-  ctx.fillStyle = '#a07858'; ctx.fillRect(x + 2, y + 8, 22, 14);
-  // 屋根
-  ctx.fillStyle = '#604030'; ctx.fillRect(x - 2, y + 2, 30, 6);
-  // 煙突
-  ctx.fillStyle = '#686058'; ctx.fillRect(x + 20, y - 4, 5, 8);
-  // 煙
-  ctx.fillStyle = '#c0b8a880'; ctx.fillRect(x + 21, y - 7, 3, 3);
-  ctx.fillStyle = '#c0b8a850'; ctx.fillRect(x + 22, y - 10, 2, 2);
-  // ドア
-  ctx.fillStyle = '#503820'; ctx.fillRect(x + 9, y + 14, 8, 10);
-  // アンビル
-  ctx.fillStyle = '#505050'; ctx.fillRect(x + 1, y + 20, 6, 3);
-}
-
-function drawWorkshop(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 壁（青系）
-  ctx.fillStyle = '#506880'; ctx.fillRect(x, y + 4, 26, 18);
-  ctx.fillStyle = '#607890'; ctx.fillRect(x + 2, y + 6, 22, 14);
-  // 屋根
-  ctx.fillStyle = '#405060'; ctx.fillRect(x - 1, y, 28, 6);
-  // 窓
-  ctx.fillStyle = '#a0c8e0'; ctx.fillRect(x + 4, y + 8, 5, 5);
-  ctx.fillStyle = '#a0c8e0'; ctx.fillRect(x + 17, y + 8, 5, 5);
-  // ドア
-  ctx.fillStyle = '#304050'; ctx.fillRect(x + 10, y + 14, 6, 8);
-  // ダイスマーク
-  ctx.fillStyle = '#f0e8d0'; ctx.fillRect(x + 12, y + 16, 2, 2);
-}
-
-function drawMarket(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // カウンター
-  ctx.fillStyle = '#906848'; ctx.fillRect(x, y + 10, 28, 14);
-  // オーニング（赤）
-  ctx.fillStyle = '#c04838'; ctx.fillRect(x - 2, y + 4, 32, 8);
-  ctx.fillStyle = '#a03828'; ctx.fillRect(x, y + 6, 28, 4);
-  // 商品
-  ctx.fillStyle = '#e0c050'; ctx.fillRect(x + 4, y + 12, 4, 4);
-  ctx.fillStyle = '#50a0c0'; ctx.fillRect(x + 12, y + 12, 4, 4);
-  ctx.fillStyle = '#80c060'; ctx.fillRect(x + 20, y + 12, 4, 4);
-}
-
-function drawShrine(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 台座
-  ctx.fillStyle = '#787070'; ctx.fillRect(x + 2, y + 14, 22, 10);
+// --- 闘技場 ---
+function drawArena(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  rect(ctx, x, y + 12, w, h - 12, '#a09888');
+  rect(ctx, x + 3, y + 15, w - 6, h - 18, '#b0a898');
   // 柱
-  ctx.fillStyle = '#686060'; ctx.fillRect(x + 4, y + 4, 4, 14);
-  ctx.fillStyle = '#686060'; ctx.fillRect(x + 18, y + 4, 4, 14);
-  // 屋根
-  ctx.fillStyle = '#605080'; ctx.fillRect(x, y, 26, 6);
-  // クリスタル
-  ctx.fillStyle = '#a080d0'; ctx.fillRect(x + 10, y + 8, 6, 8);
-  ctx.fillStyle = '#c0a0e0'; ctx.fillRect(x + 11, y + 9, 4, 6);
-}
-
-function drawLibrary(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 壁
-  ctx.fillStyle = '#706050'; ctx.fillRect(x, y + 4, 22, 16);
-  ctx.fillStyle = '#806858'; ctx.fillRect(x + 2, y + 6, 18, 12);
-  // 屋根
-  ctx.fillStyle = '#504030'; ctx.fillRect(x - 1, y, 24, 6);
-  // 本の窓
-  ctx.fillStyle = '#d0c0a0'; ctx.fillRect(x + 4, y + 7, 4, 6);
-  ctx.fillStyle = '#c04030'; ctx.fillRect(x + 5, y + 8, 1, 4);
-  ctx.fillStyle = '#3070a0'; ctx.fillRect(x + 6, y + 8, 1, 4);
-  // ドア
-  ctx.fillStyle = '#403020'; ctx.fillRect(x + 12, y + 12, 5, 8);
-}
-
-function drawBulletin(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 柱
-  ctx.fillStyle = '#705030'; ctx.fillRect(x + 4, y + 4, 3, 18);
-  ctx.fillStyle = '#705030'; ctx.fillRect(x + 17, y + 4, 3, 18);
-  // ボード
-  ctx.fillStyle = '#c0a870'; ctx.fillRect(x + 2, y + 2, 20, 14);
-  ctx.fillStyle = '#a08850'; ctx.fillRect(x + 3, y + 3, 18, 12);
-  // メモ
-  ctx.fillStyle = '#f0e8d0'; ctx.fillRect(x + 5, y + 5, 5, 4);
-  ctx.fillStyle = '#e0d0b0'; ctx.fillRect(x + 12, y + 5, 5, 4);
-  ctx.fillStyle = '#f0e0c0'; ctx.fillRect(x + 8, y + 10, 6, 3);
-}
-
-function drawColosseum(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // 基壇
-  ctx.fillStyle = '#a09888'; ctx.fillRect(x, y + 12, 32, 16);
-  ctx.fillStyle = '#b0a898'; ctx.fillRect(x + 2, y + 14, 28, 12);
-  // 柱
-  for (let i = 0; i < 4; i++) {
-    ctx.fillStyle = '#c0b8a8'; ctx.fillRect(x + 4 + i * 8, y + 4, 3, 14);
+  for (let i = 0; i < 5; i++) {
+    rect(ctx, x + 5 + i * ((w - 14) / 4), y + 6, 5, h - 12, '#c8c0b0');
+    rect(ctx, x + 6 + i * ((w - 14) / 4), y + 6, 3, h - 12, '#d0c8b8');
   }
   // 屋根
-  ctx.fillStyle = '#908070'; ctx.fillRect(x - 1, y, 34, 6);
+  rect(ctx, x - 2, y, w + 4, 8, '#807068');
+  rect(ctx, x, y + 2, w, 4, '#908070');
   // 旗
-  ctx.fillStyle = '#c04838'; ctx.fillRect(x + 14, y - 6, 4, 6);
-  ctx.fillStyle = '#c04838'; ctx.fillRect(x + 16, y - 6, 4, 3);
+  rect(ctx, x + w / 2 - 2, y - 10, 3, 12, '#705030');
+  rect(ctx, x + w / 2, y - 10, 8, 6, '#c04838');
   // 門
-  ctx.fillStyle = '#504838'; ctx.fillRect(x + 12, y + 18, 8, 10);
+  rect(ctx, x + w / 2 - 8, y + h - 16, 16, 16, '#504838');
+}
+
+// --- 鍛冶屋 ---
+function drawForge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  // 壁
+  rect(ctx, x, y + 10, w, h - 10, '#906848');
+  rect(ctx, x + 3, y + 13, w - 6, h - 16, '#a07858');
+  // 屋根
+  rect(ctx, x - 3, y + 4, w + 6, 8, '#604030');
+  rect(ctx, x - 1, y + 6, w + 2, 4, '#705040');
+  // 煙突
+  rect(ctx, x + w - 14, y - 10, 8, 16, '#686058');
+  rect(ctx, x + w - 12, y - 14, 4, 4, '#b0a89080');
+  rect(ctx, x + w - 11, y - 18, 3, 3, '#b0a89050');
+  // ドア
+  rect(ctx, x + w / 2 - 7, y + h - 18, 14, 18, '#503820');
+  rect(ctx, x + w / 2 - 5, y + h - 16, 10, 14, '#604830');
+  // アンビル
+  rect(ctx, x + 5, y + h - 8, 10, 4, '#484848');
+  rect(ctx, x + 7, y + h - 12, 6, 4, '#585858');
+  // 看板
+  rect(ctx, x + w - 8, y + 16, 2, 12, '#705030');
+  rect(ctx, x + w - 14, y + 14, 10, 8, '#c0a870');
+}
+
+// --- ダイス工房 ---
+function drawDiceShop(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  rect(ctx, x, y + 8, w, h - 8, '#506880');
+  rect(ctx, x + 3, y + 11, w - 6, h - 14, '#607890');
+  // 屋根
+  rect(ctx, x - 2, y + 2, w + 4, 8, '#405060');
+  // 窓
+  rect(ctx, x + 6, y + 16, 10, 8, '#a0c8e0');
+  rect(ctx, x + 7, y + 17, 8, 6, '#b0d8f0');
+  rect(ctx, x + w - 16, y + 16, 10, 8, '#a0c8e0');
+  rect(ctx, x + w - 15, y + 17, 8, 6, '#b0d8f0');
+  // ドア
+  rect(ctx, x + w / 2 - 6, y + h - 16, 12, 16, '#304050');
+  // ダイスマーク
+  rect(ctx, x + w / 2 - 3, y + h - 12, 6, 6, '#e0d8c0');
+  rect(ctx, x + w / 2, y + h - 9, 2, 2, '#304050');
+}
+
+// --- ショップ ---
+function drawShop(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  rect(ctx, x, y + 12, w, h - 12, '#a08060');
+  rect(ctx, x + 3, y + 15, w - 6, h - 18, '#b09070');
+  // オーニング
+  rect(ctx, x - 3, y + 4, w + 6, 10, '#c04838');
+  for (let i = 0; i < 6; i++) {
+    rect(ctx, x - 3 + i * ((w + 6) / 6), y + 10, (w + 6) / 12, 4, '#a03020');
+  }
+  // カウンター
+  rect(ctx, x + 4, y + 20, w - 8, 6, '#806040');
+  // 商品
+  rect(ctx, x + 8, y + 16, 6, 5, '#e0c050');
+  rect(ctx, x + 18, y + 16, 6, 5, '#50a0c0');
+  rect(ctx, x + w - 14, y + 16, 6, 5, '#80c060');
+}
+
+// --- ガチャ祠 ---
+function drawGacha(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  // 台座
+  rect(ctx, x + 4, y + h - 14, w - 8, 14, '#787070');
+  rect(ctx, x + 6, y + h - 12, w - 12, 10, '#888080');
+  // 柱
+  rect(ctx, x + 6, y + 8, 6, h - 16, '#787070');
+  rect(ctx, x + w - 12, y + 8, 6, h - 16, '#787070');
+  // 屋根
+  rect(ctx, x, y + 2, w, 8, '#605080');
+  rect(ctx, x + 2, y + 4, w - 4, 4, '#706090');
+  // クリスタル
+  rect(ctx, x + w / 2 - 6, y + 14, 12, 16, '#9070c0');
+  rect(ctx, x + w / 2 - 4, y + 16, 8, 12, '#b090e0');
+  rect(ctx, x + w / 2 - 2, y + 18, 4, 8, '#c8b0f0');
+}
+
+// --- 図鑑 ---
+function drawCodex(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  rect(ctx, x, y + 6, w, h - 6, '#706050');
+  rect(ctx, x + 3, y + 9, w - 6, h - 12, '#806858');
+  // 屋根
+  rect(ctx, x - 2, y, w + 4, 8, '#504030');
+  // 本棚（窓の代わり）
+  rect(ctx, x + 5, y + 12, 12, 10, '#d0c0a0');
+  rect(ctx, x + 6, y + 13, 2, 8, '#c04030');
+  rect(ctx, x + 9, y + 13, 2, 8, '#3070a0');
+  rect(ctx, x + 12, y + 13, 2, 8, '#508040');
+  // ドア
+  rect(ctx, x + w / 2 - 5, y + h - 14, 10, 14, '#403020');
+}
+
+// --- 掲示板 ---
+function drawEvent(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  // 柱
+  rect(ctx, x + 6, y + 8, 4, h - 8, '#705030');
+  rect(ctx, x + w - 10, y + 8, 4, h - 8, '#705030');
+  // ボード
+  rect(ctx, x + 2, y + 4, w - 4, h - 16, '#c0a870');
+  rect(ctx, x + 4, y + 6, w - 8, h - 20, '#b09850');
+  // メモ
+  rect(ctx, x + 8, y + 10, 10, 8, '#f0e8d0');
+  rect(ctx, x + w - 18, y + 10, 10, 8, '#e8e0c8');
+  rect(ctx, x + 12, y + 22, 12, 6, '#f0e0c0');
 }
 
 const BUILDINGS: Building[] = [
-  { id: 'dungeon', name: 'DUNGEON', screen: 'dungeon', x: 10, y: 30, w: 28, h: 24, draw: drawStoneGate },
-  { id: 'arena', name: 'ARENA', screen: 'pvp', x: 100, y: 26, w: 32, h: 28, draw: drawColosseum },
-  { id: 'forge', name: 'FORGE', screen: 'forge', x: 24, y: 90, w: 26, h: 24, draw: drawSmithy },
-  { id: 'dice', name: 'DICE', screen: 'dice-editor', x: 108, y: 92, w: 26, h: 22, draw: drawWorkshop },
-  { id: 'shop', name: 'SHOP', screen: 'shop', x: 10, y: 152, w: 28, h: 24, draw: drawMarket },
-  { id: 'gacha', name: 'GACHA', screen: 'gacha', x: 106, y: 150, w: 26, h: 24, draw: drawShrine, badge: true },
-  { id: 'book', name: 'BOOK', screen: 'codex', x: 22, y: 210, w: 22, h: 20, draw: drawLibrary },
-  { id: 'event', name: 'EVENT', screen: 'town', x: 108, y: 212, w: 24, h: 22, draw: drawBulletin, badge: true },
+  { id: 'dungeon', label: 'DUNGEON', sub: 'ダンジョン', screen: 'dungeon', x: 16, y: 50, w: 56, h: 48, draw: drawDungeon },
+  { id: 'arena', label: 'ARENA', sub: '決闘場', screen: 'pvp', x: 192, y: 40, w: 64, h: 52, draw: drawArena, disabled: true },
+  { id: 'forge', label: 'FORGE', sub: '鍛冶屋', screen: 'forge', x: 36, y: 170, w: 54, h: 44, draw: drawForge },
+  { id: 'dice', label: 'DICE', sub: 'ダイス装備', screen: 'dice-editor', x: 200, y: 168, w: 54, h: 44, draw: drawDiceShop },
+  { id: 'shop', label: 'SHOP', sub: 'ショップ', screen: 'shop', x: 16, y: 288, w: 56, h: 42, draw: drawShop },
+  { id: 'gacha', label: 'GACHA', sub: 'ガチャ', screen: 'gacha', x: 200, y: 286, w: 52, h: 44, draw: drawGacha },
+  { id: 'codex', label: 'BOOK', sub: '図鑑', screen: 'codex', x: 40, y: 400, w: 48, h: 38, draw: drawCodex },
+  { id: 'event', label: 'EVENT', sub: 'イベント', screen: 'town', x: 204, y: 398, w: 48, h: 38, draw: drawEvent, disabled: true },
 ];
 
 // ==============================
-// 装飾要素
+// 描画ヘルパー
 // ==============================
+function drawPaths(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = PATH;
+  // 水平
+  ctx.fillRect(72, 78, 120, 6);
+  ctx.fillRect(90, 194, 110, 6);
+  ctx.fillRect(72, 310, 128, 6);
+  ctx.fillRect(88, 420, 124, 6);
+  // 垂直
+  ctx.fillRect(48, 98, 6, 72);
+  ctx.fillRect(222, 92, 6, 76);
+  ctx.fillRect(48, 214, 6, 74);
+  ctx.fillRect(228, 212, 6, 74);
+  ctx.fillRect(48, 330, 6, 70);
+  ctx.fillRect(228, 330, 6, 68);
+  // 中央縦
+  ctx.fillRect(155, 194, 6, 116);
+  // エッジ
+  ctx.fillStyle = PATH_EDGE;
+  ctx.fillRect(72, 77, 120, 1);
+  ctx.fillRect(72, 84, 120, 1);
+}
+
 function drawDecorations(ctx: CanvasRenderingContext2D) {
   // 木
-  const trees = [[55, 46], [148, 70], [4, 130], [76, 170], [145, 200], [62, 240]];
+  const trees: [number, number][] = [[110, 55], [280, 80], [8, 140], [155, 145], [280, 240], [140, 340], [10, 360], [270, 370], [95, 460]];
   for (const [tx, ty] of trees) {
-    ctx.fillStyle = '#705030'; ctx.fillRect(tx + 3, ty + 8, 2, 6);
-    ctx.fillStyle = '#508030'; ctx.fillRect(tx, ty, 8, 9);
-    ctx.fillStyle = '#608838'; ctx.fillRect(tx + 1, ty + 1, 6, 7);
+    rect(ctx, tx + 5, ty + 14, 4, 10, '#604828');
+    rect(ctx, tx, ty, 14, 15, '#407028');
+    rect(ctx, tx + 2, ty + 2, 10, 11, '#508830');
+    rect(ctx, tx + 4, ty + 4, 6, 7, '#609838');
   }
 
   // 花
-  const flowers: [number, number, string][] = [[40, 68, '#d87088'], [130, 110, '#e0c050'], [90, 200, '#8080d0'], [28, 180, '#d87088'], [140, 164, '#e0c050']];
+  const flowers: [number, number, string][] = [
+    [85, 120, '#d87088'], [170, 100, '#e8c848'], [120, 260, '#8888d0'],
+    [50, 250, '#d87088'], [265, 310, '#e8c848'], [180, 450, '#d87088'],
+  ];
   for (const [fx, fy, fc] of flowers) {
-    ctx.fillStyle = fc; ctx.fillRect(fx, fy, 3, 3);
-    ctx.fillStyle = '#608838'; ctx.fillRect(fx + 1, fy + 3, 1, 2);
+    rect(ctx, fx, fy, 4, 4, fc);
+    rect(ctx, fx + 1, fy + 4, 2, 3, '#508830');
   }
 
   // 岩
-  ctx.fillStyle = '#989088'; ctx.fillRect(82, 55, 6, 4);
-  ctx.fillStyle = '#908880'; ctx.fillRect(125, 140, 5, 3);
-  ctx.fillStyle = '#888078'; ctx.fillRect(50, 220, 7, 4);
+  rect(ctx, 148, 100, 10, 6, '#989088');
+  rect(ctx, 250, 260, 8, 5, '#908880');
+  rect(ctx, 90, 380, 12, 6, '#888078');
 
   // 井戸
-  ctx.fillStyle = '#888078'; ctx.fillRect(72, 120, 12, 8);
-  ctx.fillStyle = '#687068'; ctx.fillRect(73, 121, 10, 6);
-  ctx.fillStyle = '#3070a0'; ctx.fillRect(75, 123, 6, 3);
-  // 屋根
-  ctx.fillStyle = '#705030'; ctx.fillRect(74, 116, 10, 4);
-  ctx.fillStyle = '#705030'; ctx.fillRect(77, 113, 1, 3);
-  ctx.fillStyle = '#705030'; ctx.fillRect(80, 113, 1, 3);
+  rect(ctx, 142, 230, 20, 14, '#808078');
+  rect(ctx, 144, 232, 16, 10, '#607060');
+  rect(ctx, 146, 234, 12, 6, '#4080a0');
+  rect(ctx, 145, 224, 14, 6, '#705030');
+  rect(ctx, 149, 218, 2, 6, '#705030');
+  rect(ctx, 155, 218, 2, 6, '#705030');
 
-  // NPC 1 (青服)
-  ctx.fillStyle = '#d0b898'; ctx.fillRect(60, 100, 4, 4); // 頭
-  ctx.fillStyle = '#4060a0'; ctx.fillRect(59, 104, 6, 6); // 体
-  ctx.fillStyle = '#705030'; ctx.fillRect(60, 110, 2, 3); ctx.fillRect(63, 110, 2, 3); // 足
-
-  // NPC 2 (茶服)
-  ctx.fillStyle = '#d0b898'; ctx.fillRect(100, 170, 4, 4);
-  ctx.fillStyle = '#906848'; ctx.fillRect(99, 174, 6, 6);
-  ctx.fillStyle = '#504030'; ctx.fillRect(100, 180, 2, 3); ctx.fillRect(103, 180, 2, 3);
-
-  // NPC 3 (緑服)
-  ctx.fillStyle = '#d0b898'; ctx.fillRect(42, 200, 4, 4);
-  ctx.fillStyle = '#508050'; ctx.fillRect(41, 204, 6, 6);
-  ctx.fillStyle = '#305030'; ctx.fillRect(42, 210, 2, 3); ctx.fillRect(45, 210, 2, 3);
+  // NPC
+  const npcs: [number, number, string][] = [[115, 170, '#4060a0'], [180, 300, '#906848'], [70, 340, '#408050']];
+  for (const [nx, ny, nc] of npcs) {
+    rect(ctx, nx, ny, 8, 6, '#d0b898');  // 頭
+    rect(ctx, nx - 1, ny + 6, 10, 10, nc); // 体
+    rect(ctx, nx, ny + 16, 3, 5, '#504030'); // 足
+    rect(ctx, nx + 5, ny + 16, 3, 5, '#504030');
+  }
 
   // 猫
-  ctx.fillStyle = '#d0a040'; ctx.fillRect(90, 130, 5, 3); // 体
-  ctx.fillStyle = '#d0a040'; ctx.fillRect(88, 128, 3, 3); // 頭
-  ctx.fillStyle = '#3a2a1a'; ctx.fillRect(88, 129, 1, 1); // 目
-  ctx.fillStyle = '#d0a040'; ctx.fillRect(95, 131, 3, 1); // 尻尾
+  rect(ctx, 170, 240, 8, 5, '#d0a040');
+  rect(ctx, 166, 238, 6, 5, '#d0a040');
+  rect(ctx, 167, 239, 1, 1, '#302018');
+  rect(ctx, 170, 239, 1, 1, '#302018');
+  rect(ctx, 178, 242, 5, 2, '#d0a040');
 }
 
-// ==============================
-// パス描画
-// ==============================
-function drawPaths(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = PATH_COLOR;
-  // 水平パス
-  ctx.fillRect(38, 46, 62, 4);   // DUNGEON-ARENA間
-  ctx.fillRect(50, 106, 58, 4);  // FORGE-DICE間
-  ctx.fillRect(38, 168, 68, 4);  // SHOP-GACHA間
-  ctx.fillRect(44, 224, 64, 4);  // BOOK-EVENT間
-  // 垂直パス
-  ctx.fillRect(30, 54, 4, 36);   // DUNGEON→FORGE
-  ctx.fillRect(120, 54, 4, 38);  // ARENA→DICE
-  ctx.fillRect(30, 110, 4, 42);  // FORGE→SHOP
-  ctx.fillRect(120, 110, 4, 40); // DICE→GACHA
-  ctx.fillRect(38, 172, 4, 38);  // SHOP→BOOK
-  ctx.fillRect(120, 172, 4, 40); // GACHA→EVENT
-  // 中央接続
-  ctx.fillRect(78, 110, 4, 58);
+function drawGrass(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = GRASS;
+  ctx.fillRect(0, 0, W, H);
+  // テクスチャ
+  for (let i = 0; i < 200; i++) {
+    ctx.fillStyle = i % 3 === 0 ? GRASS2 : GRASS3;
+    const gx = (i * 37 + 13) % W;
+    const gy = (i * 53 + 7) % H;
+    ctx.fillRect(gx, gy, 2, 1);
+  }
 }
 
 // ==============================
@@ -235,114 +274,92 @@ function drawPaths(ctx: CanvasRenderingContext2D) {
 export function TownScreen() {
   const { setScreen, playerMaxHp, gold, gems, currentChapter, save } = useGameStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [pressed, setPressed] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState(false);
 
-  // Canvas描画
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     ctx.imageSmoothingEnabled = false;
 
-    // 背景（草地）
-    ctx.fillStyle = GRASS;
-    ctx.fillRect(0, 0, W, H);
-
-    // 草のテクスチャ（ランダムドット）
-    ctx.fillStyle = '#98b060';
-    for (let i = 0; i < 80; i++) {
-      const gx = (i * 37 + 13) % W;
-      const gy = (i * 53 + 7) % H;
-      ctx.fillRect(gx, gy, 1, 1);
-    }
-    ctx.fillStyle = '#a8c070';
-    for (let i = 0; i < 60; i++) {
-      const gx = (i * 41 + 23) % W;
-      const gy = (i * 47 + 11) % H;
-      ctx.fillRect(gx, gy, 1, 1);
-    }
-
-    // パス
+    drawGrass(ctx);
     drawPaths(ctx);
-
-    // デコレーション
     drawDecorations(ctx);
 
-    // 建物
     for (const b of BUILDINGS) {
-      b.draw(ctx, b.x, b.y);
+      // 暗め表示（disabled）
+      if (b.disabled) ctx.globalAlpha = 0.5;
+      b.draw(ctx, b.x, b.y, b.w, b.h);
+      ctx.globalAlpha = 1;
 
-      // ラベル
-      ctx.fillStyle = LABEL_BG;
-      const labelW = b.name.length * 4 + 4;
-      const lx = b.x + (b.w - labelW) / 2;
-      ctx.fillRect(lx, b.y - 6, labelW, 7);
-      ctx.fillStyle = LABEL_FG;
-      ctx.font = '5px monospace';
-      ctx.fillText(b.name, lx + 2, b.y - 1);
-
-      // バッジ
-      if (b.badge) {
-        ctx.fillStyle = BADGE_COLOR;
-        ctx.beginPath();
-        ctx.arc(b.x + b.w - 1, b.y - 3, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // ラベル背景
+      ctx.fillStyle = '#4a3828e0';
+      const lw = b.label.length * 7 + 8;
+      const lx = b.x + (b.w - lw) / 2;
+      ctx.fillRect(lx, b.y - 14, lw, 13);
+      // ラベルテキスト
+      ctx.fillStyle = '#f0e8d0';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x + b.w / 2, b.y - 4);
+      // サブテキスト
+      ctx.fillStyle = '#d0c8b0';
+      ctx.font = '7px monospace';
+      ctx.fillText(b.sub, b.x + b.w / 2, b.y + b.h + 10);
+      ctx.textAlign = 'start';
     }
 
     // ロゴ
     ctx.fillStyle = '#3a3a1a';
-    ctx.font = 'bold 5px monospace';
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('PIP SOCKET CHRONICLE', W / 2, 10);
+    ctx.fillText('PIP SOCKET CHRONICLE', W / 2, 18);
+    ctx.font = '7px monospace';
+    ctx.fillStyle = '#606050';
+    ctx.fillText(`Chapter ${currentChapter}`, W / 2, 30);
     ctx.textAlign = 'start';
+  }, [currentChapter]);
 
-  }, [pressed]); // pressedが変わったら再描画（クリック演出用）
-
-  // タップ判定
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / (rect.width / W);
-    const y = (e.clientY - rect.top) / (rect.height / H);
+    const r = canvas.getBoundingClientRect();
+    const scaleX = W / r.width;
+    const scaleY = H / r.height;
+    const x = (e.clientX - r.left) * scaleX;
+    const y = (e.clientY - r.top) * scaleY;
 
     for (const b of BUILDINGS) {
-      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
-        setPressed(b.id);
-        setTimeout(() => {
-          setPressed(null);
-          if (b.screen === 'pvp') return; // 準備中
-          setScreen(b.screen);
-        }, 120);
+      // ヒットエリアを少し広げる（ラベル含む）
+      if (x >= b.x - 8 && x <= b.x + b.w + 8 && y >= b.y - 16 && y <= b.y + b.h + 14) {
+        if (b.disabled) return;
+        setScreen(b.screen);
         return;
       }
     }
   }, [setScreen]);
 
-  // セーブ
   const handleSave = useCallback(async () => {
     await save();
-    setPressed('saved');
-    setTimeout(() => setPressed(null), 1200);
+    setSaveMsg(true);
+    setTimeout(() => setSaveMsg(false), 1500);
   }, [save]);
 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100vh',
-      background: GRASS, alignItems: 'center', justifyContent: 'center',
+      background: GRASS, alignItems: 'center',
     }}>
-      {/* Canvas */}
       <canvas
         ref={canvasRef}
         width={W}
         height={H}
         onClick={handleClick}
         style={{
-          width: W * SCALE,
-          height: H * SCALE,
+          width: '100%',
+          maxWidth: 400,
+          flex: 1,
           imageRendering: 'pixelated',
           cursor: 'pointer',
         }}
@@ -350,23 +367,27 @@ export function TownScreen() {
 
       {/* ステータスバー */}
       <div style={{
-        width: W * SCALE,
-        background: 'rgba(200, 190, 160, 0.88)',
-        borderTop: '1px solid #a89870',
-        padding: '4px 10px',
+        width: '100%', maxWidth: 400,
+        background: 'rgba(210, 200, 170, 0.92)',
+        borderTop: '2px solid #a89870',
+        padding: '6px 12px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: 10, color: '#3a3018',
-        fontFamily: 'monospace',
+        fontSize: 11, color: '#3a3018', fontFamily: 'monospace',
       }}>
-        <span>HP {playerMaxHp}/{playerMaxHp}</span>
-        <span style={{ color: '#705828' }}>{gold}G</span>
+        <span>HP {playerMaxHp}</span>
+        <span style={{ color: '#705828', fontWeight: 'bold' }}>{gold}G</span>
         <span style={{ color: '#4070a0' }}>{gems}Gem</span>
         <span>Ch.{currentChapter}</span>
         <span
           onClick={handleSave}
-          style={{ cursor: 'pointer', color: pressed === 'saved' ? '#308050' : '#705828', fontWeight: 'bold' }}
+          style={{
+            cursor: 'pointer', padding: '2px 8px',
+            background: saveMsg ? '#b0c8a0' : '#c8c0a8',
+            border: '1px solid #a09878', borderRadius: 2,
+            color: saveMsg ? '#305028' : '#605838', fontWeight: 'bold',
+          }}
         >
-          {pressed === 'saved' ? 'SAVED!' : 'SAVE'}
+          {saveMsg ? 'OK!' : 'SAVE'}
         </span>
       </div>
     </div>
