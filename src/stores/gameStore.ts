@@ -3,6 +3,7 @@ import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
 import { CHAPTER1_MONSTERS } from '../data/monsters';
 import { SKILL_RUNES } from '../data/skill-runes';
 import { saveGame, loadGame } from './saveSystem';
+import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
 export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture';
 
@@ -123,7 +124,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setBattleState: (state) => set({ battleState: state }),
   currentEnemy: null,
 
-  addDice: (dice) => set((s) => ({ ownedDice: [...s.ownedDice, dice] })),
+  addDice: (dice) => set((s) => ({ ownedDice: [...s.ownedDice, applyDefaultSocketTiers(dice)] })),
   setParty: (party) => set({ party }),
 
   addRune: (rune) => set((s) => ({ ownedRunes: [...s.ownedRunes, rune] })),
@@ -260,9 +261,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initNewGame: () => {
     const starterDice = [
-      { ...CHAPTER1_MONSTERS.find(m => m.id === 'slime')! },
-      { ...CHAPTER1_MONSTERS.find(m => m.id === 'bat')! },
-      { ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander')! },
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'slime')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'bat')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander')! }),
     ];
     const starterRunes = SKILL_RUNES
       .filter(r => r.tier === 'common')

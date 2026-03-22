@@ -23,16 +23,38 @@ export const ELEMENT_CHART: Record<Element, Record<Element, number>> = {
 };
 
 // ==============================
-// ダイス確率テーブル
+// ダイス確率テーブル（低面ほど出やすい）
 // ==============================
 export const DICE_PROBABILITY: Record<number, number> = {
-  1: 0.10,
-  2: 0.12,
-  3: 0.15,
-  4: 0.18,
-  5: 0.22,
-  6: 0.23,
+  1: 0.23,  // 最も出やすい
+  2: 0.20,
+  3: 0.18,
+  4: 0.16,
+  5: 0.13,
+  6: 0.10,  // 最も出にくい（レア）
 };
+
+// ==============================
+// 面番号ごとのデフォルトソケット品質
+// ==============================
+export const FACE_DEFAULT_SOCKET_TIER: Record<number, SocketTier> = {
+  1: 'gold',
+  2: 'gold',
+  3: 'silver',
+  4: 'silver',
+  5: 'bronze',
+  6: 'bronze',
+};
+
+// ソケット品質ごとの威力倍率
+export const SOCKET_TIER_MULTIPLIER: Record<SocketTier, number> = {
+  gold: 1.5,
+  silver: 1.0,
+  bronze: 0.6,
+};
+
+// 同面スキル威力減衰率（1pipあたり10%減衰）
+export const PIP_DECAY_RATE = 0.10;
 
 // ==============================
 // スキル関連

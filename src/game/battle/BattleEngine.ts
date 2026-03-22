@@ -3,7 +3,7 @@ import type {
   SkillAction, TurnResult, Element, DiceFace, FixedFace, CustomFace,
   StatusEffect,
 } from '../../types';
-import { ELEMENT_CHART, isFixedFace } from '../../types';
+import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE } from '../../types';
 import { rollParty, determineFirstAttacker } from '../dice/DiceEngine';
 import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
 import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } from '../synergy/SynergyEngine';
@@ -42,11 +42,18 @@ export function createBattleState(
 }
 
 // ==============================
+// 同面スキル威力減衰を計算
+// ==============================
+function calcDecayMultiplier(totalPipsOnFace: number): number {
+  return Math.max(0.1, 1 - (totalPipsOnFace - 1) * PIP_DECAY_RATE);
+}
+
+// ==============================
 // 面からスキルアクションを生成
 // ==============================
 function getSkillsFromFace(
   face: DiceFace,
-  targetElement: Element | null, // 敵の主属性 (属性相性計算用)
+  targetElement: Element | null,
   targetIsPlayer: boolean
 ): SkillAction[] {
   const actions: SkillAction[] = [];
@@ -54,12 +61,17 @@ function getSkillsFromFace(
 
   if (isFixedFace(face)) {
     const fixed = face as FixedFace;
+    const totalPips = fixed.sockets.length;
+    const decayMult = calcDecayMultiplier(totalPips);
+    // 固有面はgold品質相当
+    const tierMult = SOCKET_TIER_MULTIPLIER['gold'];
+
     for (const socket of fixed.sockets) {
       const skill = FIXED_SKILLS[socket.skillId];
       if (!skill) continue;
       const elementMult = targetElement ? ELEMENT_CHART[socket.element][targetElement] : 1.0;
       const rawDmg = skill.effect.power;
-      const finalDmg = Math.round(rawDmg * elementMult * synergyMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
 
       actions.push({
         skillId: socket.skillId,
@@ -75,13 +87,18 @@ function getSkillsFromFace(
     }
   } else {
     const custom = face as CustomFace;
+    const filledSockets = custom.sockets.filter(s => s.skillRuneId !== null);
+    const totalPips = filledSockets.length;
+    const decayMult = calcDecayMultiplier(totalPips);
+
     for (const socket of custom.sockets) {
       if (!socket.skillRuneId) continue;
       const rune = getSkillRune(socket.skillRuneId);
       if (!rune) continue;
+      const tierMult = SOCKET_TIER_MULTIPLIER[socket.socketTier];
       const elementMult = targetElement ? ELEMENT_CHART[rune.element][targetElement] : 1.0;
       const rawDmg = rune.effect.power;
-      const finalDmg = Math.round(rawDmg * elementMult * synergyMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
 
       actions.push({
         skillId: rune.id,
