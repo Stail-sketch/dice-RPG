@@ -57,6 +57,12 @@ interface GameState {
   setBattleState: (state: BattleState | null) => void;
   currentEnemy: MonsterDice[] | null;
 
+  // マジックダイス
+  ownedMagicDice: string[];
+  equippedMagicDice: string | null;
+  addMagicDice: (id: string) => void;
+  equipMagicDice: (id: string | null) => void;
+
   // ダイス
   addDice: (dice: MonsterDice) => void;
   setParty: (party: [string, string, string]) => void;
@@ -113,6 +119,8 @@ function getSaveableState(s: GameState) {
     gachaPityDice: s.gachaPityDice,
     gachaPityRune: s.gachaPityRune,
     tutorial: s.tutorial,
+    ownedMagicDice: s.ownedMagicDice,
+    equippedMagicDice: s.equippedMagicDice,
   };
 }
 
@@ -181,6 +189,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   gachaPityRune: 0,
   setGachaPityDice: (n) => set({ gachaPityDice: n }),
   setGachaPityRune: (n) => set({ gachaPityRune: n }),
+
+  ownedMagicDice: [],
+  equippedMagicDice: null,
+  addMagicDice: (id) => set((s) => ({
+    ownedMagicDice: s.ownedMagicDice.includes(id) ? s.ownedMagicDice : [...s.ownedMagicDice, id],
+  })),
+  equipMagicDice: (id) => set({ equippedMagicDice: id }),
 
   battleState: null,
   setBattleState: (state) => set({ battleState: state }),
@@ -421,6 +436,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       gachaPityDice: 0,
       gachaPityRune: 0,
       tutorial: { completed: true, currentStep: 0 },
+      ownedMagicDice: [],
+      equippedMagicDice: null,
       currentScreen: 'town',
     });
   },

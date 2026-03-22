@@ -2,7 +2,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { createBattleState, executeTurnFull, rollParty, aiSelectDice } from '../../game/battle/BattleEngine';
 import type { BattleState, TurnResult, MonsterDice, SkillAction, DiceRollResult, TurnSelection, Element } from '../../types';
-import { ELEMENT_NAMES } from '../../types';
+import { ELEMENT_NAMES, ELEMENT_CHART } from '../../types';
+import { getMagicDice, type MagicDiceData } from '../../data/magic-dice';
+import { getAllFaces } from '../../types';
 import { SKILL_RUNES } from '../../data/skill-runes';
 import { HpBar } from '../common/HpBar';
 import { ChargeBar } from '../common/ChargeBar';
@@ -24,7 +26,8 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice } = useGameStore();
+  const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
   const [phase, setPhase] = useState<Phase>('ready');
@@ -46,6 +49,10 @@ export function BattleScreen() {
   const [diceLanded, setDiceLanded] = useState(false);
   const [screenFlash, setScreenFlash] = useState<string | null>(null);
   const [filmBars, setFilmBars] = useState(false);
+
+  // マジックダイス用
+  const [magicUsedThisTurn, setMagicUsedThisTurn] = useState(false);
+  const [magicEffect, setMagicEffect] = useState<string | null>(null);
 
   // 選択フェーズ用
   const [currentRolls, setCurrentRolls] = useState<DiceRollResult[] | null>(null);
@@ -125,38 +132,477 @@ export function BattleScreen() {
     });
   }, []);
 
+  // ===== マジックダイス使用 =====
+  const useMagicDice = useCallback((md: MagicDiceData) => {
+    if (!battle) return;
+    sfx.synergy();
+
+    // Consume charge
+    battle.player.charge.current = Math.max(0, battle.player.charge.current - md.cost);
+    setBattle({ ...battle });
+    setMagicUsedThisTurn(true);
+
+    flash(`${md.name}!`, 1000);
+    addLog(`  MAGIC: ${md.name} (${md.nameEn})`);
+
+    switch (md.id) {
+      case 'reroll': {
+        const newRolls = rollParty(battle.player.dice);
+        setCurrentRolls(newRolls);
+        setSelectedDice(new Set());
+        addLog('  -> dice re-rolled!');
+        break;
+      }
+      case 'echo': {
+        setMagicEffect('echo');
+        addLog('  -> all skills fire twice!');
+        break;
+      }
+      case 'barrier': {
+        setMagicEffect('barrier');
+        addLog('  -> damage taken halved!');
+        break;
+      }
+      case 'haste': {
+        setMagicEffect('haste');
+        addLog('  -> guaranteed first strike!');
+        break;
+      }
+      case 'pierce': {
+        setMagicEffect('pierce');
+        addLog('  -> ignoring enemy defense!');
+        break;
+      }
+      case 'crit-star': {
+        setMagicEffect('crit-star');
+        addLog('  -> all skills crit x2!');
+        break;
+      }
+      case 'restore': {
+        const healAmount = Math.round(battle.player.maxHp * 0.4);
+        battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + healAmount);
+        setBattle({ ...battle });
+        addLog(`  -> HP +${healAmount}!`);
+        sfx.heal();
+        break;
+      }
+      case 'sacrifice': {
+        const hpLoss = Math.round(battle.player.hp * 0.25);
+        battle.player.hp = Math.max(1, battle.player.hp - hpLoss);
+        setBattle({ ...battle });
+        setMagicEffect('sacrifice');
+        addLog(`  -> HP -${hpLoss}! Next turn damage x2!`);
+        break;
+      }
+      case 'unleash': {
+        setMagicEffect('unleash');
+        setSelectedDice(new Set([0, 1, 2]));
+        addLog('  -> all 3 dice activated!');
+        break;
+      }
+      case 'flip': {
+        if (currentRolls) {
+          const flipped = currentRolls.map(r => ({
+            ...r,
+            faceNumber: 7 - r.faceNumber,
+            face: getAllFaces(battle.player.dice[r.diceIndex])[7 - r.faceNumber - 1],
+          }));
+          setCurrentRolls(flipped);
+          setSelectedDice(new Set());
+          addLog(`  -> faces flipped! [${flipped.map(r => r.faceNumber).join(',')}]`);
+        }
+        break;
+      }
+      case 'drain': {
+        setMagicEffect('drain');
+        addLog('  -> 40% lifesteal on damage dealt!');
+        break;
+      }
+      case 'reflect': {
+        setMagicEffect('reflect');
+        addLog('  -> 30% damage reflected!');
+        break;
+      }
+      case 'freeze-time': {
+        setMagicEffect('freeze-time');
+        addLog('  -> enemy actions sealed!');
+        break;
+      }
+      case 'revive': {
+        setMagicEffect('revive');
+        addLog('  -> survive lethal at HP 1!');
+        break;
+      }
+      case 'lock': {
+        // 1個のダイスを現在の面で固定（最大出目のダイスを自動選択）
+        if (currentRolls) {
+          const bestIdx = currentRolls.reduce((best, r, idx) => r.faceNumber > currentRolls[best].faceNumber ? idx : best, 0);
+          setMagicEffect(`lock-${bestIdx}`);
+          addLog(`  -> dice ${bestIdx + 1} locked at face ${currentRolls[bestIdx].faceNumber}!`);
+        }
+        break;
+      }
+      case 'swap': {
+        // ダイス2個の出目を入れ替え（最大と最小を交換）
+        if (currentRolls) {
+          const sorted = [...currentRolls].sort((a, b) => a.faceNumber - b.faceNumber);
+          const minIdx = currentRolls.indexOf(sorted[0]);
+          const maxIdx = currentRolls.indexOf(sorted[2]);
+          const swapped = currentRolls.map((r, i) => {
+            if (i === minIdx) return { ...currentRolls[maxIdx], diceIndex: i };
+            if (i === maxIdx) return { ...currentRolls[minIdx], diceIndex: i };
+            return r;
+          });
+          setCurrentRolls(swapped);
+          setSelectedDice(new Set());
+          addLog(`  -> swapped dice ${minIdx + 1} <-> ${maxIdx + 1}!`);
+        }
+        break;
+      }
+      case 'destiny': {
+        // 全ダイスが1の面確定
+        if (currentRolls) {
+          const destinyRolls = currentRolls.map((r) => ({
+            ...r,
+            faceNumber: 1,
+            face: getAllFaces(battle.player.dice[r.diceIndex])[0],
+          }));
+          setCurrentRolls(destinyRolls);
+          setSelectedDice(new Set());
+          addLog('  -> all dice set to face 1!');
+        }
+        break;
+      }
+      case 'insight': {
+        // 敵の選択が見える（次ターンまで効果持続）
+        setMagicEffect('insight');
+        addLog('  -> enemy selection revealed!');
+        break;
+      }
+      case 'jinx': {
+        // 敵全ダイスが6の面固定（最弱面）
+        setMagicEffect('jinx');
+        addLog('  -> enemy dice cursed to face 6!');
+        break;
+      }
+      case 'seal': {
+        // 敵のシナジー全無効
+        setMagicEffect('seal');
+        addLog('  -> enemy synergies sealed!');
+        break;
+      }
+      case 'shift': {
+        // 全スキルの属性をランダム変更
+        const elements: Element[] = ['blaze', 'frost', 'volt', 'venom', 'alloy', 'mirage'];
+        const chosen = elements[Math.floor(Math.random() * elements.length)];
+        setMagicEffect(`shift-${chosen}`);
+        addLog(`  -> all skills shift to ${ELEMENT_NAMES[chosen]}!`);
+        break;
+      }
+      case 'chaos': {
+        // 全面をランダムスキルに一時置換（出目をランダムに変更）
+        if (currentRolls) {
+          const chaosRolls = currentRolls.map((r) => {
+            const newFace = Math.floor(Math.random() * 6) + 1;
+            return {
+              ...r,
+              faceNumber: newFace,
+              face: getAllFaces(battle.player.dice[r.diceIndex])[newFace - 1],
+            };
+          });
+          setCurrentRolls(chaosRolls);
+          setSelectedDice(new Set());
+          addLog(`  -> chaos! faces: [${chaosRolls.map(r => r.faceNumber).join(',')}]`);
+        }
+        break;
+      }
+      case 'all-or-nothing': {
+        setMagicEffect('all-or-nothing');
+        addLog('  -> all or nothing! Win=x3, Lose=0!');
+        break;
+      }
+      case 'mirror': {
+        // 敵の出目を自分にコピー
+        if (enemyRolls && currentRolls) {
+          const mirrored = currentRolls.map((r, i) => ({
+            ...r,
+            faceNumber: enemyRolls[i]?.faceNumber ?? r.faceNumber,
+            face: enemyRolls[i]
+              ? getAllFaces(battle.player.dice[r.diceIndex])[(enemyRolls[i].faceNumber - 1)] ?? r.face
+              : r.face,
+          }));
+          setCurrentRolls(mirrored);
+          setSelectedDice(new Set());
+          addLog(`  -> mirrored enemy rolls! [${mirrored.map(r => r.faceNumber).join(',')}]`);
+        }
+        break;
+      }
+      case 'jackpot': {
+        // 7番目ダイスを振る: 1-3空振り, 4-5 HP全回復, 6 敵即死
+        const roll = Math.floor(Math.random() * 6) + 1;
+        if (roll >= 4 && roll <= 5) {
+          battle.player.hp = battle.player.maxHp;
+          setBattle({ ...battle });
+          sfx.heal();
+          addLog(`  -> JACKPOT roll: ${roll}! HP fully restored!`);
+        } else if (roll === 6) {
+          battle.enemy.hp = 0;
+          battle.status = 'player-win';
+          setBattle({ ...battle });
+          sfx.bigHit();
+          addLog(`  -> JACKPOT roll: 6! INSTANT KILL!`);
+        } else {
+          addLog(`  -> JACKPOT roll: ${roll}... miss!`);
+        }
+        break;
+      }
+      default: {
+        addLog(`  ${md.effect}`);
+        break;
+      }
+    }
+  }, [battle, currentRolls, enemyRolls, flash, addLog]);
+
   // ===== GO: 選択確定 → ターン実行 =====
   const confirmSelection = useCallback(() => {
-    if (!battle || !currentRolls || !enemyRolls || selectedDice.size !== 2) return;
+    const isUnleash = magicEffect === 'unleash';
+    const requiredCount = isUnleash ? 3 : 2;
+    if (!battle || !currentRolls || !enemyRolls || selectedDice.size !== requiredCount) return;
     sfx.click();
 
-    const activeArr = Array.from(selectedDice) as [number, number];
-    const chargeIdx = [0, 1, 2].find(i => !selectedDice.has(i))!;
+    const activeArr = isUnleash
+      ? Array.from(selectedDice).slice(0, 2) as [number, number]
+      : Array.from(selectedDice) as [number, number];
+    const chargeIdx = isUnleash ? 0 : [0, 1, 2].find(i => !selectedDice.has(i))!;
     const playerSel: TurnSelection = { activateIndices: activeArr, chargeIndex: chargeIdx };
 
-    // 敵AI選択
-    const enemySel = aiSelectDice(battle.enemy.dice, enemyRolls, battle.enemy.charge, battle.enemy.hp);
+    // jinx: 敵全ダイスを6の面に固定
+    let actualEnemyRolls = enemyRolls;
+    if (magicEffect === 'jinx') {
+      actualEnemyRolls = enemyRolls.map((r) => ({
+        ...r,
+        faceNumber: 6,
+        face: getAllFaces(battle.enemy.dice[r.diceIndex])[5],
+      }));
+      addLog('  JINX: enemy dice forced to face 6!');
+    }
 
-    addLog(`発動: ダイス${activeArr.map(i => i + 1).join(',')} / 充填: ダイス${chargeIdx + 1}(+${currentRolls[chargeIdx].faceNumber})`);
+    // 敵AI選択
+    const enemySel = aiSelectDice(battle.enemy.dice, actualEnemyRolls, battle.enemy.charge, battle.enemy.hp);
+
+    if (isUnleash) {
+      addLog(`発動: ダイス1,2,3 (全面発動)`);
+    } else {
+      addLog(`発動: ダイス${activeArr.map(i => i + 1).join(',')} / 充填: ダイス${chargeIdx + 1}(+${currentRolls[chargeIdx].faceNumber})`);
+    }
 
     const prevPlayerCharge = battle.player.charge.current;
-    const prevPlayerChargeMax = battle.player.charge.bonusActive;
+
+    // Apply haste effect: force player first
+    if (magicEffect === 'haste') {
+      // We'll override playerFirst after result
+    }
 
     // ターン実行
-    const result = executeTurnFull(battle, currentRolls, enemyRolls, playerSel, enemySel);
+    const result = executeTurnFull(battle, currentRolls, actualEnemyRolls, playerSel, enemySel);
+
+    // Apply magic effects to result
+    if (magicEffect === 'haste') {
+      // Force player first - swap actions if needed
+      if (!result.playerFirst) {
+        const temp = result.firstActions;
+        result.firstActions = result.secondActions;
+        result.secondActions = temp;
+        result.playerFirst = true;
+      }
+    }
+
+    if (magicEffect === 'echo') {
+      // Double all player actions
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      const doubled = [...playerActions, ...playerActions.map(a => ({ ...a }))];
+      if (result.playerFirst) result.firstActions = doubled;
+      else result.secondActions = doubled;
+    }
+
+    if (magicEffect === 'crit-star') {
+      // Double all player action damage
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      for (const a of playerActions) {
+        if (a.effectType === 'damage') a.finalDamage = a.finalDamage * 2;
+      }
+    }
+
+    if (magicEffect === 'pierce') {
+      // Player actions ignore defense (already calculated, so boost damage)
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      for (const a of playerActions) {
+        if (a.effectType === 'damage') {
+          a.finalDamage = Math.round(a.finalDamage * battle.enemy.defenseMultiplier);
+        }
+      }
+    }
+
+    if (magicEffect === 'barrier') {
+      // Halve all enemy action damage
+      const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
+      for (const a of enemyActions) {
+        if (a.effectType === 'damage') a.finalDamage = Math.round(a.finalDamage * 0.5);
+      }
+    }
+
+    if (magicEffect === 'freeze-time') {
+      // Clear all enemy actions
+      if (result.playerFirst) result.secondActions = [];
+      else result.firstActions = [];
+    }
+
+    if (magicEffect === 'seal') {
+      // Remove synergy multipliers from enemy actions
+      const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
+      for (const a of enemyActions) {
+        if (a.synergyMultiplier > 1) {
+          a.finalDamage = Math.round(a.finalDamage / a.synergyMultiplier);
+          a.synergyMultiplier = 1;
+        }
+      }
+    }
+
+    if (magicEffect?.startsWith('shift-')) {
+      // Change all player action elements to chosen element
+      const shiftElement = magicEffect.replace('shift-', '') as Element;
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      const enemyMainElement = battle.enemy.dice[0]?.element || null;
+      for (const a of playerActions) {
+        a.element = shiftElement;
+        if (enemyMainElement && a.effectType === 'damage') {
+          const newMult = ELEMENT_CHART[shiftElement]?.[enemyMainElement] ?? 1;
+          const oldMult = a.elementMultiplier || 1;
+          a.finalDamage = Math.round(a.finalDamage * (newMult / oldMult));
+          a.elementMultiplier = newMult;
+        }
+      }
+    }
+
+    if (magicEffect === 'all-or-nothing') {
+      // Compare total damage: player > enemy = x3, else = 0
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
+      const pDmg = playerActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+      const eDmg = enemyActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+      if (pDmg > eDmg) {
+        for (const a of playerActions) { if (a.effectType === 'damage') a.finalDamage *= 3; }
+        addLog('  ALL-OR-NOTHING: WIN! x3 damage!');
+      } else {
+        for (const a of playerActions) { if (a.effectType === 'damage') a.finalDamage = 0; }
+        addLog('  ALL-OR-NOTHING: LOSE... 0 damage');
+      }
+    }
+
+    if (isUnleash) {
+      // Add 3rd dice actions to player's action list
+      const thirdIdx = [0, 1, 2].find(i => !activeArr.includes(i));
+      if (thirdIdx !== undefined) {
+        const thirdRoll = currentRolls[thirdIdx];
+        // Generate skills for 3rd dice
+        // We'll add a bonus hit for simplification
+        const extraActions: SkillAction[] = [{
+          skillId: 'unleash-extra', skillName: '解放撃',
+          element: (thirdRoll.face as any).element ?? 'alloy',
+          effectType: 'damage', rawDamage: thirdRoll.faceNumber * 3,
+          elementMultiplier: 1, synergyMultiplier: 1,
+          finalDamage: thirdRoll.faceNumber * 3, targetIsPlayer: false,
+        }];
+        if (result.playerFirst) result.firstActions.push(...extraActions);
+        else result.secondActions.push(...extraActions);
+      }
+    }
+
+    // Re-apply damage based on modified actions
+    // Reset HP to pre-turn values and re-apply
+    battle.player.hp = result.prePlayerHp;
+    battle.enemy.hp = result.preEnemyHp;
+
+    // Apply first actions
+    for (const a of result.firstActions) {
+      if (a.effectType === 'damage' && a.finalDamage > 0) {
+        if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
+        else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
+      } else if (a.effectType === 'heal') {
+        if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
+        else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+      }
+    }
+    result.midPlayerHp = battle.player.hp;
+    result.midEnemyHp = battle.enemy.hp;
+
+    // Apply second actions
+    for (const a of result.secondActions) {
+      if (a.effectType === 'damage' && a.finalDamage > 0) {
+        if (a.targetIsPlayer) battle.player.hp = Math.max(0, battle.player.hp - a.finalDamage);
+        else battle.enemy.hp = Math.max(0, battle.enemy.hp - a.finalDamage);
+      } else if (a.effectType === 'heal') {
+        if (!a.targetIsPlayer) battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + a.rawDamage);
+        else battle.enemy.hp = Math.min(battle.enemy.maxHp, battle.enemy.hp + a.rawDamage);
+      }
+    }
+
+    // Drain effect: heal 40% of damage dealt
+    if (magicEffect === 'drain') {
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      const totalDmg = playerActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+      const healAmt = Math.round(totalDmg * 0.4);
+      if (healAmt > 0) {
+        battle.player.hp = Math.min(battle.player.maxHp, battle.player.hp + healAmt);
+        addLog(`  DRAIN: +${healAmt}HP`);
+      }
+    }
+
+    // Reflect effect: 30% of damage taken reflected to enemy
+    if (magicEffect === 'reflect') {
+      const enemyActions = result.playerFirst ? result.secondActions : result.firstActions;
+      const totalDmg = enemyActions.filter(a => a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+      const reflectAmt = Math.round(totalDmg * 0.3);
+      if (reflectAmt > 0) {
+        battle.enemy.hp = Math.max(0, battle.enemy.hp - reflectAmt);
+        addLog(`  REFLECT: ${reflectAmt}dmg`);
+      }
+    }
+
+    // Revive effect: survive lethal at HP 1
+    if (magicEffect === 'revive' && battle.player.hp <= 0) {
+      battle.player.hp = 1;
+      addLog('  REVIVE: HP1 survived!');
+    }
+
+    // Sacrifice buff: double all damage next turn was set in useMagicDice
+    if (magicEffect === 'sacrifice') {
+      const playerActions = result.playerFirst ? result.firstActions : result.secondActions;
+      for (const a of playerActions) {
+        if (a.effectType === 'damage') a.finalDamage = a.finalDamage * 2;
+      }
+    }
+
+    // Update final HP
+    result.playerHp = battle.player.hp;
+    result.enemyHp = battle.enemy.hp;
+
+    // Re-check win condition
+    if (battle.enemy.hp <= 0) battle.status = 'player-win';
+    else if (battle.player.hp <= 0) battle.status = 'enemy-win';
+
     setBattle({ ...battle });
     setLastTurn(result);
     setTurnCount(result.turn);
 
     addLog(`出目 [${result.playerRolls.map(r => r.faceNumber).join(',')}] vs [${result.enemyRolls.map(r => r.faceNumber).join(',')}]`);
     addLog(result.playerFirst ? '→ プレイヤー先攻' : '→ エネミー先攻');
-    if (result.chargedUsedPlayer) addLog('  ★ CHARGED! 威力1.5倍');
 
     // Charge SFX
     if (result.playerCharge.current > prevPlayerCharge) {
       sfx.chargeUp();
     }
-    if (result.playerCharge.bonusActive && !prevPlayerChargeMax) {
+    if (magicData && result.playerCharge.current >= magicData.cost && prevPlayerCharge < magicData.cost) {
       setTimeout(() => sfx.chargeMax(), 200);
     }
 
@@ -176,7 +622,7 @@ export function BattleScreen() {
         const hitEnemy = !a.targetIsPlayer;
         if (a.effectType === 'damage' && a.finalDamage > 0) {
           dmg += a.finalDamage;
-          const isBig = result.chargedUsedPlayer && firstIsPlayer;
+          const isBig = a.finalDamage >= 20;
           if (isBig) { sfx.bigHit(); } else { sfx.hit(a.element); }
           addPopup(`-${a.finalDamage}`, ELEMENT_COLORS[a.element], hitEnemy ? 'enemy' : 'player', Math.floor(Math.random() * 3), isBig);
         } else if (a.effectType === 'heal') {
@@ -211,9 +657,9 @@ export function BattleScreen() {
             const hitEnemy = !a.targetIsPlayer;
             if (a.effectType === 'damage' && a.finalDamage > 0) {
               dmg2 += a.finalDamage;
-              const isBig = result.chargedUsedPlayer && !firstIsPlayer;
-              if (isBig) { sfx.bigHit(); } else { sfx.hit(a.element); }
-              addPopup(`-${a.finalDamage}`, ELEMENT_COLORS[a.element], hitEnemy ? 'enemy' : 'player', Math.floor(Math.random() * 3), isBig);
+              const isBig2 = a.finalDamage >= 20;
+              if (isBig2) { sfx.bigHit(); } else { sfx.hit(a.element); }
+              addPopup(`-${a.finalDamage}`, ELEMENT_COLORS[a.element], hitEnemy ? 'enemy' : 'player', Math.floor(Math.random() * 3), isBig2);
             } else if (a.effectType === 'heal') {
               sfx.heal();
               addPopup(`+${a.rawDamage}`, '#308050', hitEnemy ? 'player' : 'enemy', 1);
@@ -239,7 +685,7 @@ export function BattleScreen() {
 
           setTimeout(() => {
             setCurrentActions([]); setAttackLabel('');
-            addLog(`  HP ${result.playerHp} vs ${result.enemyHp} | CG ${result.playerCharge.current}/${result.playerCharge.max}`);
+            addLog(`  HP ${result.playerHp} vs ${result.enemyHp} | CG ${result.playerCharge.current}${magicData ? '/' + magicData.cost : ''}`);
 
             if (battle.status !== 'ongoing') {
               setPhase('result');
@@ -384,6 +830,7 @@ export function BattleScreen() {
           <div style={{ flex: 1 }}>
             {battle ? <HpBar current={displayEnemyHp} max={battle.enemy.maxHp} color="enemy" /> : <div style={{ height: 16 }} />}
             {battle && <ChargeBar gauge={battle.enemy.charge} />}
+
           </div>
           {battle && <span style={{ fontSize: 9, color: '#6a5a4a', minWidth: 50, textAlign: 'right' }}>T{turnCount}/{battle.maxTurns}</span>}
         </div>
@@ -487,7 +934,7 @@ export function BattleScreen() {
           <span style={{ fontSize: 10, color: '#4070a0', minWidth: 42 }}>PLAYER</span>
           <div style={{ flex: 1 }}>
             {battle ? <HpBar current={displayPlayerHp} max={battle.player.maxHp} /> : <div style={{ height: 16 }} />}
-            {battle && <ChargeBar gauge={battle.player.charge} />}
+            {battle && <ChargeBar gauge={battle.player.charge} magicCost={magicData?.cost} magicName={magicData?.name} />}
           </div>
         </div>
       </div>
@@ -498,11 +945,27 @@ export function BattleScreen() {
           <button className="rpg-btn rpg-btn-primary" onClick={startBattle} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>BATTLE START</button>
         )}
         {phase === 'selecting' && (
-          <button className="rpg-btn rpg-btn-primary" onClick={confirmSelection}
-            style={{ fontSize: 15, padding: '12px 20px', margin: 0, opacity: selectedDice.size === 2 ? 1 : 0.4 }}
-            disabled={selectedDice.size !== 2}>
-            GO
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="rpg-btn rpg-btn-primary" onClick={confirmSelection}
+              style={{ flex: 2, fontSize: 15, padding: '10px 8px', margin: 0, opacity: (magicEffect === 'unleash' ? selectedDice.size === 3 : selectedDice.size === 2) ? 1 : 0.4 }}
+              disabled={magicEffect === 'unleash' ? selectedDice.size !== 3 : selectedDice.size !== 2}>
+              GO
+            </button>
+            {equippedMagicDice && battle && !magicUsedThisTurn && (() => {
+              const md = getMagicDice(equippedMagicDice);
+              if (!md) return null;
+              const canUse = battle.player.charge.current >= md.cost;
+              return (
+                <button className="rpg-btn" onClick={() => useMagicDice(md)}
+                  style={{ flex: 1, margin: 0, padding: '10px 8px', opacity: canUse ? 1 : 0.4,
+                    borderColor: canUse ? '#b09050' : '#c0b8a8',
+                    color: canUse ? '#705828' : '#998a78', fontSize: 11 }}
+                  disabled={!canUse}>
+                  {canUse ? md.name : `${md.name} (${md.cost})`}
+                </button>
+              );
+            })()}
+          </div>
         )}
         {phase === 'turn-end' && (
           <button className="rpg-btn rpg-btn-primary" onClick={doNextTurn} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>ROLL DICE</button>

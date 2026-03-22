@@ -3,10 +3,10 @@ import { useGameStore } from '../../stores/gameStore';
 import { SHOP_ITEMS } from '../../data/shop';
 import { ElementBadge } from '../common/ElementBadge';
 
-type Filter = 'all' | 'rune' | 'material';
+type Filter = 'all' | 'rune' | 'material' | 'magic-dice';
 
 export function ShopScreen() {
-  const { setScreen, gold, gems, materials, addGold, addGems, addRune, addMaterial } = useGameStore();
+  const { setScreen, gold, gems, materials, addGold, addGems, addRune, addMaterial, addMagicDice, ownedMagicDice } = useGameStore();
   const [filter, setFilter] = useState<Filter>('all');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -29,6 +29,12 @@ export function ShopScreen() {
     } else if (item.type === 'material' && item.materialId) {
       addMaterial(item.materialId as 'forge-stone' | 'rare-ore', 1);
       setMessage(`${item.name}を購入！`);
+    } else if (item.type === 'magic-dice' && item.magicDiceId) {
+      if (ownedMagicDice.includes(item.magicDiceId)) {
+        setMessage('すでに所持している！'); setTimeout(() => setMessage(null), 1200); return;
+      }
+      addMagicDice(item.magicDiceId);
+      setMessage(`${item.name}を入手！`);
     }
     setTimeout(() => setMessage(null), 1200);
   };
@@ -58,7 +64,7 @@ export function ShopScreen() {
 
       {/* フィルタ */}
       <div style={{ display: 'flex', gap: 4, padding: '4px 8px' }}>
-        {([['all', '全て'], ['rune', 'ルーン'], ['material', '素材']] as const).map(([key, label]) => (
+        {([['all', '全て'], ['rune', 'ルーン'], ['material', '素材'], ['magic-dice', '魔法ダイス']] as const).map(([key, label]) => (
           <button key={key}
             style={{
               fontSize: 10, padding: '3px 8px', cursor: 'pointer',
@@ -94,12 +100,16 @@ export function ShopScreen() {
                   {item.description}
                 </div>
               </div>
-              <button className="rpg-btn"
-                style={{ width: 'auto', padding: '4px 10px', margin: 0, fontSize: 11 }}
-                onClick={() => buy(item)}
-              >
-                {item.price}{item.currency === 'gold' ? 'G' : 'Gem'}
-              </button>
+              {item.type === 'magic-dice' && item.magicDiceId && ownedMagicDice.includes(item.magicDiceId) ? (
+                <span style={{ fontSize: 10, color: '#308050', padding: '4px 10px' }}>所持</span>
+              ) : (
+                <button className="rpg-btn"
+                  style={{ width: 'auto', padding: '4px 10px', margin: 0, fontSize: 11 }}
+                  onClick={() => buy(item)}
+                >
+                  {item.price}{item.currency === 'gold' ? 'G' : 'Gem'}
+                </button>
+              )}
             </div>
           </div>
         ))}

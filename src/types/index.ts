@@ -157,12 +157,8 @@ export interface StatusEffect {
 
 export interface ChargeGauge {
   current: number;
-  max: number;
-  bonusActive: boolean;
+  // no more max/bonusActive - magic dice cost determines when you can use
 }
-
-export const CHARGE_MAX = 10;
-export const CHARGE_BONUS_MULTIPLIER = 1.5;
 
 export interface TurnSelection {
   activateIndices: [number, number];
@@ -202,9 +198,8 @@ export interface TurnResult {
   enemyHp: number;
   playerCharge: ChargeGauge;
   enemyCharge: ChargeGauge;
-  chargedUsedPlayer: boolean;
-  chargedUsedEnemy: boolean;
   synergies: SynergyActivation[];
+  magicUsed?: string; // magic dice ID used this turn, if any
 }
 
 export interface SkillAction {

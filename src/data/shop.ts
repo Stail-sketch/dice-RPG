@@ -1,15 +1,17 @@
 import { SKILL_RUNES } from './skill-runes';
+import { ALL_MAGIC_DICE } from './magic-dice';
 import type { SkillRune } from '../types';
 
 export interface ShopItem {
   id: string;
   name: string;
   description: string;
-  type: 'rune' | 'material' | 'consumable';
+  type: 'rune' | 'material' | 'consumable' | 'magic-dice';
   price: number;
   currency: 'gold' | 'gems';
   rune?: SkillRune;
   materialId?: string;
+  magicDiceId?: string;
 }
 
 // ショップラインナップ
@@ -53,4 +55,19 @@ export const SHOP_ITEMS: ShopItem[] = [
     currency: 'gems',
     materialId: 'rare-ore',
   },
+  // マジックダイス（shopで買えるもの）
+  ...ALL_MAGIC_DICE
+    .filter(m => m.obtain.startsWith('shop-'))
+    .map(m => {
+      const goldPrice = parseInt(m.obtain.replace('shop-', ''), 10);
+      return {
+        id: `shop-magic-${m.id}`,
+        name: `魔法ダイス: ${m.name}`,
+        description: `[CG${m.cost}] ${m.effect}`,
+        type: 'magic-dice' as const,
+        price: goldPrice,
+        currency: 'gold' as const,
+        magicDiceId: m.id,
+      };
+    }),
 ];

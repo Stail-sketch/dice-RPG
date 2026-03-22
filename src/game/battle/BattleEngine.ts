@@ -3,7 +3,7 @@ import type {
   SkillAction, TurnResult, Element, DiceFace, FixedFace, CustomFace,
   StatusEffect, TurnSelection, ChargeGauge,
 } from '../../types';
-import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE, CHARGE_MAX, CHARGE_BONUS_MULTIPLIER } from '../../types';
+import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE } from '../../types';
 import { rollParty } from '../dice/DiceEngine';
 import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
 import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } from '../synergy/SynergyEngine';
@@ -12,7 +12,7 @@ import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } fro
 // バトル初期化
 // ==============================
 function newChargeGauge(): ChargeGauge {
-  return { current: 0, max: CHARGE_MAX, bonusActive: false };
+  return { current: 0 };
 }
 
 export function createBattleState(
@@ -50,7 +50,6 @@ function getSkillsFromFace(
   face: DiceFace,
   targetElement: Element | null,
   targetIsPlayer: boolean,
-  chargeBonusMult: number, // 1.0 or CHARGE_BONUS_MULTIPLIER
 ): SkillAction[] {
   const actions: SkillAction[] = [];
   const { multiplier: synergyMult } = calcSameFaceSynergyMultiplier(face);
@@ -66,7 +65,7 @@ function getSkillsFromFace(
       if (!skill) continue;
       const elementMult = targetElement ? ELEMENT_CHART[socket.element][targetElement] : 1.0;
       const rawDmg = skill.effect.power;
-      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult * chargeBonusMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
 
       actions.push({
         skillId: socket.skillId, skillName: skill.name, element: socket.element,
@@ -90,7 +89,7 @@ function getSkillsFromFace(
       const tierMult = SOCKET_TIER_MULTIPLIER[socket.socketTier];
       const elementMult = targetElement ? ELEMENT_CHART[rune.element][targetElement] : 1.0;
       const rawDmg = rune.effect.power;
-      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult * chargeBonusMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
 
       actions.push({
         skillId: rune.id, skillName: rune.name, element: rune.element,
@@ -102,12 +101,11 @@ function getSkillsFromFace(
 
     // 空ソケットのみの面でも「素振り」で最低ダメージ
     if (!hasAnySkill) {
-      const baseDmg = Math.max(1, Math.round(2 * chargeBonusMult));
       actions.push({
         skillId: 'basic-hit', skillName: '素振り', element: 'alloy' as Element,
         effectType: 'damage', rawDamage: 2,
         elementMultiplier: 1.0, synergyMultiplier: 1.0,
-        finalDamage: baseDmg, targetIsPlayer,
+        finalDamage: 2, targetIsPlayer,
       });
     }
   }
@@ -177,18 +175,15 @@ function getCrossDiceMultiplier(
 }
 
 // ==============================
-// 充填処理
+// 充填処理 (just accumulates, no cap)
 // ==============================
-function processCharge(gauge: ChargeGauge, chargedFacePips: number): ChargeGauge {
-  const newCurrent = Math.min(gauge.current + chargedFacePips, CHARGE_MAX);
-  return { current: newCurrent, max: CHARGE_MAX, bonusActive: newCurrent >= CHARGE_MAX };
+function processCharge(gauge: ChargeGauge, pips: number): ChargeGauge {
+  return { current: gauge.current + pips };
 }
 
-function consumeCharge(gauge: ChargeGauge): { mult: number; used: boolean; after: ChargeGauge } {
-  if (gauge.bonusActive) {
-    return { mult: CHARGE_BONUS_MULTIPLIER, used: true, after: { current: 0, max: CHARGE_MAX, bonusActive: false } };
-  }
-  return { mult: 1.0, used: false, after: gauge };
+// Consume charge cost for magic dice
+export function consumeChargeCost(gauge: ChargeGauge, cost: number): ChargeGauge {
+  return { current: Math.max(0, gauge.current - cost) };
 }
 
 // ==============================
@@ -197,7 +192,7 @@ function consumeCharge(gauge: ChargeGauge): { mult: number; used: boolean; after
 export function aiSelectDice(
   _dice: MonsterDice[],
   rolls: DiceRollResult[],
-  gauge: ChargeGauge,
+  _gauge: ChargeGauge,
   enemyHp: number,
 ): TurnSelection {
   const combos: [number, number, number][] = [[0, 1, 2], [0, 2, 1], [1, 2, 0]];
@@ -211,8 +206,7 @@ export function aiSelectDice(
     score += rolls[b].faceNumber * 2;
     // 充填価値
     const chargeVal = rolls[c].faceNumber;
-    const gaugeFill = gauge.current + chargeVal;
-    if (gaugeFill >= CHARGE_MAX) score += 8;
+    score += chargeVal * 0.5;
     // 瀕死なら火力優先
     if (enemyHp < 15) score -= chargeVal * 0.5;
 
@@ -250,12 +244,6 @@ export function executeTurnFull(
   const prePlayerHp = state.player.hp;
   const preEnemyHp = state.enemy.hp;
 
-  // 充填ボーナス判定（ターン開始時にMAXなら使う）
-  const pCharge = consumeCharge(state.player.charge);
-  const eCharge = consumeCharge(state.enemy.charge);
-  state.player.charge = pCharge.after;
-  state.enemy.charge = eCharge.after;
-
   // 先攻判定（発動2個の出目合計）
   const playerFirst = determineFirst(playerRolls, playerSelection, enemyRolls, enemySelection);
 
@@ -266,14 +254,14 @@ export function executeTurnFull(
   const enemyMainElement = state.enemy.dice[0]?.element || null;
   const playerMainElement = state.player.dice[0]?.element || null;
 
-  // スキルアクション生成（発動2個のみ）
+  // スキルアクション生成（発動2個のみ、チャージボーナスなし）
   const playerActions: SkillAction[] = [];
   for (const roll of playerActiveRolls) {
-    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false, pCharge.mult));
+    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false));
   }
   const enemyActions: SkillAction[] = [];
   for (const roll of enemyActiveRolls) {
-    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true, eCharge.mult));
+    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true));
   }
 
   // クロスダイスシナジー（属性一致は3個全部で判定）
@@ -307,28 +295,6 @@ export function executeTurnFull(
   state.player.charge = processCharge(state.player.charge, playerChargedPips);
   state.enemy.charge = processCharge(state.enemy.charge, enemyChargedPips);
 
-  // チャージ追加ダメージ: 現在のチャージ値の半分を相手にダメージ
-  const playerChargeDmg = Math.floor(state.player.charge.current / 2);
-  const enemyChargeDmg = Math.floor(state.enemy.charge.current / 2);
-  if (playerChargeDmg > 0) {
-    state.enemy.hp = Math.max(0, state.enemy.hp - playerChargeDmg);
-    playerActions.push({
-      skillId: 'charge-pulse', skillName: 'チャージ波', element: 'alloy' as Element,
-      effectType: 'damage', rawDamage: playerChargeDmg,
-      elementMultiplier: 1, synergyMultiplier: 1,
-      finalDamage: playerChargeDmg, targetIsPlayer: false,
-    });
-  }
-  if (enemyChargeDmg > 0) {
-    state.player.hp = Math.max(0, state.player.hp - enemyChargeDmg);
-    enemyActions.push({
-      skillId: 'charge-pulse', skillName: 'チャージ波', element: 'alloy' as Element,
-      effectType: 'damage', rawDamage: enemyChargeDmg,
-      elementMultiplier: 1, synergyMultiplier: 1,
-      finalDamage: enemyChargeDmg, targetIsPlayer: true,
-    });
-  }
-
   // ステータス効果
   processStatusEffects(state.player);
   processStatusEffects(state.enemy);
@@ -351,8 +317,6 @@ export function executeTurnFull(
     playerHp: state.player.hp, enemyHp: state.enemy.hp,
     playerCharge: { ...state.player.charge },
     enemyCharge: { ...state.enemy.charge },
-    chargedUsedPlayer: pCharge.used,
-    chargedUsedEnemy: eCharge.used,
     synergies: allSynergies,
   };
 

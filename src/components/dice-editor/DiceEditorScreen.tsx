@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { getAllFaces, isFixedFace, ELEMENT_NAMES, type FixedFace, type CustomFace, type Element, type SocketTier, type SkillTier } from '../../types';
 import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
+import { getMagicDice, type MagicCategory } from '../../data/magic-dice';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 import { DiceFaceView } from '../common/DiceFaceView';
 import { calcSameFaceSynergyMultiplier } from '../../game/synergy/SynergyEngine';
@@ -19,8 +20,16 @@ const TIER_COLORS: Record<SocketTier, string> = {
   gold: '#705828',
 };
 
+const CATEGORY_NAMES: Record<MagicCategory, string> = {
+  dice_control: '制御',
+  attack: '攻撃',
+  defense: '防御',
+  sabotage: '妨害',
+  gamble: '賭け',
+};
+
 export function DiceEditorScreen() {
-  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice } = useGameStore();
+  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [selectedSocket, setSelectedSocket] = useState<number | null>(null);
@@ -372,6 +381,76 @@ export function DiceEditorScreen() {
           </div>
         </div>
       )}
+
+      {/* マジックダイス装備 */}
+      <div className="rpg-panel" style={{ padding: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span className="rpg-panel-title" style={{ margin: 0, fontSize: 12 }}>
+            魔法ダイス装備
+          </span>
+          {equippedMagicDice && (() => {
+            const md = getMagicDice(equippedMagicDice);
+            return md ? (
+              <span style={{ fontSize: 9, color: '#705828' }}>
+                装備中: {md.name} [CG{md.cost}]
+              </span>
+            ) : null;
+          })()}
+        </div>
+
+        {ownedMagicDice.length === 0 ? (
+          <div style={{ color: '#998a78', fontSize: 11, padding: 8, textAlign: 'center' }}>
+            魔法ダイスを所持していません（ショップで購入できます）
+          </div>
+        ) : (
+          <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+            {/* 外すボタン */}
+            {equippedMagicDice && (
+              <div
+                style={{
+                  display: 'flex', gap: 6, alignItems: 'center',
+                  padding: '5px 6px', background: '#f0e8dc',
+                  border: '1px solid #c0b8a8', borderRadius: 4, marginBottom: 3,
+                  cursor: 'pointer',
+                }}
+                onClick={() => equipMagicDice(null)}
+              >
+                <span style={{ fontSize: 10, color: '#998a78' }}>— 外す —</span>
+              </div>
+            )}
+            {ownedMagicDice.map(id => {
+              const md = getMagicDice(id);
+              if (!md) return null;
+              const isEquipped = equippedMagicDice === id;
+              return (
+                <div
+                  key={id}
+                  style={{
+                    display: 'flex', gap: 6, alignItems: 'center',
+                    padding: '5px 6px',
+                    background: isEquipped ? '#e8e0d0' : '#e0d8cc',
+                    border: isEquipped ? '2px solid #705828' : '1px solid transparent',
+                    borderRadius: 4, marginBottom: 3,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => equipMagicDice(isEquipped ? null : id)}
+                >
+                  <span style={{
+                    fontSize: 9, color: '#8a7050', fontWeight: 'bold', minWidth: 28,
+                  }}>
+                    [{CATEGORY_NAMES[md.category]}]
+                  </span>
+                  <span style={{ fontSize: 11, color: '#3a2a1a' }}>{md.name}</span>
+                  <span style={{ fontSize: 9, color: '#705828', marginLeft: 2 }}>CG{md.cost}</span>
+                  <span style={{ fontSize: 9, color: '#998a78', marginLeft: 'auto', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {md.effect}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div style={{ padding: '4px 0' }}>
         <button className="rpg-btn" onClick={() => setScreen('town')}>

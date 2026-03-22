@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChargeGauge } from '../../types';
 
-export function ChargeBar({ gauge }: { gauge: ChargeGauge }) {
-  const pct = Math.min(100, (gauge.current / gauge.max) * 100);
+interface ChargeBarProps {
+  gauge: ChargeGauge;
+  magicCost?: number; // cost of equipped magic dice
+  magicName?: string; // name of equipped magic dice
+}
+
+export function ChargeBar({ gauge, magicCost, magicName }: ChargeBarProps) {
+  const target = magicCost ?? 0;
+  const pct = target > 0 ? Math.min(100, (gauge.current / target) * 100) : 0;
+  const ready = target > 0 && gauge.current >= target;
   const prevRef = useRef(gauge.current);
   const [flashing, setFlashing] = useState(false);
 
@@ -19,28 +27,50 @@ export function ChargeBar({ gauge }: { gauge: ChargeGauge }) {
   const barClass = [
     'charge-bar',
     flashing ? 'charge-increasing' : '',
-    gauge.bonusActive ? 'charge-max-active' : '',
+    ready ? 'charge-max-active' : '',
   ].filter(Boolean).join(' ');
 
   const fillClass = [
     'charge-fill',
-    gauge.bonusActive ? 'max' : '',
+    ready ? 'max' : '',
     flashing ? 'flash' : '',
   ].filter(Boolean).join(' ');
+
+  // Label: show magic name when equipped, or just the gauge value
+  let label: string;
+  if (ready && magicName) {
+    label = 'READY!';
+  } else if (target > 0) {
+    label = `${gauge.current}/${target}`;
+  } else {
+    label = `${gauge.current}`;
+  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       <span style={{ fontSize: 8, color: '#998a78', minWidth: 14 }}>CG</span>
       <div className={barClass} style={{ flex: 1 }}>
-        <div className={fillClass} style={{ width: `${pct}%` }} />
+        <div className={fillClass} style={{ width: `${target > 0 ? pct : 0}%` }} />
       </div>
+      {magicName && !ready && (
+        <span style={{
+          fontSize: 7,
+          color: '#8a7050',
+          maxWidth: 48,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {magicName}
+        </span>
+      )}
       <span style={{
         fontSize: 8,
-        color: gauge.bonusActive ? '#705828' : '#998a78',
-        fontWeight: gauge.bonusActive ? 'bold' : 'normal',
+        color: ready ? '#705828' : '#998a78',
+        fontWeight: ready ? 'bold' : 'normal',
         transition: 'color 0.2s',
       }}>
-        {gauge.bonusActive ? 'MAX!' : `${gauge.current}/${gauge.max}`}
+        {label}
       </span>
     </div>
   );
