@@ -220,12 +220,17 @@ export function CaptureScene({ monster, onComplete, onSkip }: CaptureSceneProps)
   return (
     <div style={{
       position: 'absolute', inset: 0,
-      background: `radial-gradient(ellipse at center, rgba(255,255,255,${1 - screenDark}) 0%, rgba(245,240,232,${1 - screenDark}) 70%)`,
+      background: '#f5f0e8',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       zIndex: 250,
-      transition: 'background 0.3s',
     }}>
+      {/* 背景グラデーション（不透明） */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `radial-gradient(ellipse at center, #ffffff 0%, #f5f0e8 70%)`,
+        pointerEvents: 'none',
+      }} />
       {/* 暗転オーバーレイ */}
       <div style={{
         position: 'absolute', inset: 0,
