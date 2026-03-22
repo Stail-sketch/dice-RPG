@@ -154,10 +154,11 @@ export function TutorialScreen() {
   const [selectedDice3v3, setSelectedDice3v3] = useState<Set<number>>(new Set());
   const [hurtEnemy3v3, setHurtEnemy3v3] = useState(false);
   const [chargeGauge, setChargeGauge] = useState(0);
-  const CHARGE_MAX = 10;
+  const CHARGE_MAX_TUT = 10;
 
-  // Rigged roll results for step 4 (used in render below)
-  void (subStep <= 2 ? [3, 2, 5] : [4, 1, 6]);
+  // ---- Capture state for step 3 ----
+  const [captureRolling, setCaptureRolling] = useState(false);
+  const [captureDone, setCaptureDone] = useState(false);
 
   // ---- Render per step ----
   const renderContent = () => {
@@ -325,9 +326,6 @@ export function TutorialScreen() {
   // STEP 3 rendering (Capture)
   // ==============================
   const renderStep3 = () => {
-    const [captureRolling, setCaptureRolling] = useState(false);
-    const [captureDone, setCaptureDone] = useState(false);
-
     const handleCapture = () => {
       setCaptureRolling(true);
       setTimeout(() => {
@@ -454,8 +452,8 @@ export function TutorialScreen() {
     const handleGo = () => {
       const chargeIdx = [0, 1, 2].find(i => !selectedDice3v3.has(i))!;
       const chargeValue = currentRolls[chargeIdx];
-      const newCharge = Math.min(CHARGE_MAX, chargeGauge + chargeValue);
-      const isMax = newCharge >= CHARGE_MAX;
+      const newCharge = Math.min(CHARGE_MAX_TUT, chargeGauge + chargeValue);
+      const isMax = newCharge >= CHARGE_MAX_TUT;
 
       // Calculate damage from selected dice
       let dmg = 0;
@@ -525,14 +523,14 @@ export function TutorialScreen() {
               border: '1px solid #c0b8a8',
             }}>
               <div style={{
-                width: `${Math.min(100, (chargeGauge / CHARGE_MAX) * 100)}%`,
+                width: `${Math.min(100, (chargeGauge / CHARGE_MAX_TUT) * 100)}%`,
                 height: '100%', borderRadius: 2,
-                background: chargeGauge >= CHARGE_MAX ? '#c05030' : '#b09050',
+                background: chargeGauge >= CHARGE_MAX_TUT ? '#c05030' : '#b09050',
                 transition: 'width 0.5s ease',
               }} />
             </div>
-            <span style={{ fontSize: 8, color: chargeGauge >= CHARGE_MAX ? '#c05030' : '#998a78', fontWeight: chargeGauge >= CHARGE_MAX ? 'bold' : 'normal' }}>
-              {chargeGauge >= CHARGE_MAX ? 'MAX!' : `${chargeGauge}/${CHARGE_MAX}`}
+            <span style={{ fontSize: 8, color: chargeGauge >= CHARGE_MAX_TUT ? '#c05030' : '#998a78', fontWeight: chargeGauge >= CHARGE_MAX_TUT ? 'bold' : 'normal' }}>
+              {chargeGauge >= CHARGE_MAX_TUT ? 'MAX!' : `${chargeGauge}/${CHARGE_MAX_TUT}`}
             </span>
           </div>
 
