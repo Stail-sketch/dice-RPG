@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
-import { CHAPTER1_MONSTERS } from '../data/monsters';
+import { MAX_SAME_MONSTER } from '../types';
+import type { DecomposeResult, PartyBonus } from '../types';
+import { CHAPTER1_MONSTERS, PROTAGONIST_DICE } from '../data/monsters';
 import { SKILL_RUNES } from '../data/skill-runes';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
@@ -22,9 +24,13 @@ interface GameState {
   gems: number;
   materials: Materials;
 
+  protagonistDice: MonsterDice;
   ownedDice: MonsterDice[];
   party: [string, string, string];
   ownedRunes: SkillRune[];
+
+  decomposeDice: (diceInstanceId: string) => DecomposeResult | null;
+  getPartyBonus: () => PartyBonus;
 
   currentChapter: number;
   clearedDungeons: string[]; // クリア済みダンジョンID
@@ -86,6 +92,7 @@ function getSaveableState(s: GameState) {
     gold: s.gold,
     gems: s.gems,
     materials: s.materials,
+    protagonistDice: s.protagonistDice,
     ownedDice: s.ownedDice,
     party: s.party,
     ownedRunes: s.ownedRunes,
@@ -107,9 +114,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   gems: 10,
   materials: { 'forge-stone': 0, 'rare-ore': 0 },
 
+  protagonistDice: { ...PROTAGONIST_DICE },
   ownedDice: [],
   party: ['', '', ''],
   ownedRunes: [],
+
+  getPartyBonus: () => {
+    const s = get();
+    const hasProtagonist = s.party.includes('protagonist');
+    return {
+      goldMultiplier: hasProtagonist ? 1.2 : 1.0,
+      captureBonus: hasProtagonist ? 10 : 0,
+    };
+  },
 
   currentChapter: 1,
   clearedDungeons: [],
@@ -124,8 +141,45 @@ export const useGameStore = create<GameState>((set, get) => ({
   setBattleState: (state) => set({ battleState: state }),
   currentEnemy: null,
 
-  addDice: (dice) => set((s) => ({ ownedDice: [...s.ownedDice, applyDefaultSocketTiers(dice)] })),
+  addDice: (dice) => {
+    const s = get();
+    // Count existing instances of this base monster
+    const baseId = dice.id;
+    const existing = s.ownedDice.filter(d => (d.baseId || d.id) === baseId);
+    if (existing.length >= MAX_SAME_MONSTER) return; // can't add more
+
+    const instanceId = `${baseId}_${String(existing.length + 1).padStart(3, '0')}`;
+    const newDice = applyDefaultSocketTiers({ ...dice, id: instanceId, baseId: baseId });
+    set({ ownedDice: [...s.ownedDice, newDice] });
+  },
   setParty: (party) => set({ party }),
+
+  decomposeDice: (diceInstanceId: string) => {
+    const s = get();
+    if (diceInstanceId === 'protagonist') return null;
+    if (s.party.includes(diceInstanceId)) return null;
+
+    const dice = s.ownedDice.find(d => d.id === diceInstanceId);
+    if (!dice) return null;
+
+    const result: DecomposeResult = {
+      forgeStones: dice.rarity * 2 + 1,
+      rareOre: dice.rarity >= 3 ? dice.rarity - 2 : 0,
+      gold: dice.rarity * 100,
+    };
+
+    set({
+      ownedDice: s.ownedDice.filter(d => d.id !== diceInstanceId),
+      gold: s.gold + result.gold,
+      materials: {
+        ...s.materials,
+        'forge-stone': s.materials['forge-stone'] + result.forgeStones,
+        'rare-ore': s.materials['rare-ore'] + result.rareOre,
+      },
+    });
+
+    return result;
+  },
 
   addRune: (rune) => set((s) => ({ ownedRunes: [...s.ownedRunes, rune] })),
   addRunes: (runes) => set((s) => ({ ownedRunes: [...s.ownedRunes, ...runes] })),
@@ -138,8 +192,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   }),
 
   equipRune: (diceId, faceNumber, socketIndex, runeId) => set((s) => {
-    const dice = s.ownedDice.map(d => {
-      if (d.id !== diceId) return d;
+    const updateCustomFaces = (d: MonsterDice) => {
       const newCustom = d.customFaces.map(f => {
         if (f.faceNumber !== faceNumber) return f;
         const newSockets = f.sockets.map((sock, si) =>
@@ -148,19 +201,24 @@ export const useGameStore = create<GameState>((set, get) => ({
         return { ...f, sockets: newSockets };
       });
       return { ...d, customFaces: newCustom };
-    });
+    };
+    if (diceId === 'protagonist') {
+      return { protagonistDice: updateCustomFaces(s.protagonistDice) };
+    }
+    const dice = s.ownedDice.map(d => d.id !== diceId ? d : updateCustomFaces(d));
     return { ownedDice: dice };
   }),
 
   unequipRune: (diceId, faceNumber, socketIndex) => set((s) => {
-    const targetDice = s.ownedDice.find(d => d.id === diceId);
+    const targetDice = diceId === 'protagonist'
+      ? s.protagonistDice
+      : s.ownedDice.find(d => d.id === diceId);
     if (!targetDice) return {};
     const face = targetDice.customFaces.find(f => f.faceNumber === faceNumber);
     if (!face) return {};
     const oldRuneId = face.sockets[socketIndex]?.skillRuneId;
 
-    const dice = s.ownedDice.map(d => {
-      if (d.id !== diceId) return d;
+    const clearSocket = (d: MonsterDice) => {
       const newCustom = d.customFaces.map(f => {
         if (f.faceNumber !== faceNumber) return f;
         const newSockets = f.sockets.map((sock, si) =>
@@ -169,13 +227,18 @@ export const useGameStore = create<GameState>((set, get) => ({
         return { ...f, sockets: newSockets };
       });
       return { ...d, customFaces: newCustom };
-    });
+    };
 
     let newRunes = s.ownedRunes;
     if (oldRuneId) {
       const rune = SKILL_RUNES.find(r => r.id === oldRuneId);
       if (rune) newRunes = [...s.ownedRunes, { ...rune }];
     }
+
+    if (diceId === 'protagonist') {
+      return { protagonistDice: clearSocket(s.protagonistDice), ownedRunes: newRunes };
+    }
+    const dice = s.ownedDice.map(d => d.id !== diceId ? d : clearSocket(d));
     return { ownedDice: dice, ownedRunes: newRunes };
   }),
 
@@ -196,7 +259,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   // 鍛冶: ソケット強化
   upgradeSocket: (diceId, faceNumber, socketIndex) => {
     const s = get();
-    const dice = s.ownedDice.find(d => d.id === diceId);
+
+    // Find the dice (protagonist or owned)
+    const dice = diceId === 'protagonist' ? s.protagonistDice : s.ownedDice.find(d => d.id === diceId);
     if (!dice) return false;
     const face = dice.customFaces.find(f => f.faceNumber === faceNumber);
     if (!face) return false;
@@ -208,27 +273,39 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.materials['forge-stone'] < cost.stones) return false;
     if (s.materials['rare-ore'] < cost.ore) return false;
 
+    const upgradeCustomFaces = (d: MonsterDice) => {
+      const newCustom = d.customFaces.map(f => {
+        if (f.faceNumber !== faceNumber) return f;
+        const newSockets = f.sockets.map((sock, si) =>
+          si !== socketIndex ? sock : { ...sock, socketTier: cost.next }
+        );
+        return { ...f, sockets: newSockets };
+      });
+      return { ...d, customFaces: newCustom };
+    };
+
     // コスト消費 + ソケット強化
     set((s) => {
-      const newDice = s.ownedDice.map(d => {
-        if (d.id !== diceId) return d;
-        const newCustom = d.customFaces.map(f => {
-          if (f.faceNumber !== faceNumber) return f;
-          const newSockets = f.sockets.map((sock, si) =>
-            si !== socketIndex ? sock : { ...sock, socketTier: cost.next }
-          );
-          return { ...f, sockets: newSockets };
-        });
-        return { ...d, customFaces: newCustom };
-      });
-      return {
-        ownedDice: newDice,
+      const costUpdate = {
         gold: s.gold - cost.gold,
         materials: {
           ...s.materials,
           'forge-stone': s.materials['forge-stone'] - cost.stones,
           'rare-ore': s.materials['rare-ore'] - cost.ore,
         },
+      };
+
+      if (diceId === 'protagonist') {
+        return {
+          protagonistDice: upgradeCustomFaces(s.protagonistDice),
+          ...costUpdate,
+        };
+      }
+
+      const newDice = s.ownedDice.map(d => d.id !== diceId ? d : upgradeCustomFaces(d));
+      return {
+        ownedDice: newDice,
+        ...costUpdate,
       };
     });
     return true;
@@ -261,17 +338,18 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initNewGame: () => {
     const starterDice = [
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')! }),
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'frost-jelly')! }),
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')!, id: 'pyrachnid_001', baseId: 'pyrachnid' }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'frost-jelly')!, id: 'frost-jelly_001', baseId: 'frost-jelly' }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')!, id: 'salamander-v2_001', baseId: 'salamander-v2' }),
     ];
     const starterRunes = SKILL_RUNES
       .filter(r => r.tier === 'common')
       .flatMap(r => [{ ...r }, { ...r }]);
 
     set({
+      protagonistDice: { ...PROTAGONIST_DICE },
       ownedDice: starterDice,
-      party: [starterDice[0].id, starterDice[1].id, starterDice[2].id],
+      party: ['protagonist', 'pyrachnid_001', 'frost-jelly_001'],
       ownedRunes: starterRunes,
       gold: 500,
       gems: 30,

@@ -20,13 +20,16 @@ const TIER_COLORS: Record<SocketTier, string> = {
 };
 
 export function DiceEditorScreen() {
-  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune } = useGameStore();
+  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [selectedSocket, setSelectedSocket] = useState<number | null>(null);
   const [filterElement, setFilterElement] = useState<Element | 'all'>('all');
 
-  const partyDice = party.map(id => ownedDice.find(d => d.id === id));
+  const partyDice = party.map(id => {
+    if (id === 'protagonist') return protagonistDice;
+    return ownedDice.find(d => d.id === id);
+  });
   const currentDice = partyDice[selectedSlot];
 
   const swapDice = (slotIndex: number, diceId: string) => {
@@ -111,7 +114,11 @@ export function DiceEditorScreen() {
                 <>
                   <DiceFaceView faceNumber={slot + 1} size={36} borderColor={ELEMENT_COLORS[dice.element]} />
                   <div style={{ fontSize: 10, marginTop: 2 }}>{dice.name}</div>
-                  <span className="rarity" style={{ fontSize: 9 }}>{'★'.repeat(dice.rarity)}</span>
+                  {dice.id === 'protagonist' ? (
+                    <span style={{ color: '#b09050', fontSize: 9, fontWeight: 'bold' }}>HERO</span>
+                  ) : (
+                    <span className="rarity" style={{ fontSize: 9 }}>{'★'.repeat(dice.rarity)}</span>
+                  )}
                 </>
               ) : (
                 <div style={{ color: '#998a78', fontSize: 11, padding: 8 }}>空</div>
@@ -124,10 +131,10 @@ export function DiceEditorScreen() {
       {/* 所持ダイス一覧 */}
       <div className="rpg-panel" style={{ padding: 8 }}>
         <div style={{ fontSize: 10, color: '#998a78', marginBottom: 4 }}>
-          所持ダイス（タップで装備） — {ownedDice.length}個
+          所持ダイス（タップで装備） — {ownedDice.length + 1}個
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {ownedDice.map((d, i) => (
+          {[protagonistDice, ...ownedDice].map((d, i) => (
             <button
               key={`${d.id}-${i}`}
               className="rpg-btn"
@@ -138,7 +145,11 @@ export function DiceEditorScreen() {
               }}
               onClick={() => swapDice(selectedSlot, d.id)}
             >
-              <span style={{ color: ELEMENT_COLORS[d.element] }}>{'★'.repeat(d.rarity)}</span> {d.name}
+              {d.id === 'protagonist' ? (
+                <span style={{ color: '#b09050', fontWeight: 'bold' }}>HERO</span>
+              ) : (
+                <span style={{ color: ELEMENT_COLORS[d.element] }}>{'★'.repeat(d.rarity)}</span>
+              )} {d.name}
             </button>
           ))}
         </div>

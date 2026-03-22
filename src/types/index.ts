@@ -122,7 +122,8 @@ export interface MonsterDice {
   id: string;
   name: string;
   element: Element;
-  rarity: 1 | 2 | 3 | 4 | 5;
+  rarity: 0 | 1 | 2 | 3 | 4 | 5;
+  baseId?: string; // base monster ID (for individual instances)
   fixedFaces: FixedFace[];
   customFaces: CustomFace[];
   baseStats: {
@@ -231,6 +232,19 @@ export interface BattleState {
   maxTurns: number;
   log: TurnResult[];
   status: 'ongoing' | 'player-win' | 'enemy-win' | 'draw';
+}
+
+export const MAX_SAME_MONSTER = 3;
+
+export interface PartyBonus {
+  goldMultiplier: number;
+  captureBonus: number;
+}
+
+export interface DecomposeResult {
+  forgeStones: number;
+  rareOre: number;
+  gold: number;
 }
 
 // ==============================

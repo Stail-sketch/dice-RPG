@@ -23,7 +23,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus } = useGameStore();
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
   const [phase, setPhase] = useState<Phase>('ready');
@@ -49,7 +49,10 @@ export function BattleScreen() {
   const [enemyRolls, setEnemyRolls] = useState<DiceRollResult[] | null>(null);
   const [selectedDice, setSelectedDice] = useState<Set<number>>(new Set()); // 発動するダイスのインデックス
 
-  const playerDice = party.map(id => ownedDice.find(d => d.id === id)).filter(Boolean) as MonsterDice[];
+  const playerDice = party.map(id => {
+    if (id === 'protagonist') return protagonistDice;
+    return ownedDice.find(d => d.id === id);
+  }).filter(Boolean) as MonsterDice[];
   const enemyDiceList = currentEnemy || [];
 
   useEffect(() => { if (popups.length > 0) { const t = setTimeout(() => setPopups([]), 1500); return () => clearTimeout(t); } }, [popups]);
@@ -195,7 +198,8 @@ export function BattleScreen() {
               setPhase('result');
               if (battle.status === 'player-win') {
                 addLog('══ 勝利！ ══'); flash('WIN!', 1500);
-                addGold(50 + enemyDiceList[0].rarity * 30);
+                const bonus = getPartyBonus();
+                addGold(Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier));
               } else { addLog('══ 敗北... ══'); flash('LOSE...', 1500); }
             } else {
               setPhase('turn-end');
@@ -204,7 +208,7 @@ export function BattleScreen() {
         }, 400);
       }, 800);
     }, 400);
-  }, [battle, currentRolls, enemyRolls, selectedDice, addLog, addPopup, doShake, flash, addGold, enemyDiceList, logActions, showElementEffect, showParticles]);
+  }, [battle, currentRolls, enemyRolls, selectedDice, addLog, addPopup, doShake, flash, addGold, enemyDiceList, logActions, showElementEffect, showParticles, getPartyBonus]);
 
   // ===== 次のターン =====
   const doNextTurn = useCallback(() => {
@@ -399,7 +403,7 @@ export function BattleScreen() {
         )}
         {phase === 'result' && battle?.status === 'player-win' && (
           <div>
-            <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>+{50 + enemyDiceList[0].rarity * 30} GOLD</div>
+            <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>+{Math.round((50 + enemyDiceList[0].rarity * 30) * getPartyBonus().goldMultiplier)} GOLD</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
               <button className="rpg-btn" onClick={() => setScreen('dungeon')} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>

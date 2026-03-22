@@ -1,4 +1,22 @@
-import type { MonsterDice } from '../types';
+import type { MonsterDice, Element } from '../types';
+
+export const PROTAGONIST_DICE: MonsterDice = {
+  id: 'protagonist',
+  name: 'Hero Dice',
+  element: 'alloy' as Element, // neutral, use alloy as placeholder
+  rarity: 0,
+  fixedFaces: [],
+  customFaces: [
+    { faceNumber: 1, sockets: [{ skillRuneId: null, socketTier: 'gold' }] },
+    { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+    { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+    { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+    { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+    { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+  ],
+  baseStats: { captureRate: 0 },
+  description: 'あなた自身のダイス。全ソケットがgold。自由にカスタマイズせよ。',
+};
 
 // 第1章モンスター10体（★1x4, ★2x3, ★3x2, ★4ボスx1）
 export const CHAPTER1_MONSTERS: MonsterDice[] = [
