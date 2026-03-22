@@ -148,6 +148,86 @@ export const FIXED_SKILLS: Record<string, FixedSkill> = {
     effect: { type: 'damage', power: 18, description: '極大炎ダメージ' } },
 
   // ==============================
+  // 第1章 新モンスター固有スキル
+  // ==============================
+  // パイラクニド
+  'ember-fang': { id: 'ember-fang', name: '炎牙', element: 'blaze',
+    effect: { type: 'damage', power: 6, description: '炎牙で噛みつく' } },
+  // フロストジェリー
+  'cryo-splash': { id: 'cryo-splash', name: '冷気飛沫', element: 'frost',
+    effect: { type: 'damage', power: 5, description: '冷気の飛沫' } },
+  // ボルトウィスプ
+  'spark-shot': { id: 'spark-shot', name: '放電弾', element: 'volt',
+    effect: { type: 'damage', power: 7, description: '放電' } },
+  // ロットビートル
+  'toxic-bite': { id: 'toxic-bite', name: '毒噛み', element: 'venom',
+    effect: { type: 'damage', power: 5, description: '毒の噛みつき' } },
+  // ホロウ
+  'soul-drain': { id: 'soul-drain', name: '魂吸収', element: 'mirage',
+    effect: { type: 'heal', power: 5, description: '魂を吸い取る' } },
+  'phase-shift': { id: 'phase-shift', name: '位相変位', element: 'mirage',
+    effect: { type: 'buff', power: 1.3, duration: 1, description: '位相をずらす' } },
+  'haunt': { id: 'haunt', name: '憑依', element: 'mirage',
+    effect: { type: 'debuff', power: 0.7, duration: 2, description: '取り憑く' } },
+  // ゴブリンナイト
+  'shield-bash-v2': { id: 'shield-bash-v2', name: '盾強打', element: 'alloy',
+    effect: { type: 'damage', power: 7, description: '盾で殴る' } },
+  'iron-guard': { id: 'iron-guard', name: '鉄壁の守り', element: 'alloy',
+    effect: { type: 'shield', power: 6, duration: 1, description: '鉄壁の守り' } },
+  'war-cry': { id: 'war-cry', name: '雄叫び', element: 'alloy',
+    effect: { type: 'debuff', power: 0.8, duration: 1, description: '雄叫び' } },
+  // サラマンダーv2
+  'flame-v2': { id: 'flame-v2', name: '火炎', element: 'blaze',
+    effect: { type: 'damage', power: 8, description: '火炎で焼く' } },
+  'combustion-v2': { id: 'combustion-v2', name: '燃焼', element: 'blaze',
+    effect: { type: 'dot', power: 3, duration: 2, description: '燃焼' } },
+  'scorch-v2': { id: 'scorch-v2', name: '灼熱', element: 'blaze',
+    effect: { type: 'damage', power: 6, description: '灼熱' } },
+  // アイアンゴーレム
+  'iron-fist': { id: 'iron-fist', name: '鉄拳', element: 'alloy',
+    effect: { type: 'damage', power: 10, description: '鉄拳' } },
+  'fortify': { id: 'fortify', name: '防御強化', element: 'alloy',
+    effect: { type: 'buff', power: 1.4, duration: 2, description: '防御強化' } },
+  'wall': { id: 'wall', name: '鉄壁', element: 'alloy',
+    effect: { type: 'shield', power: 8, duration: 2, description: '鉄壁' } },
+  'crush': { id: 'crush', name: '粉砕', element: 'alloy',
+    effect: { type: 'damage', power: 12, description: '粉砕' } },
+  'counter-v2': { id: 'counter-v2', name: '反撃', element: 'alloy',
+    effect: { type: 'damage', power: 10, description: '反撃' } },
+  'war-roar': { id: 'war-roar', name: '戦嘶き', element: 'alloy',
+    effect: { type: 'buff', power: 1.3, duration: 1, description: '戦嘶き' } },
+  // シャドウサーペント
+  'venom-strike': { id: 'venom-strike', name: '毒撃', element: 'venom',
+    effect: { type: 'damage', power: 7, description: '毒撃' } },
+  'poison-mist': { id: 'poison-mist', name: '毒霧', element: 'venom',
+    effect: { type: 'dot', power: 4, duration: 3, description: '毒霧' } },
+  'constrict': { id: 'constrict', name: '締め付け', element: 'venom',
+    effect: { type: 'debuff', power: 0.6, duration: 2, description: '締め付け' } },
+  'death-coil': { id: 'death-coil', name: '死の螺旋', element: 'venom',
+    effect: { type: 'damage', power: 12, description: '死の螺旋' } },
+  'toxic-cloud': { id: 'toxic-cloud', name: '毒雲', element: 'venom',
+    effect: { type: 'dot', power: 5, duration: 3, description: '毒雲' } },
+  'shed-skin': { id: 'shed-skin', name: '脱皮', element: 'venom',
+    effect: { type: 'heal', power: 8, description: '脱皮で回復' } },
+  // インフェルノドレイク
+  'dragon-breath-v2': { id: 'dragon-breath-v2', name: '竜のブレス', element: 'blaze',
+    effect: { type: 'damage', power: 15, description: '竜のブレス' } },
+  'flame-claw-v2': { id: 'flame-claw-v2', name: '炎爪', element: 'blaze',
+    effect: { type: 'damage', power: 12, description: '炎爪' } },
+  'eruption-v2': { id: 'eruption-v2', name: '噴火', element: 'blaze',
+    effect: { type: 'damage', power: 18, description: '噴火' } },
+  'heat-wave-v2': { id: 'heat-wave-v2', name: '熱波', element: 'blaze',
+    effect: { type: 'dot', power: 5, duration: 3, description: '熱波' } },
+  'magma-shield-v2': { id: 'magma-shield-v2', name: 'マグマの盾', element: 'blaze',
+    effect: { type: 'shield', power: 12, duration: 2, description: 'マグマの盾' } },
+  'dragon-roar-v2': { id: 'dragon-roar-v2', name: '竜の咆哮', element: 'blaze',
+    effect: { type: 'buff', power: 1.5, duration: 2, description: '竜の咆哮' } },
+  'inferno-blast': { id: 'inferno-blast', name: '獄炎の爆発', element: 'blaze',
+    effect: { type: 'damage', power: 20, description: '獄炎の爆発' } },
+  'hellfire': { id: 'hellfire', name: '地獄の業火', element: 'blaze',
+    effect: { type: 'damage', power: 16, description: '地獄の業火' } },
+
+  // ==============================
   // 第2章: 氷結の峡谷
   // ==============================
   // フロストウルフ

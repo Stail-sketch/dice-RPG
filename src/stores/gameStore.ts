@@ -261,9 +261,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initNewGame: () => {
     const starterDice = [
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'slime')! }),
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'bat')! }),
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'frost-jelly')! }),
+      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')! }),
     ];
     const starterRunes = SKILL_RUNES
       .filter(r => r.tier === 'common')
@@ -278,7 +278,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       materials: { 'forge-stone': 3, 'rare-ore': 0 },
       currentChapter: 1,
       clearedDungeons: [],
-      capturedMonsters: ['slime', 'bat', 'salamander'],
+      capturedMonsters: ['pyrachnid', 'frost-jelly', 'salamander-v2'],
       gachaPityDice: 0,
       gachaPityRune: 0,
       currentScreen: 'town',

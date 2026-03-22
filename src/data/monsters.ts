@@ -1,12 +1,12 @@
 import type { MonsterDice } from '../types';
 
-// 第1章モンスター8体 + ボス
+// 第1章モンスター10体（★1x4, ★2x3, ★3x2, ★4ボスx1）
 export const CHAPTER1_MONSTERS: MonsterDice[] = [
-  // ★1 スライム (氷)
+  // ★1 パイラクニド (炎)
   {
-    id: 'slime', name: 'スライム', element: 'frost', rarity: 1,
+    id: 'pyrachnid', name: 'パイラクニド', element: 'blaze', rarity: 1,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'slime-shot', element: 'frost' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'ember-fang', element: 'blaze' }] },
     ],
     customFaces: [
       { faceNumber: 2, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
@@ -16,14 +16,14 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 80 },
-    description: 'どこにでもいる粘液生物。カスタム自由度MAX。',
+    description: '炎を纏う小蜘蛛。炎牙で獲物を仕留める。',
   },
 
-  // ★1 コウモリ (幻)
+  // ★1 フロストジェリー (氷)
   {
-    id: 'bat', name: 'コウモリ', element: 'mirage', rarity: 1,
+    id: 'frost-jelly', name: 'フロストジェリー', element: 'frost', rarity: 1,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'vampirism', element: 'mirage' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'cryo-splash', element: 'frost' }] },
     ],
     customFaces: [
       { faceNumber: 2, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
@@ -33,15 +33,49 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 80 },
-    description: '闇に潜む吸血コウモリ。幻属性の入門ダイス。',
+    description: '冷気を帯びたゼリー状の生物。冷たい飛沫で攻撃する。',
   },
 
-  // ★2 ゴブリン (鋼)
+  // ★1 ボルトウィスプ (雷)
   {
-    id: 'goblin', name: 'ゴブリン', element: 'alloy', rarity: 2,
+    id: 'volt-wisp', name: 'ボルトウィスプ', element: 'volt', rarity: 1,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'shield-bash', element: 'alloy' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'defend', element: 'alloy' }, { skillId: 'taunt', element: 'alloy' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'spark-shot', element: 'volt' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 3, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 4, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '漂う雷の精霊。放電で敵を痺れさせる。',
+  },
+
+  // ★1 ロットビートル (毒)
+  {
+    id: 'rot-beetle', name: 'ロットビートル', element: 'venom', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'toxic-bite', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 3, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 4, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '腐食を撒き散らす甲虫。毒の噛みつきが厄介。',
+  },
+
+  // ★2 ホロウ (幻)
+  {
+    id: 'hollow', name: 'ホロウ', element: 'mirage', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'soul-drain', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'phase-shift', element: 'mirage' }, { skillId: 'haunt', element: 'mirage' }] },
     ],
     customFaces: [
       { faceNumber: 3, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
@@ -50,15 +84,15 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 50 },
-    description: '盾を持つ小鬼。防御に長けた鋼属性。',
+    description: '虚ろな亡霊。魂を吸い取り、位相をずらして攻撃を避ける。',
   },
 
-  // ★2 サラマンダー (炎)
+  // ★2 ゴブリンナイト (鋼)
   {
-    id: 'salamander', name: 'サラマンダー', element: 'blaze', rarity: 2,
+    id: 'goblin-knight', name: 'ゴブリンナイト', element: 'alloy', rarity: 2,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'flame', element: 'blaze' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'combustion', element: 'blaze' }, { skillId: 'scorch', element: 'blaze' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'shield-bash-v2', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'iron-guard', element: 'alloy' }, { skillId: 'war-cry', element: 'alloy' }] },
     ],
     customFaces: [
       { faceNumber: 3, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
@@ -67,15 +101,15 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 50 },
-    description: '炎を纏うトカゲ。攻撃的な炎属性。',
+    description: '鎧を纏ったゴブリン騎士。盾と雄叫びで戦場を制する。',
   },
 
-  // ★2 スケルトン (毒)
+  // ★2 サラマンダーv2 (炎)
   {
-    id: 'skeleton', name: 'スケルトン', element: 'venom', rarity: 2,
+    id: 'salamander-v2', name: 'サラマンダー', element: 'blaze', rarity: 2,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'bone-throw', element: 'venom' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'miasma', element: 'venom' }, { skillId: 'curse', element: 'venom' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'flame-v2', element: 'blaze' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'combustion-v2', element: 'blaze' }, { skillId: 'scorch-v2', element: 'blaze' }] },
     ],
     customFaces: [
       { faceNumber: 3, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
@@ -84,58 +118,58 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 50 },
-    description: '不死の骨戦士。毒と呪いで削る。',
+    description: '炎を纏うトカゲ。攻撃的な炎属性の中級モンスター。',
   },
 
-  // ★3 ハーピー (雷)
+  // ★3 アイアンゴーレム (鋼)
   {
-    id: 'harpy', name: 'ハーピー', element: 'volt', rarity: 3,
+    id: 'iron-golem', name: 'アイアンゴーレム', element: 'alloy', rarity: 3,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'wind-blade', element: 'volt' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'lightning', element: 'volt' }, { skillId: 'rapid-strike', element: 'volt' }] },
-      { faceNumber: 3, sockets: [{ skillId: 'storm', element: 'volt' }, { skillId: 'haste', element: 'volt' }, { skillId: 'flight', element: 'volt' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'iron-fist', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'fortify', element: 'alloy' }, { skillId: 'wall', element: 'alloy' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'crush', element: 'alloy' }, { skillId: 'counter-v2', element: 'alloy' }, { skillId: 'war-roar', element: 'alloy' }] },
     ],
     customFaces: [
       { faceNumber: 4, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
-      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 25 },
-    description: '空を舞う雷鳥人。連撃と速度が武器。',
+    description: '鋼鉄の巨人。鉄拳と鉄壁で敵を圧倒する。',
   },
 
-  // ★3 ミミック (幻)
+  // ★3 シャドウサーペント (毒)
   {
-    id: 'mimic-monster', name: 'ミミック', element: 'mirage', rarity: 3,
+    id: 'shadow-serpent', name: 'シャドウサーペント', element: 'venom', rarity: 3,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'mimic', element: 'mirage' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'steal', element: 'mirage' }, { skillId: 'transform', element: 'mirage' }] },
-      { faceNumber: 3, sockets: [{ skillId: 'copy', element: 'mirage' }, { skillId: 'split', element: 'mirage' }, { skillId: 'trap', element: 'mirage' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'venom-strike', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'poison-mist', element: 'venom' }, { skillId: 'constrict', element: 'venom' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'death-coil', element: 'venom' }, { skillId: 'toxic-cloud', element: 'venom' }, { skillId: 'shed-skin', element: 'venom' }] },
     ],
     customFaces: [
       { faceNumber: 4, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
-      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 25 },
-    description: '宝箱に擬態する魔物。トリックが得意。',
+    description: '影に潜む毒蛇。猛毒と締め付けで獲物を逃さない。',
   },
 
-  // ★4 洞窟竜 (炎) - 第1章ボス
+  // ★4 インフェルノドレイク (炎) - 第1章ボス
   {
-    id: 'cave-dragon', name: '洞窟竜', element: 'blaze', rarity: 4,
+    id: 'inferno-drake', name: 'インフェルノドレイク', element: 'blaze', rarity: 4,
     fixedFaces: [
-      { faceNumber: 1, sockets: [{ skillId: 'dragon-breath', element: 'blaze' }] },
-      { faceNumber: 2, sockets: [{ skillId: 'flame-claw', element: 'blaze' }, { skillId: 'combustion', element: 'blaze' }] },
-      { faceNumber: 3, sockets: [{ skillId: 'eruption', element: 'blaze' }, { skillId: 'heat-wave', element: 'blaze' }, { skillId: 'scorch', element: 'blaze' }] },
-      { faceNumber: 4, sockets: [{ skillId: 'magma-shield', element: 'blaze' }, { skillId: 'dragon-roar', element: 'blaze' }, { skillId: 'flame', element: 'blaze' }, { skillId: 'inferno-fixed', element: 'blaze' }] },
+      { faceNumber: 1, sockets: [{ skillId: 'dragon-breath-v2', element: 'blaze' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'flame-claw-v2', element: 'blaze' }, { skillId: 'combustion-v2', element: 'blaze' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'eruption-v2', element: 'blaze' }, { skillId: 'heat-wave-v2', element: 'blaze' }, { skillId: 'scorch-v2', element: 'blaze' }] },
+      { faceNumber: 4, sockets: [{ skillId: 'magma-shield-v2', element: 'blaze' }, { skillId: 'dragon-roar-v2', element: 'blaze' }, { skillId: 'inferno-blast', element: 'blaze' }, { skillId: 'hellfire', element: 'blaze' }] },
     ],
     customFaces: [
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
     baseStats: { captureRate: 10 },
-    description: '洞窟の奥に棲む炎竜。第1章のボス。',
+    description: '灼熱の炎竜。地獄の業火で全てを焼き尽くす第1章のボス。',
   },
 ];
 
