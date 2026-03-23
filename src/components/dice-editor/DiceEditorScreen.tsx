@@ -29,7 +29,7 @@ const CATEGORY_NAMES: Record<MagicCategory, string> = {
 };
 
 export function DiceEditorScreen() {
-  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, unequipAllRunes, sellDice, sellRune } = useGameStore();
+  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, sellDice, sellRune } = useGameStore();
   const [message, setMessage] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
