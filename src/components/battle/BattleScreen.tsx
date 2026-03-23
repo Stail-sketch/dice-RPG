@@ -82,13 +82,35 @@ export function BattleScreen() {
   const doScreenFlash = useCallback((color: string) => { setScreenFlash(color); setTimeout(() => setScreenFlash(null), 180); }, []);
   const showFilmBars = useCallback(() => { setFilmBars(true); setTimeout(() => setFilmBars(false), 400); }, []);
 
-  const logActions = useCallback((actions: SkillAction[]) => {
+  const logActions = useCallback((actions: SkillAction[], isPlayerAttacking: boolean) => {
     if (actions.length === 0) { addLog('  (なし)'); return; }
+    const who = isPlayerAttacking ? '' : '[敵]';
     for (const a of actions) {
       const elName = ELEMENT_NAMES[a.element];
-      if (a.effectType === 'damage' && a.finalDamage > 0) addLog(`  ${a.skillName}(${elName}) → ${a.finalDamage}dmg`);
-      else if (a.effectType === 'heal') addLog(`  ${a.skillName}(${elName}) → +${a.rawDamage}HP`);
-      else addLog(`  ${a.skillName}(${elName}) → ${a.effectType}`);
+      if (a.effectType === 'damage' && a.finalDamage > 0) {
+        // 倍率情報を追加
+        const mults: string[] = [];
+        if (a.elementMultiplier !== 1.0) mults.push(`属性x${a.elementMultiplier}`);
+        if (a.synergyMultiplier !== 1.0) mults.push(`シナジーx${a.synergyMultiplier}`);
+        const multStr = mults.length > 0 ? ` [${mults.join(' ')}]` : '';
+        if (a.rawDamage !== a.finalDamage) {
+          addLog(`  ${who}${a.skillName}(${elName}) ${a.rawDamage}→${a.finalDamage}dmg${multStr}`);
+        } else {
+          addLog(`  ${who}${a.skillName}(${elName}) → ${a.finalDamage}dmg`);
+        }
+      } else if (a.effectType === 'heal') {
+        addLog(`  ${who}${a.skillName}(${elName}) → +${a.rawDamage}HP`);
+      } else if (a.effectType === 'dot') {
+        addLog(`  ${who}${a.skillName}(${elName}) → 継続${a.rawDamage}dmg/T (3T)`);
+      } else if (a.effectType === 'buff') {
+        const val = a.rawDamage > 1 ? a.rawDamage : 1.3;
+        addLog(`  ${who}${a.skillName}(${elName}) → 攻撃x${val}`);
+      } else if (a.effectType === 'debuff') {
+        const val = a.rawDamage < 1 ? a.rawDamage : 0.7;
+        addLog(`  ${who}${a.skillName}(${elName}) → 敵攻撃x${val}`);
+      } else if (a.effectType === 'shield') {
+        addLog(`  ${who}${a.skillName}(${elName}) → シールド${a.rawDamage} (2T)`);
+      }
     }
   }, [addLog]);
 
@@ -618,7 +640,7 @@ export function BattleScreen() {
     setTimeout(() => {
       setCurrentActions(result.firstActions);
       setPhase('first-attack');
-      logActions(result.firstActions);
+      logActions(result.firstActions, firstIsPlayer);
 
       let dmg = 0;
       for (const a of result.firstActions) {
@@ -653,7 +675,7 @@ export function BattleScreen() {
         setTimeout(() => {
           setCurrentActions(result.secondActions);
           setPhase('second-attack');
-          logActions(result.secondActions);
+          logActions(result.secondActions, !firstIsPlayer);
 
           let dmg2 = 0;
           for (const a of result.secondActions) {
@@ -678,7 +700,7 @@ export function BattleScreen() {
             const mainEl = result.secondActions.find(a => a.effectType === 'damage')?.element;
             if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'bottom' : 'top'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 65 : 22); }
           }
-          for (const s of result.synergies) addLog(`  ★ ${s.name}`);
+          for (const s of result.synergies) addLog(`  ★ ${s.name}: ${s.description}`);
           if (result.synergies.length > 0) {
             setTimeout(() => {
               sfx.synergy();
@@ -688,7 +710,23 @@ export function BattleScreen() {
 
           setTimeout(() => {
             setCurrentActions([]); setAttackLabel('');
-            addLog(`  HP ${result.playerHp} vs ${result.enemyHp} | CG ${result.playerCharge.current}${magicData ? '/' + magicData.cost : ''}`);
+            // HP変動詳細
+            const pDelta = result.playerHp - result.prePlayerHp;
+            const eDelta = result.enemyHp - result.preEnemyHp;
+            addLog(`  HP ${result.prePlayerHp}→${result.playerHp}(${pDelta >= 0 ? '+' : ''}${pDelta}) vs ${result.preEnemyHp}→${result.enemyHp}(${eDelta >= 0 ? '+' : ''}${eDelta})`);
+            // ステータスエフェクト
+            if (result.playerStatusDmg > 0) addLog(`  → 状態異常で自分に${result.playerStatusDmg}dmg`);
+            if (result.enemyStatusDmg > 0) addLog(`  → 状態異常で敵に${result.enemyStatusDmg}dmg`);
+            // 残存エフェクト
+            const pEffects = result.playerEffects.filter(e => e.remainingTurns > 0);
+            const eEffects = result.enemyEffects.filter(e => e.remainingTurns > 0);
+            if (pEffects.length > 0) addLog(`  自分: ${pEffects.map(e => `${e.type}(${e.remainingTurns}T)`).join(' ')}`);
+            if (eEffects.length > 0) addLog(`  敵: ${eEffects.map(e => `${e.type}(${e.remainingTurns}T)`).join(' ')}`);
+            // 倍率
+            if (result.playerDmgMult !== 1.0 || result.enemyDmgMult !== 1.0) {
+              addLog(`  攻撃倍率 自分x${result.playerDmgMult.toFixed(1)} / 敵x${result.enemyDmgMult.toFixed(1)}`);
+            }
+            addLog(`  CG ${result.playerCharge.current}${magicData ? '/' + magicData.cost : ''} vs ${result.enemyCharge.current}`);
 
             if (battle.status !== 'ongoing') {
               setPhase('result');
@@ -895,14 +933,22 @@ export function BattleScreen() {
 
         {/* ログ */}
         <div ref={logRef} style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '3px 6px', fontSize: 9, fontFamily: 'monospace', background: '#ece5d8', borderRadius: 2, border: '1px solid #d8d0c4' }}>
-          {log.map((line, i) => (
-            <div key={i} style={{
-              color: line.startsWith('══') ? (line.includes('勝利') ? '#308050' : '#b04030')
-                : line.startsWith('──') ? '#8a7050' : line.startsWith('  ★') ? '#705828'
-                : line.includes('ルーン獲得') ? '#4070a0' : line.includes('封印') ? (line.includes('成功') ? '#308050' : '#b04030')
-                : line.startsWith('→') ? '#998a78' : '#6a5a4a', lineHeight: 1.3,
-            }}>{line}</div>
-          ))}
+          {log.map((line, i) => {
+            const c = line.startsWith('══') ? (line.includes('勝利') ? '#308050' : '#b04030')
+              : line.startsWith('──') ? '#8a7050'
+              : line.startsWith('  ★') ? '#705828'
+              : line.includes('ルーン獲得') ? '#4070a0'
+              : line.includes('封印') ? (line.includes('成功') ? '#308050' : '#b04030')
+              : line.includes('状態異常で') ? '#906020'
+              : line.startsWith('  自分:') || line.startsWith('  敵:') ? '#7050a0'
+              : line.startsWith('  攻撃倍率') ? '#3070a0'
+              : line.startsWith('  HP ') ? '#4a6a4a'
+              : line.startsWith('  CG ') ? '#8a7050'
+              : line.includes('[敵]') ? '#b04030'
+              : line.startsWith('→') ? '#998a78'
+              : '#6a5a4a';
+            return <div key={i} style={{ color: c, lineHeight: 1.3 }}>{line}</div>;
+          })}
         </div>
       </div>
 

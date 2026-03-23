@@ -200,6 +200,12 @@ export interface TurnResult {
   enemyCharge: ChargeGauge;
   synergies: SynergyActivation[];
   magicUsed?: string; // magic dice ID used this turn, if any
+  playerStatusDmg: number; // DoT damage dealt to player this turn
+  enemyStatusDmg: number;  // DoT damage dealt to enemy this turn
+  playerEffects: StatusEffect[]; // player's active effects after this turn
+  enemyEffects: StatusEffect[];  // enemy's active effects after this turn
+  playerDmgMult: number; // player's damage multiplier after this turn
+  enemyDmgMult: number;  // enemy's damage multiplier after this turn
 }
 
 export interface SkillAction {

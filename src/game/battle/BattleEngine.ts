@@ -138,11 +138,14 @@ function applyActions(
 // ==============================
 // ステータス効果処理
 // ==============================
-function processStatusEffects(combatant: Combatant): void {
+function processStatusEffects(combatant: Combatant): number {
+  let totalDotDmg = 0;
   const remaining: StatusEffect[] = [];
   for (const effect of combatant.statusEffects) {
     if (effect.type === 'poison' || effect.type === 'burn') {
+      const dmg = Math.min(effect.power, combatant.hp);
       combatant.hp = Math.max(0, combatant.hp - effect.power);
+      totalDotDmg += dmg;
     }
     effect.remainingTurns--;
     if (effect.remainingTurns > 0) remaining.push(effect);
@@ -150,6 +153,7 @@ function processStatusEffects(combatant: Combatant): void {
   combatant.statusEffects = remaining;
   combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, combatant.damageMultiplier));
   combatant.defenseMultiplier = Math.min(2.0, Math.max(0.3, combatant.defenseMultiplier));
+  return totalDotDmg;
 }
 
 // ==============================
@@ -296,8 +300,8 @@ export function executeTurnFull(
   state.enemy.charge = processCharge(state.enemy.charge, enemyChargedPips);
 
   // ステータス効果
-  processStatusEffects(state.player);
-  processStatusEffects(state.enemy);
+  const playerStatusDmg = processStatusEffects(state.player);
+  const enemyStatusDmg = processStatusEffects(state.enemy);
 
   // 勝敗判定
   if (state.enemy.hp <= 0) state.status = 'player-win';
@@ -318,6 +322,11 @@ export function executeTurnFull(
     playerCharge: { ...state.player.charge },
     enemyCharge: { ...state.enemy.charge },
     synergies: allSynergies,
+    playerStatusDmg, enemyStatusDmg,
+    playerEffects: state.player.statusEffects.map(e => ({ ...e })),
+    enemyEffects: state.enemy.statusEffects.map(e => ({ ...e })),
+    playerDmgMult: state.player.damageMultiplier,
+    enemyDmgMult: state.enemy.damageMultiplier,
   };
 
   state.log.push(result);
