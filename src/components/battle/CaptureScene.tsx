@@ -5,6 +5,7 @@ import { MonsterSprite } from '../common/MonsterSprite';
 import { DiceFaceView } from '../common/DiceFaceView';
 import { attemptCapture, type CaptureResult } from '../../game/capture/CaptureEngine';
 import { sfx } from '../../utils/sfx';
+import { bgm } from '../../utils/bgm';
 
 type CapturePhase =
   | 'intro'       // モンスター表示 + 「封印のダイスを振る」
@@ -78,6 +79,7 @@ export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: 
   // ===== チャージ演出 =====
   useEffect(() => {
     if (phase !== 'charging') return;
+    bgm.play('capture');
     sfx.chargeUp();
     // 魔法陣がぐるっと展開
     let frame = 0;
@@ -189,6 +191,7 @@ export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: 
   useEffect(() => {
     if (phase !== 'success') return;
     sfx.victory();
+    bgm.playOnce('capture-success');
     setTextShown(false);
     const timer = setTimeout(() => setTextShown(true), 200);
     const complete = setTimeout(() => onComplete(result!), 3000);
@@ -198,6 +201,7 @@ export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: 
   // ===== 失敗: ヒビ演出 =====
   useEffect(() => {
     if (phase !== 'crack') return;
+    bgm.playOnce('capture-fail');
     sfx.debuff();
     setDiceGlow(0);
     emitParticles(6, '#998a78', 40);

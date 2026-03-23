@@ -3,7 +3,9 @@
  * No audio files needed. All music is synthesized on-the-fly.
  */
 
-type BGMTrack = 'title' | 'town' | 'battle' | 'boss' | 'victory' | 'event' | 'dungeon';
+type BGMTrack = 'title' | 'town' | 'battle' | 'boss' | 'victory' | 'defeat' | 'event' | 'dungeon'
+  | 'battle-frost' | 'battle-volt' | 'battle-venom' | 'battle-alloy' | 'battle-mirage' | 'battle-final'
+  | 'capture' | 'capture-success' | 'capture-fail';
 
 interface Note {
   freq: number;       // frequency in Hz
@@ -30,12 +32,15 @@ const C4 = 262, D4 = 294, E4 = 330, F4 = 349, G4 = 392, A4 = 440, B4 = 494;
 const C5 = 523, D5 = 587, E5 = 659, F5 = 698, G5 = 784, _A5 = 880, _B5 = 988;
 void _A5; void _B5;
 const C3 = 131, D3 = 147, E3 = 165, F3 = 175, G3 = 196, A3 = 220, B3 = 247;
-const Bb3 = 233, _Eb4 = 311, _Ab4 = 415, Bb4 = 466;
-void _Eb4; void _Ab4;
+const Bb3 = 233, Eb4 = 311, _Ab4 = 415, Bb4 = 466;
+void _Ab4;
 const C6 = 1047;
 // Minor scale extras
-const _Gs3 = 208, _Fs4 = 370;
-void _Gs3; void _Fs4;
+const Gs3 = 208, Fs4 = 370;
+// Additional frequencies for chapter battle themes
+const Eb3 = 156, Fs3 = 185;
+const Gs4 = 415;
+const Eb5 = 622, Fs5 = 740, Gs5 = 831;
 
 const BPM_TO_BEAT = (bpm: number) => 60 / bpm;
 
@@ -275,14 +280,379 @@ function makeDungeonTrack(): TrackData {
   return { duration: 16 * b, notes };
 }
 
+function makeDefeatTrack(): TrackData {
+  // Slow, sad - ~80 BPM, A minor, descending melody
+  const b = BPM_TO_BEAT(80);
+  const notes: Note[] = [];
+
+  // Descending melody - slow, lonely
+  const melody = [A4, G4, F4, E4, D4, C4, B3, A3];
+  for (let i = 0; i < melody.length; i++) {
+    notes.push({ freq: melody[i], start: i * b, duration: b * 0.9, type: 'triangle', volume: 0.12 });
+  }
+
+  // Sparse harmony - every other note
+  const harm = [E4, 0, C4, 0, A3, 0, E3, 0];
+  for (let i = 0; i < harm.length; i++) {
+    if (harm[i] === 0) continue;
+    notes.push({ freq: harm[i], start: i * b, duration: b * 0.7, type: 'triangle', volume: 0.06 });
+  }
+
+  // Quiet bass drone
+  notes.push({ freq: A3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.05 });
+
+  return { duration: 8 * b, notes };
+}
+
+function makeBattleFrostTrack(): TrackData {
+  // Ch2 - Ice/Frost: ~150 BPM, E minor, crystal-clear shimmering
+  const b = BPM_TO_BEAT(150);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (triangle) - crystal-clear, high notes with shimmering pairs
+  const melody = [
+    E5, 0, G5, Fs5, B4, 0, E5, D5,
+    G5, 0, Fs5, E5, B4, 0, D5, E5,
+    E5, 0, Gs5, E5, B4, 0, Gs5, Fs5,
+    E5, 0, D5, B4, E4, 0, E5, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.35, type: 'triangle', volume: 0.16 });
+    // Shimmer: a second note slightly delayed and quieter
+    notes.push({ freq: melody[i] * 1.002, start: i * (b / 2) + 0.03, duration: b * 0.25, type: 'triangle', volume: 0.06 });
+  }
+
+  // Bass - lighter, steady
+  const bass = [
+    E3, E3, E3, E3, G3, G3, G3, G3,
+    B3, B3, B3, B3, E3, E3, E3, E3,
+  ];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.05 });
+  }
+
+  // Light percussion - gentle taps
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    perc.push({ start: offset, duration: 0.04, volume: 0.08 });
+    perc.push({ start: offset + 2 * b, duration: 0.04, volume: 0.08 });
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBattleVoltTrack(): TrackData {
+  // Ch3 - Electric: ~170 BPM, B minor, rapid staccato with octave jumps
+  const b = BPM_TO_BEAT(170);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (sawtooth) - staccato, octave jumps for electric feel
+  const melody = [
+    B4, 0, Fs4, B4, Fs5, 0, B4, 0,
+    D5, 0, Fs4, D5, Fs5, 0, E5, D5,
+    B4, 0, Fs5, B4, D5, 0, Fs5, 0,
+    E5, 0, D5, B4, Fs4, 0, B4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    // Very short notes for staccato
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.2, type: 'sawtooth', volume: 0.14 });
+  }
+
+  // Driving bass - power chord feel
+  const bass = [
+    B3, B3, B3, B3, Fs3, Fs3, B3, B3,
+    D3, D3, D3, D3, Fs3, Fs3, B3, B3,
+    B3, B3, B3, B3, E3, E3, Fs3, Fs3,
+    D3, D3, B3, B3, Fs3, Fs3, B3, B3,
+  ];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * (b / 2), duration: b * 0.3, type: 'square', volume: 0.08 });
+  }
+
+  // Heavy syncopated percussion
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * (b / 2) * 2;
+    // Kick every beat
+    for (let beat = 0; beat < 4; beat++) {
+      perc.push({ start: offset + beat * b / 2 * 2, duration: 0.05, volume: 0.16 });
+    }
+    // Off-beat snares
+    perc.push({ start: offset + b * 0.5, duration: 0.03, volume: 0.12 });
+    perc.push({ start: offset + b * 1.5, duration: 0.03, volume: 0.12 });
+    perc.push({ start: offset + b * 2.5, duration: 0.03, volume: 0.1 });
+    perc.push({ start: offset + b * 3.5, duration: 0.03, volume: 0.1 });
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBattleVenomTrack(): TrackData {
+  // Ch4 - Poison/Venom: ~140 BPM, Eb minor / chromatic, creepy oozing
+  const b = BPM_TO_BEAT(140);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (sawtooth) - chromatic half-steps, unsettling
+  const melody = [
+    Eb4, E4, Eb4, 0, Fs4, G4, Fs4, 0,
+    Eb4, D4, Eb4, 0, Gs4, A4, Gs4, 0,
+    Eb5, E5, Eb5, 0, Fs4, Gs4, A4, Gs4,
+    Eb4, 0, D4, Eb4, E4, 0, Eb4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    // "Oozing" - slightly longer notes with close frequencies
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.45, type: 'sawtooth', volume: 0.13 });
+    // Slide effect: a detuned ghost note
+    notes.push({ freq: melody[i] * 0.99, start: i * (b / 2) + 0.02, duration: b * 0.3, type: 'sawtooth', volume: 0.04 });
+  }
+
+  // Low droning bass
+  const bass = [Eb3, Eb3, Eb3, Eb3, D3, D3, D3, D3, Eb3, Eb3, Eb3, Eb3, Gs3, Gs3, Eb3, Eb3];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.06 });
+  }
+
+  // Drone undertone
+  notes.push({ freq: Eb3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.05 });
+
+  // Odd percussion - irregular hits
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    perc.push({ start: offset, duration: 0.05, volume: 0.1 });
+    perc.push({ start: offset + b * 1.5, duration: 0.04, volume: 0.07 });
+    perc.push({ start: offset + b * 3, duration: 0.05, volume: 0.09 });
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBattleAlloyTrack(): TrackData {
+  // Ch5 - Metal/Alloy: ~155 BPM, C minor, mechanical/robotic patterns
+  const b = BPM_TO_BEAT(155);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (square) - mechanical repeating motifs
+  const melody = [
+    C4, Eb4, G4, C4, Eb4, G4, C4, Eb4,
+    Bb3, D4, F4, Bb3, D4, F4, Bb3, D4,
+    C4, Eb4, G4, C5, G4, Eb4, C4, Eb4,
+    Bb3, D4, G4, F4, Eb4, D4, C4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.3, type: 'square', volume: 0.14 });
+  }
+
+  // Bass - steady industrial pulse
+  const bass = [
+    C3, C3, C3, C3, C3, C3, C3, C3,
+    Bb3, Bb3, Bb3, Bb3, G3, G3, G3, G3,
+  ];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.4, type: 'square', volume: 0.07 });
+  }
+
+  // Heavy metallic percussion - hammering pattern
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    for (let beat = 0; beat < 4; beat++) {
+      // Kick every beat
+      perc.push({ start: offset + beat * b, duration: 0.06, volume: 0.18 });
+      // Metallic tap on off-beats
+      perc.push({ start: offset + beat * b + b / 2, duration: 0.02, volume: 0.12 });
+      // Extra sixteenth-note hits for mechanical feel
+      perc.push({ start: offset + beat * b + b / 4, duration: 0.015, volume: 0.06 });
+    }
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBattleMirageTrack(): TrackData {
+  // Ch6 - Illusion/Mirage: ~130 BPM, F# minor, ethereal, dreamy
+  const b = BPM_TO_BEAT(130);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (triangle) - ethereal, unexpected intervals
+  const melody = [
+    Fs4, 0, B4, 0, E5, 0, Gs4, 0,
+    Fs4, 0, D5, 0, B4, 0, Fs5, 0,
+    E5, 0, Gs5, 0, Fs5, 0, B4, 0,
+    D5, 0, Fs4, 0, Gs4, 0, Fs4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.55, type: 'triangle', volume: 0.15 });
+    // Echo/delay effect: same note repeated quieter
+    notes.push({ freq: melody[i], start: i * (b / 2) + b * 0.3, duration: b * 0.35, type: 'triangle', volume: 0.06 });
+  }
+
+  // Dissonant harmony pad
+  notes.push({ freq: Fs3, start: 0, duration: 8 * b, type: 'sine', volume: 0.05 });
+  notes.push({ freq: Gs3, start: 0, duration: 8 * b, type: 'sine', volume: 0.03 }); // dissonance
+  notes.push({ freq: Fs3, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.05 });
+  notes.push({ freq: E3, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.03 });
+
+  // Light percussion - sparse, reverb-like
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    perc.push({ start: offset, duration: 0.04, volume: 0.06 });
+    perc.push({ start: offset + 0.1, duration: 0.03, volume: 0.03 }); // echo
+    perc.push({ start: offset + 2 * b, duration: 0.04, volume: 0.06 });
+    perc.push({ start: offset + 2 * b + 0.1, duration: 0.03, volume: 0.03 }); // echo
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBattleFinalTrack(): TrackData {
+  // Ch7 - Final: ~145 BPM, D minor, epic, combines elements from all chapters
+  const b = BPM_TO_BEAT(145);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Main melody (sawtooth) - epic dramatic
+  const melody = [
+    D5, 0, F5, D5, A4, 0, D5, C5,
+    Bb4, 0, D5, F5, E5, 0, D5, C5,
+    D5, 0, F5, A4, Bb4, 0, C5, D5,
+    F5, 0, E5, D5, A4, 0, D5, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.4, type: 'sawtooth', volume: 0.15 });
+  }
+
+  // Counter-melody (square) - interweaving
+  const counter = [
+    A3, 0, D4, 0, F4, 0, A4, 0,
+    Bb3, 0, D4, 0, F4, 0, G4, 0,
+    A3, 0, D4, 0, F4, 0, A4, 0,
+    G3, 0, Bb3, 0, A3, 0, D4, 0,
+  ];
+  for (let i = 0; i < counter.length; i++) {
+    if (counter[i] === 0) continue;
+    notes.push({ freq: counter[i], start: i * (b / 2), duration: b * 0.35, type: 'square', volume: 0.08 });
+  }
+
+  // Heavy bass
+  const bass = [D3, D3, D3, D3, Bb3, Bb3, G3, G3, D3, D3, D3, D3, A3, A3, D3, D3];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.08 });
+  }
+
+  // Ominous drone
+  notes.push({ freq: D3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
+  notes.push({ freq: A3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.06 });
+
+  // Full percussion - most intense
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    for (let beat = 0; beat < 4; beat++) {
+      // kick every beat
+      perc.push({ start: offset + beat * b, duration: 0.06, volume: 0.18 });
+      // snare on off-beats
+      perc.push({ start: offset + beat * b + b / 2, duration: 0.03, volume: 0.12 });
+      // hi-hat sixteenths
+      perc.push({ start: offset + beat * b + b / 4, duration: 0.015, volume: 0.05 });
+      perc.push({ start: offset + beat * b + b * 3 / 4, duration: 0.015, volume: 0.05 });
+    }
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeCaptureTrack(): TrackData {
+  // Tense, anticipatory - ~100 BPM, short loop
+  const b = BPM_TO_BEAT(100);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Suspenseful rising tone
+  const rise = [A3, Bb3, B3, C4, D4, Eb4, E4, F4];
+  for (let i = 0; i < rise.length; i++) {
+    notes.push({ freq: rise[i], start: i * (b / 2), duration: b * 0.4, type: 'triangle', volume: 0.1 + i * 0.01 });
+  }
+
+  // Drum roll effect - rapid quiet percussion
+  const rollLen = 4 * b;
+  const numHits = 24;
+  for (let i = 0; i < numHits; i++) {
+    const t = (i / numHits) * rollLen;
+    perc.push({ start: t, duration: 0.02, volume: 0.04 + (i / numHits) * 0.06 });
+  }
+
+  return { duration: 4 * b, notes, perc };
+}
+
+function makeCaptureSuccessTrack(): TrackData {
+  // Joyful fanfare - ~140 BPM, C major ascending
+  const b = BPM_TO_BEAT(140);
+  const notes: Note[] = [];
+
+  const melody = [C5, E5, G5, C6, C6, G5, C6, 0];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.45, type: 'triangle', volume: 0.2 });
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.3, type: 'square', volume: 0.06 });
+  }
+
+  // Harmony
+  const harm = [E4, G4, B4, E5, E5, B4, E5, 0];
+  for (let i = 0; i < harm.length; i++) {
+    if (harm[i] === 0) continue;
+    notes.push({ freq: harm[i], start: i * (b / 2), duration: b * 0.35, type: 'triangle', volume: 0.08 });
+  }
+
+  // Bass
+  notes.push({ freq: C3, start: 0, duration: 2 * b, type: 'square', volume: 0.06 });
+  notes.push({ freq: G3, start: 2 * b, duration: 2 * b, type: 'square', volume: 0.06 });
+
+  return { duration: 4 * b, notes };
+}
+
+function makeCaptureFailTrack(): TrackData {
+  // Disappointed - ~90 BPM, short descending minor
+  const b = BPM_TO_BEAT(90);
+  const notes: Note[] = [];
+
+  const melody = [E4, D4, C4, A3, E4, C4, A3, 0];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.5, type: 'triangle', volume: 0.13 - i * 0.01 });
+  }
+
+  // Low sigh
+  notes.push({ freq: A3 / 2, start: 0, duration: 3 * b, type: 'sine', volume: 0.04 });
+
+  return { duration: 3 * b, notes };
+}
+
 const TRACKS: Record<BGMTrack, () => TrackData> = {
   title: makeTitleTrack,
   town: makeTownTrack,
   battle: makeBattleTrack,
   boss: makeBossTrack,
   victory: makeVictoryTrack,
+  defeat: makeDefeatTrack,
   event: makeEventTrack,
   dungeon: makeDungeonTrack,
+  'battle-frost': makeBattleFrostTrack,
+  'battle-volt': makeBattleVoltTrack,
+  'battle-venom': makeBattleVenomTrack,
+  'battle-alloy': makeBattleAlloyTrack,
+  'battle-mirage': makeBattleMirageTrack,
+  'battle-final': makeBattleFinalTrack,
+  capture: makeCaptureTrack,
+  'capture-success': makeCaptureSuccessTrack,
+  'capture-fail': makeCaptureFailTrack,
 };
 
 // ============================================================
@@ -326,6 +696,19 @@ class BGMEngine {
     this.currentTrack = track;
     this.isPlaying = true;
     this.startLoop(track);
+  }
+
+  playOnce(track: BGMTrack) {
+    this.stop();
+    this.currentTrack = track;
+    this.isPlaying = true;
+    const trackData = TRACKS[track]();
+    this.playSequence(trackData);
+    // Auto-stop after duration (don't loop)
+    this.loopTimer = window.setTimeout(() => {
+      this.isPlaying = false;
+      // Don't clear currentTrack so controller knows what was playing
+    }, trackData.duration * 1000);
   }
 
   stop() {

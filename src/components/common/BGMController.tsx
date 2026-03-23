@@ -11,6 +11,7 @@ import type { BGMTrack } from '../../utils/bgm';
  */
 export function BGMController() {
   const currentScreen = useGameStore((s) => s.currentScreen);
+  const currentChapter = useGameStore((s) => s.currentChapter);
   const [muted, setMuted] = useState(bgm.muted);
 
   // Load saved audio settings on mount
@@ -28,24 +29,36 @@ export function BGMController() {
   }, []);
 
   useEffect(() => {
-    const trackMap: Record<string, BGMTrack> = {
-      title: 'title',
-      town: 'town',
-      battle: 'battle',
-      dungeon: 'dungeon',
-      event: 'event',
-      shop: 'event',
-      forge: 'event',
-      gacha: 'event',
-      codex: 'town',
-      'dice-editor': 'town',
-      pvp: 'battle',
-      tutorial: 'town',
-      settings: 'town',
-    };
-    const track = trackMap[currentScreen] ?? 'town';
-    bgm.play(track);
-  }, [currentScreen]);
+    if (currentScreen === 'battle') {
+      const chapterBattleMap: Record<number, BGMTrack> = {
+        1: 'battle',
+        2: 'battle-frost',
+        3: 'battle-volt',
+        4: 'battle-venom',
+        5: 'battle-alloy',
+        6: 'battle-mirage',
+        7: 'battle-final',
+      };
+      bgm.play(chapterBattleMap[currentChapter] ?? 'battle');
+    } else {
+      const trackMap: Record<string, BGMTrack> = {
+        title: 'title',
+        town: 'town',
+        dungeon: 'dungeon',
+        event: 'event',
+        shop: 'event',
+        forge: 'event',
+        gacha: 'event',
+        codex: 'town',
+        'dice-editor': 'town',
+        pvp: 'battle',
+        tutorial: 'town',
+        settings: 'town',
+      };
+      const track = trackMap[currentScreen] ?? 'town';
+      bgm.play(track);
+    }
+  }, [currentScreen, currentChapter]);
 
   const handleToggle = () => {
     const nowMuted = bgm.toggleMute();

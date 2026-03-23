@@ -15,6 +15,7 @@ import { MonsterSprite } from '../common/MonsterSprite';
 import { ElementEffect, SynergyCutIn, Particles, StatusIndicator, HitFlash } from './BattleEffects';
 import { CaptureScene } from './CaptureScene';
 import { sfx } from '../../utils/sfx';
+import { bgm } from '../../utils/bgm';
 
 type Phase =
   | 'ready' | 'rolling' | 'selecting'
@@ -800,6 +801,7 @@ export function BattleScreen() {
               setPhase('result');
               if (battle.status === 'player-win') {
                 sfx.victory();
+                bgm.playOnce('victory');
                 addLog('══ 勝利！ ══'); flash('WIN!', 1500);
                 if (isPvpBattle) {
                   addPvpResult(true);
@@ -846,6 +848,7 @@ export function BattleScreen() {
                 }
               } else {
                 sfx.defeat();
+                bgm.playOnce('defeat');
                 addLog('══ 敗北... ══'); flash('LOSE...', 1500);
                 if (isPvpBattle) {
                   addPvpResult(false);
