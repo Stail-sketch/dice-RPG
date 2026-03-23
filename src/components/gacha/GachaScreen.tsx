@@ -173,7 +173,7 @@ export function GachaScreen() {
               スキルルーンを入手！
             </div>
             <div style={{ fontSize: 9, color: '#6a5a4a', textAlign: 'center', lineHeight: 1.6 }}>
-              コモン: 50% / レア: 35% / エピック: 15%
+              コモン: 45% / レア: 50% / エピック: 4.5% / レジェンド: 0.5%
             </div>
           </>
         )}
