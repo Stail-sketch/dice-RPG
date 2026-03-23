@@ -8,6 +8,7 @@ import { HpBar } from '../common/HpBar';
 import { ELEMENT_COLORS } from '../common/ElementBadge';
 import { getPipColorsForDiceFace } from '../../utils/pipColors';
 import { applyDefaultSocketTiers } from '../../utils/applyDefaultTiers';
+import { CaptureScene } from '../battle/CaptureScene';
 
 // ==============================
 // Pip dialogue box
@@ -330,89 +331,75 @@ export function TutorialScreen() {
   };
 
   // ==============================
-  // STEP 3 rendering (Capture)
+  // STEP 3 rendering (Capture) - 実際のCaptureSceneを使用
   // ==============================
   const renderStep3 = () => {
-    const handleCapture = () => {
-      setCaptureRolling(true);
-      setTimeout(() => {
-        setCaptureRolling(false);
-        setCaptureDone(true);
-        setSubStep(2);
-      }, 1000);
-    };
-
     const hasRotBeetle = ownedDice.some(d => (d.baseId || d.id) === 'rot-beetle');
     const hasFrostJelly = ownedDice.some(d => (d.baseId || d.id) === 'frost-jelly');
 
+    // チュートリアル用の捕獲率100%モンスター
+    const rotBeetle = CHAPTER1_MONSTERS.find(m => m.id === 'rot-beetle')!;
+    const tutorialMonster = { ...rotBeetle, baseStats: { captureRate: 100 } };
+
     return (
       <>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          {/* Show captured monster */}
-          {subStep >= 2 && hasRotBeetle && (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <MonsterSprite monsterId="rot-beetle" element="venom" size={48} animate />
-                <div style={{ fontSize: 9, color: '#408030' }}>ロットビートル</div>
-              </div>
-              {subStep >= 3 && hasFrostJelly && (
+        {subStep === 1 ? (
+          // 実際のCaptureScene使用
+          <CaptureScene
+            monster={tutorialMonster}
+            onComplete={() => {
+              // 捕獲成功（100%なので必ず成功）
+              setSubStep(2);
+            }}
+            onSkip={() => setSubStep(2)}
+          />
+        ) : (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            {/* 捕獲成功後の表示 */}
+            {subStep >= 2 && hasRotBeetle && (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <MonsterSprite monsterId="frost-jelly" element="frost" size={48} animate />
-                  <div style={{ fontSize: 9, color: '#3070a0' }}>フロストジェリー</div>
+                  <MonsterSprite monsterId="rot-beetle" element="venom" size={48} animate />
+                  <div style={{ fontSize: 9, color: '#408030' }}>ロットビートル</div>
                 </div>
-              )}
-            </div>
-          )}
+                {subStep >= 3 && hasFrostJelly && (
+                  <div style={{ textAlign: 'center' }}>
+                    <MonsterSprite monsterId="frost-jelly" element="frost" size={48} animate />
+                    <div style={{ fontSize: 9, color: '#3070a0' }}>フロストジェリー</div>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Capture dice animation */}
-          {subStep === 1 && (
-            <div style={{ textAlign: 'center' }}>
-              <MonsterSprite monsterId="rot-beetle" element="venom" size={64} animate />
+            {/* パーティ表示 */}
+            {subStep >= 4 && (
               <div style={{ marginTop: 8 }}>
-                <DiceFaceView faceNumber={captureDone ? 6 : 1} size={50} rolling={captureRolling} borderColor="#b09050"
-                  pipColors={captureDone ? Array(6).fill('#705828') : undefined} />
-              </div>
-              {!captureRolling && !captureDone && (
-                <button className="rpg-btn rpg-btn-primary" style={{ width: 'auto', padding: '6px 28px', marginTop: 8 }} onClick={handleCapture}>
-                  封印のダイスを振る！
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Party display (step 3 sub 4) */}
-          {subStep >= 4 && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 10, color: '#705828', textAlign: 'center', marginBottom: 8, fontWeight: 'bold' }}>パーティ編成</div>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <MonsterSprite monsterId="protagonist" element="alloy" size={40} animate />
-                  <div style={{ fontSize: 8, color: '#686868' }}>Hero Dice</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <MonsterSprite monsterId="rot-beetle" element="venom" size={40} animate />
-                  <div style={{ fontSize: 8, color: '#408030' }}>ロットビートル</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <MonsterSprite monsterId="frost-jelly" element="frost" size={40} animate />
-                  <div style={{ fontSize: 8, color: '#3070a0' }}>フロストジェリー</div>
+                <div style={{ fontSize: 10, color: '#705828', textAlign: 'center', marginBottom: 8, fontWeight: 'bold' }}>パーティ編成</div>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <MonsterSprite monsterId="protagonist" element="alloy" size={40} animate />
+                    <div style={{ fontSize: 8, color: '#686868' }}>Hero Dice</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <MonsterSprite monsterId="rot-beetle" element="venom" size={40} animate />
+                    <div style={{ fontSize: 8, color: '#408030' }}>ロットビートル</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <MonsterSprite monsterId="frost-jelly" element="frost" size={40} animate />
+                    <div style={{ fontSize: 8, color: '#3070a0' }}>フロストジェリー</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {subStep === 0 && !captureRolling && !captureDone && (
-            <MonsterSprite monsterId="rot-beetle" element="venom" size={64} animate />
-          )}
-        </div>
-
-        {subStep === 0 && <PipDialogue text="このモンスター、封印できるかも！ダイスに閉じ込めて仲間にしよう！" onNext={() => setSubStep(1)} />}
-        {subStep === 1 && captureRolling && (
-          <div style={{ position: 'absolute', bottom: 60, left: 12, right: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 12, color: '#705828' }}>封印中...</div>
+            {subStep === 0 && (
+              <MonsterSprite monsterId="rot-beetle" element="venom" size={64} animate />
+            )}
           </div>
         )}
-        {subStep === 2 && <PipDialogue text="つかまえた！ロットビートルをゲット！こいつも戦力になるぞ。" onNext={() => setSubStep(3)} />}
+
+        {subStep === 0 && <PipDialogue text="このモンスター、封印できるかも！実際に封印のダイスを振ってみよう！" onNext={() => setSubStep(1)} />}
+        {subStep === 2 && <PipDialogue text="つかまえた！ロットビートルをゲット！捕獲率が高いほど成功しやすいよ。" onNext={() => setSubStep(3)} />}
         {subStep === 3 && <PipDialogue text="もう1体の仲間も見つけたよ！フロストジェリーが加わった！" onNext={() => setSubStep(4)} />}
         {subStep === 4 && <PipDialogue text="3つのダイスが揃った！バトルでは3つ同時に振って戦うのが基本だよ。" onNext={nextStep} />}
       </>
