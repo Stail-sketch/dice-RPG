@@ -76,7 +76,8 @@ export function BattleScreen() {
     if (side === 'enemy') { setShakeEnemy(true); setHurtEnemy(true); setTimeout(() => { setShakeEnemy(false); setHurtEnemy(false); }, 500); }
     else { setShakePlayer(true); setHurtPlayer(true); setTimeout(() => { setShakePlayer(false); setHurtPlayer(false); }, 500); }
   }, []);
-  const flash = useCallback((msg: string, duration = 800) => { setCenterMessage(msg); setTimeout(() => setCenterMessage(null), duration); }, []);
+  const [flashDuration, setFlashDuration] = useState(800);
+  const flash = useCallback((msg: string, duration = 800) => { setFlashDuration(duration); setCenterMessage(msg); setTimeout(() => setCenterMessage(null), duration); }, []);
   const showElementEffect = useCallback((el: Element, side: 'top' | 'bottom') => { setEffectElement(el); setEffectSide(side); setTimeout(() => setEffectElement(null), 600); }, []);
   const showParticles = useCallback((color: string, y: number) => { setParticles({ color, y }); setTimeout(() => setParticles(null), 800); }, []);
   const doScreenFlash = useCallback((color: string) => { setScreenFlash(color); setTimeout(() => setScreenFlash(null), 180); }, []);
@@ -886,8 +887,8 @@ export function BattleScreen() {
       )}
 
       {centerMessage && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, pointerEvents: 'none' }}>
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#705828', animation: 'centerFlash 0.8s ease', letterSpacing: 4 }}>{centerMessage}</div>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, pointerEvents: 'none', animation: `centerFlash ${flashDuration}ms ease forwards` }}>
+          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#705828', letterSpacing: 4 }}>{centerMessage}</div>
         </div>
       )}
       {popups.map(p => {
