@@ -19,7 +19,7 @@ const UPGRADE_INFO: Record<SocketTier, { next: string; stones: number; gold: num
 };
 
 export function ForgeScreen() {
-  const { setScreen, ownedDice, gold, materials, upgradeSocket } = useGameStore();
+  const { setScreen, ownedDice, gold, materials, upgradeSocket, socketExpansions, expandSocket } = useGameStore();
   const [selectedDiceIdx, setSelectedDiceIdx] = useState(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -51,6 +51,7 @@ export function ForgeScreen() {
         <span style={{ color: '#705828' }}>{gold}G</span>
         <span style={{ color: '#998a78' }}>鍛冶石: {materials['forge-stone']}</span>
         <span style={{ color: '#7050a0' }}>レア鉱石: {materials['rare-ore']}</span>
+        <span style={{ color: '#3070a0' }}>結晶: {materials['expansion-crystal']}</span>
       </div>
 
       {/* メッセージ */}
@@ -176,6 +177,60 @@ export function ForgeScreen() {
           })()}
         </div>
       )}
+
+      {/* 上級鍛冶: ソケット拡張 */}
+      {dice && selectedFace && (() => {
+        const face = getAllFaces(dice)[selectedFace - 1];
+        if (!face || isFixedFace(face)) return null;
+        const custom = face as CustomFace;
+        const existing = socketExpansions[dice.id] || [];
+        const totalExpansions = existing.length;
+        const faceExpanded = existing.includes(selectedFace);
+        const canExpand = totalExpansions < 3 && !faceExpanded
+          && gold >= 1000
+          && materials['rare-ore'] >= 3
+          && materials['expansion-crystal'] >= 1;
+
+        return (
+          <div className="rpg-panel" style={{ padding: 8 }}>
+            <div style={{ fontSize: 11, color: '#3070a0', fontWeight: 'bold', marginBottom: 4 }}>
+              上級鍛冶 — ソケット拡張
+            </div>
+            <div style={{ fontSize: 9, color: '#998a78', marginBottom: 6 }}>
+              カスタム面にbronzeソケットを+1追加（1ダイス最大3回、同面1回）
+            </div>
+            <div style={{ fontSize: 9, color: '#6a5a4a', marginBottom: 6 }}>
+              {selectedFace}の面: 現在{custom.sockets.length}ソケット
+              {faceExpanded && <span style={{ color: '#b04030', marginLeft: 4 }}>（拡張済み）</span>}
+              <span style={{ marginLeft: 8 }}>ダイス拡張: {totalExpansions}/3</span>
+            </div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button
+                className="rpg-btn"
+                style={{
+                  width: 'auto', padding: '4px 12px', margin: 0, fontSize: 10,
+                  opacity: canExpand ? 1 : 0.4,
+                }}
+                disabled={!canExpand}
+                onClick={() => {
+                  const ok = expandSocket(dice.id, selectedFace);
+                  if (ok) {
+                    setMessage('ソケット拡張成功！');
+                  } else {
+                    setMessage('拡張できません');
+                  }
+                  setTimeout(() => setMessage(null), 1500);
+                }}
+              >
+                拡張する
+              </button>
+              <span style={{ fontSize: 8, color: '#705828' }}>1000G</span>
+              <span style={{ fontSize: 8, color: '#7050a0' }}>鉱石×3</span>
+              <span style={{ fontSize: 8, color: '#3070a0' }}>結晶×1</span>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ padding: '4px 0' }}>
         <button className="rpg-btn" onClick={() => setScreen('town')}>街に戻る</button>

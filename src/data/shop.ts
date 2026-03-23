@@ -55,6 +55,15 @@ export const SHOP_ITEMS: ShopItem[] = [
     currency: 'gems',
     materialId: 'rare-ore',
   },
+  {
+    id: 'shop-expansion-crystal',
+    name: '拡張結晶',
+    description: 'ソケット拡張に必要な希少素材',
+    type: 'material',
+    price: 10,
+    currency: 'gems',
+    materialId: 'expansion-crystal',
+  },
   // マジックダイス（shopで買えるもの）
   ...ALL_MAGIC_DICE
     .filter(m => m.obtain.startsWith('shop-'))

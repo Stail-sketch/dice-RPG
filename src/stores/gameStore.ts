@@ -17,6 +17,7 @@ interface TutorialState {
 interface Materials {
   'forge-stone': number;
   'rare-ore': number;
+  'expansion-crystal': number;
 }
 
 interface GameState {
@@ -87,6 +88,10 @@ interface GameState {
   // 鍛冶
   upgradeSocket: (diceId: string, faceNumber: number, socketIndex: number) => boolean;
 
+  // ソケット拡張（上級鍛冶）
+  socketExpansions: Record<string, number[]>; // diceId → 拡張済みface番号の配列
+  expandSocket: (diceId: string, faceNumber: number) => boolean;
+
   // 章進行
   advanceChapter: () => void;
 
@@ -121,6 +126,7 @@ function getSaveableState(s: GameState) {
     tutorial: s.tutorial,
     ownedMagicDice: s.ownedMagicDice,
     equippedMagicDice: s.equippedMagicDice,
+    socketExpansions: s.socketExpansions,
   };
 }
 
@@ -132,7 +138,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   playerMaxHp: 50,
   gold: 500,
   gems: 10,
-  materials: { 'forge-stone': 0, 'rare-ore': 0 },
+  materials: { 'forge-stone': 0, 'rare-ore': 0, 'expansion-crystal': 0 },
 
   protagonistDice: { ...PROTAGONIST_DICE },
   ownedDice: [],
@@ -170,7 +176,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedRunes: [],
       gold: 0,
       gems: 0,
-      materials: { 'forge-stone': 0, 'rare-ore': 0 },
+      materials: { 'forge-stone': 0, 'rare-ore': 0, 'expansion-crystal': 0 },
       currentChapter: 1,
       clearedDungeons: [],
       capturedMonsters: [],
@@ -371,6 +377,57 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
+  // ソケット拡張（上級鍛冶）
+  socketExpansions: {},
+  expandSocket: (diceId, faceNumber) => {
+    const s = get();
+    const dice = diceId === 'protagonist' ? s.protagonistDice : s.ownedDice.find(d => d.id === diceId);
+    if (!dice) return false;
+
+    // カスタム面のみ
+    const face = dice.customFaces.find(f => f.faceNumber === faceNumber);
+    if (!face) return false;
+
+    // 拡張上限チェック
+    const existing = s.socketExpansions[diceId] || [];
+    if (existing.length >= 3) return false; // 1ダイス最大3回
+    if (existing.includes(faceNumber)) return false; // 同面は1回
+
+    // コストチェック
+    if (s.gold < 1000) return false;
+    if (s.materials['rare-ore'] < 3) return false;
+    if (s.materials['expansion-crystal'] < 1) return false;
+
+    // ソケット追加 + コスト消費
+    set((s) => {
+      const addSocketToFace = (d: MonsterDice) => {
+        const newCustom = d.customFaces.map(f => {
+          if (f.faceNumber !== faceNumber) return f;
+          return { ...f, sockets: [...f.sockets, { skillRuneId: null, socketTier: 'bronze' as const }] };
+        });
+        return { ...d, customFaces: newCustom };
+      };
+
+      const newExpansions = { ...s.socketExpansions, [diceId]: [...(s.socketExpansions[diceId] || []), faceNumber] };
+
+      const costUpdate = {
+        gold: s.gold - 1000,
+        materials: {
+          ...s.materials,
+          'rare-ore': s.materials['rare-ore'] - 3,
+          'expansion-crystal': s.materials['expansion-crystal'] - 1,
+        },
+        socketExpansions: newExpansions,
+      };
+
+      if (diceId === 'protagonist') {
+        return { protagonistDice: addSocketToFace(s.protagonistDice), ...costUpdate };
+      }
+      return { ownedDice: s.ownedDice.map(d => d.id !== diceId ? d : addSocketToFace(d)), ...costUpdate };
+    });
+    return true;
+  },
+
   // 章進行
   advanceChapter: () => set((s) => ({
     currentChapter: Math.min(7, s.currentChapter + 1),
@@ -429,7 +486,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedRunes: starterRunes,
       gold: 500,
       gems: 30,
-      materials: { 'forge-stone': 3, 'rare-ore': 0 },
+      materials: { 'forge-stone': 3, 'rare-ore': 0, 'expansion-crystal': 0 },
       currentChapter: 1,
       clearedDungeons: [],
       capturedMonsters: ['pyrachnid', 'frost-jelly', 'salamander-v2'],
