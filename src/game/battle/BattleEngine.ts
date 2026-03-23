@@ -175,7 +175,7 @@ function applyActions(
         const debuffVal = action.rawDamage < 1 ? action.rawDamage : 0.7;
         action.actualDamage = debuffVal;
         defender.statusEffects.push({ type: 'debuff', power: debuffVal, remainingTurns: 3, element: action.element });
-        defender.damageMultiplier = Math.max(0.3, defender.damageMultiplier * debuffVal);
+        defender.damageMultiplier = Math.max(0.5, defender.damageMultiplier * debuffVal);
         break;
       }
       case 'shield':
@@ -204,10 +204,10 @@ function applyActions(
         break;
       }
       case 'seal':
-        // 封印: 敵のダメージ倍率を1Tだけ大幅ダウン
+        // 封印: 敵のダメージ倍率を1Tダウン（控えめ）
         action.actualDamage = action.rawDamage;
-        defender.statusEffects.push({ type: 'debuff', power: 0.3, remainingTurns: 1, element: action.element });
-        defender.damageMultiplier *= 0.3;
+        defender.statusEffects.push({ type: 'debuff', power: 0.7, remainingTurns: 1, element: action.element });
+        defender.damageMultiplier = Math.max(0.5, defender.damageMultiplier * 0.7);
         break;
       case 'passive':
         // パッシブ: バトル中は何もしない（装備しているだけで効果）
@@ -251,7 +251,7 @@ function processStatusEffects(combatant: Combatant): number {
     if (eff.type === 'buff') dmgMult *= eff.power;
     if (eff.type === 'debuff') dmgMult *= eff.power;
   }
-  combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, dmgMult));
+  combatant.damageMultiplier = Math.min(2.0, Math.max(0.5, dmgMult));
   combatant.defenseMultiplier = Math.min(2.0, Math.max(0.3, defMult));
   return totalDotDmg;
 }
@@ -496,8 +496,8 @@ export function executeTurnFull(
   for (const roll of enemyActiveRolls) {
     for (const el of getFaceElements(roll.face)) enemyElements.add(el);
   }
-  const playerRecipes = getRecipeSynergy(Array.from(playerElements));
-  const enemyRecipes = getRecipeSynergy(Array.from(enemyElements));
+  const playerRecipes = getRecipeSynergy(Array.from(playerElements)).slice(0, 2);
+  const enemyRecipes = getRecipeSynergy(Array.from(enemyElements)).slice(0, 2);
 
   for (const recipe of playerRecipes) {
     const bonusAction = createRecipeAction(recipe, false);
