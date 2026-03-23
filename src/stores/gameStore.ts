@@ -28,7 +28,9 @@ interface GameState {
   playerMaxHp: number;
   gold: number;
   gems: number;
+  gemFragments: number; // 100個で1ジェム
   materials: Materials;
+  addGemFragments: (amount: number) => void;
 
   protagonistDice: MonsterDice;
   ownedDice: MonsterDice[];
@@ -92,6 +94,13 @@ interface GameState {
   captureMonster: (monsterId: string) => void;
   clearDungeon: (dungeonId: string) => void;
 
+  // 売却
+  sellDice: (diceInstanceId: string) => boolean;
+  sellRune: (runeId: string) => boolean;
+
+  // ルーン一括はずし
+  unequipAllRunes: (diceId: string) => void;
+
   // 鍛冶
   upgradeSocket: (diceId: string, faceNumber: number, socketIndex: number) => boolean;
 
@@ -133,6 +142,7 @@ function getSaveableState(s: GameState) {
     tutorial: s.tutorial,
     ownedMagicDice: s.ownedMagicDice,
     equippedMagicDice: s.equippedMagicDice,
+    gemFragments: s.gemFragments,
     socketExpansions: s.socketExpansions,
     pvpPoints: s.pvpPoints,
     pvpWins: s.pvpWins,
@@ -148,6 +158,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   playerMaxHp: 50,
   gold: 500,
   gems: 10,
+  gemFragments: 0,
   materials: { 'forge-stone': 0, 'rare-ore': 0, 'expansion-crystal': 0 },
 
   protagonistDice: { ...PROTAGONIST_DICE },
@@ -330,9 +341,75 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addGold: (amount) => set((s) => ({ gold: Math.max(0, s.gold + amount) })),
   addGems: (amount) => set((s) => ({ gems: Math.max(0, s.gems + amount) })),
+  addGemFragments: (amount) => set((s) => {
+    const total = s.gemFragments + amount;
+    const gemsEarned = Math.floor(total / 100);
+    return {
+      gemFragments: total % 100,
+      gems: s.gems + gemsEarned,
+    };
+  }),
   addMaterial: (id, amount) => set((s) => ({
     materials: { ...s.materials, [id]: Math.max(0, (s.materials[id] || 0) + amount) },
   })),
+
+  // 売却
+  sellDice: (diceInstanceId) => {
+    const s = get();
+    if (diceInstanceId === 'protagonist') return false;
+    if (s.party.includes(diceInstanceId)) return false;
+    const idx = s.ownedDice.findIndex(d => d.id === diceInstanceId);
+    if (idx === -1) return false;
+    set((s) => ({
+      ownedDice: s.ownedDice.filter((_, i) => i !== idx),
+      gemFragments: s.gemFragments + 1,
+    }));
+    // gemFragments → gems変換チェック
+    const updated = get();
+    if (updated.gemFragments >= 100) {
+      set({ gems: updated.gems + 1, gemFragments: updated.gemFragments - 100 });
+    }
+    return true;
+  },
+
+  sellRune: (runeId) => {
+    const s = get();
+    const idx = s.ownedRunes.findIndex(r => r.id === runeId);
+    if (idx === -1) return false;
+    set((s) => ({
+      ownedRunes: s.ownedRunes.filter((_, i) => i !== idx),
+      materials: { ...s.materials, 'forge-stone': s.materials['forge-stone'] + 1 },
+    }));
+    return true;
+  },
+
+  // ルーン一括はずし
+  unequipAllRunes: (diceId) => {
+    const s = get();
+    const dice = diceId === 'protagonist' ? s.protagonistDice : s.ownedDice.find(d => d.id === diceId);
+    if (!dice) return;
+    const recoveredRunes: typeof s.ownedRunes = [];
+    const clearCustomFaces = (d: MonsterDice) => {
+      const newCustom = d.customFaces.map(f => ({
+        ...f,
+        sockets: f.sockets.map(sock => {
+          if (sock.skillRuneId) {
+            const rune = SKILL_RUNES.find(r => r.id === sock.skillRuneId);
+            if (rune) recoveredRunes.push({ ...rune });
+          }
+          return { ...sock, skillRuneId: null };
+        }),
+      }));
+      return { ...d, customFaces: newCustom };
+    };
+    set((s) => {
+      const runesBack = [...s.ownedRunes, ...recoveredRunes];
+      if (diceId === 'protagonist') {
+        return { protagonistDice: clearCustomFaces(s.protagonistDice), ownedRunes: runesBack };
+      }
+      return { ownedDice: s.ownedDice.map(d => d.id !== diceId ? d : clearCustomFaces(d)), ownedRunes: runesBack };
+    });
+  },
 
   setCurrentEnemy: (enemy) => set({ currentEnemy: enemy }),
   captureMonster: (monsterId) => set((s) => ({
@@ -506,6 +583,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedRunes: starterRunes,
       gold: 500,
       gems: 30,
+      gemFragments: 0,
       materials: { 'forge-stone': 3, 'rare-ore': 0, 'expansion-crystal': 0 },
       currentChapter: 1,
       clearedDungeons: [],

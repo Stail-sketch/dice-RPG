@@ -29,7 +29,8 @@ const CATEGORY_NAMES: Record<MagicCategory, string> = {
 };
 
 export function DiceEditorScreen() {
-  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice } = useGameStore();
+  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, unequipAllRunes, sellDice, sellRune, gemFragments } = useGameStore();
+  const [message, setMessage] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [selectedSocket, setSelectedSocket] = useState<number | null>(null);
@@ -168,6 +169,41 @@ export function DiceEditorScreen() {
           ))}
         </div>
       </div>
+
+      {/* トーストメッセージ */}
+      {message && (
+        <div style={{
+          position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)',
+          padding: '6px 16px', fontSize: 12, borderRadius: 6, zIndex: 1000,
+          background: '#e0f0e0', color: '#308050', border: '1px solid #a0d0a0',
+          pointerEvents: 'none',
+        }}>{message}</div>
+      )}
+
+      {/* ダイス操作ボタン */}
+      {currentDice && (
+        <div style={{ display: 'flex', gap: 4, margin: '4px 0' }}>
+          <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
+            onClick={() => {
+              unequipAllRunes(currentDice.id);
+              setMessage('ルーンを全て外しました');
+              setTimeout(() => setMessage(null), 1200);
+            }}
+          >一括はずし</button>
+          {currentDice.id !== 'protagonist' && !party.includes(currentDice.id) && (
+            <button className="rpg-btn rpg-btn-danger" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
+              onClick={() => {
+                if (confirm(`${currentDice.name}を売却しますか？\nジェムのかけら1個を獲得`)) {
+                  sellDice(currentDice.id);
+                  setSelectedSlot(0); setSelectedFace(null); setSelectedSocket(null);
+                  setMessage('売却しました');
+                  setTimeout(() => setMessage(null), 1200);
+                }
+              }}
+            >ダイス売却</button>
+          )}
+        </div>
+      )}
 
       {/* 6面展開図 */}
       {currentDice && (
@@ -395,6 +431,10 @@ export function DiceEditorScreen() {
                      rune.effect.type === 'heal' ? `+${rune.effect.power}HP` :
                      rune.effect.description}
                   </span>
+                  <button
+                    style={{ fontSize: 7, padding: '1px 4px', marginLeft: 4, border: '1px solid #c0a0a0', borderRadius: 3, background: '#f0e8e0', color: '#b04030', cursor: 'pointer' }}
+                    onClick={(e) => { e.stopPropagation(); sellRune(rune.id); setMessage('ルーン売却 → 鍛冶石+1'); setTimeout(() => setMessage(null), 1000); }}
+                  >売</button>
                 </div>
               );
             })}

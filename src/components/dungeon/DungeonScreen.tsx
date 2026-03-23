@@ -1,5 +1,6 @@
 import { useGameStore } from '../../stores/gameStore';
 import { CHAPTER1_MONSTERS, CHAPTER2_MONSTERS, CHAPTER3_MONSTERS, CHAPTER4_MONSTERS, CHAPTER5_MONSTERS, CHAPTER6_MONSTERS, CHAPTER7_MONSTERS } from '../../data/monsters';
+import { SKILL_RUNES } from '../../data/skill-runes';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 import { MonsterSprite } from '../common/MonsterSprite';
 import type { MonsterDice } from '../../types';
@@ -24,8 +25,26 @@ const CHAPTER_NAMES: Record<number, string> = {
   7: '最終章: 運命の回廊',
 };
 
-// 敵パーティ生成: メインモンスター + ランダムな取り巻き
-function buildEnemyParty(mainMonster: MonsterDice, chapterMonsters: MonsterDice[]): MonsterDice[] {
+// 敵ダイスにランダムルーン装着（章が進むほど多く装着）
+function equipRandomRunes(dice: MonsterDice, chapter: number): MonsterDice {
+  const clone: MonsterDice = JSON.parse(JSON.stringify(dice));
+  const eligible = SKILL_RUNES.filter(r => r.tier === 'common' || (chapter >= 3 && r.tier === 'rare'));
+  if (eligible.length === 0) return clone;
+  // 章ごとの装着率: ch1=20%, ch2=30%, ch3=40%... ch7=80%
+  const fillRate = Math.min(0.8, 0.1 + chapter * 0.1);
+  for (const face of clone.customFaces) {
+    for (const socket of face.sockets) {
+      if (!socket.skillRuneId && Math.random() < fillRate) {
+        const rune = eligible[Math.floor(Math.random() * eligible.length)];
+        socket.skillRuneId = rune.id;
+      }
+    }
+  }
+  return clone;
+}
+
+// 敵パーティ生成: メインモンスター + ランダムな取り巻き（ルーン装着済み）
+function buildEnemyParty(mainMonster: MonsterDice, chapterMonsters: MonsterDice[], chapter: number): MonsterDice[] {
   const weaker = chapterMonsters.filter(m => m.rarity <= mainMonster.rarity && m.id !== mainMonster.id);
   const companion1 = weaker.length > 0
     ? weaker[Math.floor(Math.random() * weaker.length)]
@@ -33,7 +52,7 @@ function buildEnemyParty(mainMonster: MonsterDice, chapterMonsters: MonsterDice[
   const companion2 = weaker.length > 0
     ? weaker[Math.floor(Math.random() * weaker.length)]
     : mainMonster;
-  return [mainMonster, companion1, companion2];
+  return [equipRandomRunes(mainMonster, chapter), equipRandomRunes(companion1, chapter), equipRandomRunes(companion2, chapter)];
 }
 
 export function DungeonScreen() {
@@ -48,7 +67,7 @@ export function DungeonScreen() {
   const bossCaptured = bossMonster ? capturedMonsters.includes(bossMonster.id) : false;
 
   const startBattle = (monster: MonsterDice) => {
-    setCurrentEnemy(buildEnemyParty(monster, chapterMonsters));
+    setCurrentEnemy(buildEnemyParty(monster, chapterMonsters, currentChapter));
     setScreen('battle');
   };
 

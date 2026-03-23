@@ -55,8 +55,12 @@ export function ShopScreen() {
 
       {message && (
         <div style={{
-          textAlign: 'center', padding: 4, fontSize: 12,
-          color: message.includes('足りない') ? '#b04030' : '#308050',
+          position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)',
+          padding: '6px 16px', fontSize: 12, borderRadius: 6, zIndex: 1000,
+          background: message.includes('足りない') || message.includes('所持') ? '#f8e0e0' : '#e0f0e0',
+          color: message.includes('足りない') || message.includes('所持') ? '#b04030' : '#308050',
+          border: '1px solid ' + (message.includes('足りない') || message.includes('所持') ? '#d0a0a0' : '#a0d0a0'),
+          pointerEvents: 'none',
         }}>
           {message}
         </div>

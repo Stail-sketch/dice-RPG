@@ -305,7 +305,7 @@ export function CaptureScene({ monster, onComplete, onSkip }: CaptureSceneProps)
           <div style={{ fontSize: 14, color: elColor, marginBottom: 4, zIndex: 2 }}>
             {'★'.repeat(monster.rarity)} {monster.name}
           </div>
-          <div style={{ fontSize: 10, color: '#998a78', marginBottom: 16, zIndex: 2 }}>
+          <div style={{ fontSize: 13, color: '#3a2a1a', fontWeight: 'bold', marginBottom: 16, zIndex: 2, background: '#ece5d8', padding: '4px 12px', borderRadius: 6, border: '1px solid #c0b8a8' }}>
             捕獲率: {monster.baseStats.captureRate}%
           </div>
         </>
@@ -375,7 +375,7 @@ export function CaptureScene({ monster, onComplete, onSkip }: CaptureSceneProps)
           }}>
             {result.roll}
           </div>
-          <div style={{ fontSize: 10, color: '#998a78', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#3a2a1a', fontWeight: 'bold', marginTop: 4 }}>
             判定率: {Math.round(result.effectiveRate)}%
           </div>
         </div>

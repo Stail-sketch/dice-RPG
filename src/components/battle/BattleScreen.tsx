@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments } = useGameStore();
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
@@ -818,8 +818,14 @@ export function BattleScreen() {
     addRunes(drops);
     if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  素材獲得: 鍛冶石 x1'); }
     if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  素材獲得: レア鉱石 x1'); }
+    // ボスからジェムかけらドロップ
+    if (monster.rarity >= 4) {
+      const fragments = currentChapter <= 3 ? 1 : currentChapter <= 6 ? 3 : 5;
+      addGemFragments(fragments);
+      addLog(`  ジェムのかけら x${fragments}`);
+    }
     setScreen('dungeon');
-  }, [currentEnemy, addDice, captureMonster, addRunes, addLog, addMaterial, setScreen]);
+  }, [currentEnemy, addDice, captureMonster, addRunes, addLog, addMaterial, addGemFragments, currentChapter, setScreen]);
 
   const isRolling = phase === 'rolling';
   const isAnimating = ['first-label', 'first-attack', 'second-label', 'second-attack'].includes(phase);
