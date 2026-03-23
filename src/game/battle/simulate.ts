@@ -51,12 +51,6 @@ function verifyTurn(result: TurnResult): string[] {
 
   // HP変動の整合性チェック
   const allActions = [...result.firstActions, ...result.secondActions];
-  const playerDmgReceived = allActions
-    .filter(a => a.targetIsPlayer && a.effectType === 'damage')
-    .reduce((s, a) => s + a.actualDamage, 0);
-  const enemyDmgReceived = allActions
-    .filter(a => !a.targetIsPlayer && a.effectType === 'damage')
-    .reduce((s, a) => s + a.actualDamage, 0);
   const playerHealReceived = allActions
     .filter(a => !a.targetIsPlayer && a.effectType === 'heal')
     .reduce((s, a) => s + a.actualDamage, 0);
