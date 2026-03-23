@@ -186,7 +186,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
-    baseStats: { captureRate: 10 },
+    baseStats: { captureRate: 15 },
     description: '灼熱の炎竜。地獄の業火で全てを焼き尽くす第1章のボス。',
   },
 ];
@@ -293,7 +293,7 @@ export const CHAPTER2_MONSTERS: MonsterDice[] = [
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
-    baseStats: { captureRate: 10 },
+    baseStats: { captureRate: 15 },
     description: '峡谷を支配する氷の古龍。第2章のボス。',
   },
 ];
@@ -400,7 +400,7 @@ export const CHAPTER3_MONSTERS: MonsterDice[] = [
       { faceNumber: 5, sockets: [{ skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }, { skillRuneId: null, socketTier: 'bronze' }] },
     ],
-    baseStats: { captureRate: 10 },
+    baseStats: { captureRate: 15 },
     description: '雷鳴の塔に君臨する雷の古龍。第3章のボス。',
   },
 ];
@@ -566,7 +566,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
     customFaces: [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
     ],
-    baseStats: { captureRate: 5 },
+    baseStats: { captureRate: 10 },
     description: '世界樹を蝕む毒の古龍。その毒は大地すら腐らせる。第4章ボス。',
   },
 ];
@@ -732,7 +732,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
     customFaces: [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
     ],
-    baseStats: { captureRate: 5 },
+    baseStats: { captureRate: 10 },
     description: '伝説の鋼龍。絶対防御と隕鉄の一撃で全てを砕く。第5章ボス。',
   },
 ];
@@ -898,7 +898,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
     customFaces: [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
     ],
-    baseStats: { captureRate: 5 },
+    baseStats: { captureRate: 10 },
     description: '幻影の神殿に眠る原初の龍。現実そのものを歪める。第6章ボス。',
   },
 ];
@@ -968,7 +968,7 @@ export const CHAPTER7_MONSTERS: MonsterDice[] = [
     customFaces: [
       { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
     ],
-    baseStats: { captureRate: 3 },
+    baseStats: { captureRate: 5 },
     description: '始まりと終わりを司る究極の龍。全属性を操り世界を巡る。最終ボス。',
   },
 ];
