@@ -727,26 +727,112 @@ function makeBossMirageTrack(): TrackData {
 }
 
 function makeBossFinalTrack(): TrackData {
-  // Ch7 final boss - Ultimate showdown, 140 BPM Dm, most epic
-  const b = BPM_TO_BEAT(140);
+  // Ch7 FINAL BOSS - ウロボロス - 全てを終わらせる壮大な決戦
+  // 4パート構成: イントロ(不穏) → 主旋律(激しい) → 対旋律(重厚) → クライマックス(全開)
+  const b = BPM_TO_BEAT(152); // 速めで緊迫感
   const notes: Note[] = [];
   const perc: PercNote[] = [];
-  // Dual melody lines interleaved
-  const mel1 = [D5, 0, F5, A4, D5, 0, C5, Bb4, A4, 0, D5, F5, G5, 0, F5, D5, D5, 0, A4, D5, F5, 0, G5, F5, D5, 0, C5, D5, A4, 0, D5, 0];
-  const mel2 = [A4, 0, D4, F4, A4, 0, G4, F4, D4, 0, A4, D5, Bb4, 0, A4, F4, A4, 0, F4, A4, D5, 0, Bb4, A4, F4, 0, G4, A4, D4, 0, F4, 0];
-  for (let i = 0; i < mel1.length; i++) {
-    if (mel1[i] !== 0) notes.push({ freq: mel1[i], start: i * (b / 2), duration: b * 0.4, type: 'sawtooth', volume: 0.16 });
-    if (mel2[i] !== 0) notes.push({ freq: mel2[i], start: i * (b / 2), duration: b * 0.35, type: 'square', volume: 0.08 });
+  const h = b / 2; // 8th note
+
+  // ===== Part A (bar 1-2): 不穏なイントロ - 低音のうねり =====
+  const introMel = [D4, 0, Eb4, D4, 0, A3, Bb3, 0, D4, 0, F4, Eb4, D4, 0, A3, 0];
+  for (let i = 0; i < introMel.length; i++) {
+    if (introMel[i] === 0) continue;
+    notes.push({ freq: introMel[i], start: i * h, duration: h * 0.7, type: 'triangle', volume: 0.18 });
   }
-  const bass = [D3, D3, D3, D3, Bb3, Bb3, A3, A3, D3, D3, G3, G3, A3, A3, D3, D3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
-  // Dual drone for maximum weight
-  notes.push({ freq: D3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
-  notes.push({ freq: A3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.07 });
-  notes.push({ freq: D3 / 4, start: 0, duration: 16 * b, type: 'sine', volume: 0.04 });
-  // Intense percussion - every 8th note
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: bt % 2 === 0 ? 0.07 : 0.04, volume: bt % 2 === 0 ? 0.22 : 0.13 }); } }
-  return { duration: 16 * b, notes, perc };
+  // 不協和音ドローン
+  notes.push({ freq: D3, start: 0, duration: 8 * b, type: 'sine', volume: 0.08 });
+  notes.push({ freq: Eb3, start: 0, duration: 4 * b, type: 'sine', volume: 0.04 }); // 半音ぶつけ
+
+  // ===== Part B (bar 3-4): 主旋律爆発 - sawtooth全開 =====
+  const mainMel = [D5, F5, 0, A4, D5, F5, G5, 0, A4, D5, 0, F5, G5, A4, D5, 0];
+  const off2 = 16 * h;
+  for (let i = 0; i < mainMel.length; i++) {
+    if (mainMel[i] === 0) continue;
+    notes.push({ freq: mainMel[i], start: off2 + i * h, duration: h * 0.45, type: 'sawtooth', volume: 0.18 });
+    // オクターブ下でユニゾン（厚み）
+    notes.push({ freq: mainMel[i] / 2, start: off2 + i * h, duration: h * 0.35, type: 'sawtooth', volume: 0.06 });
+  }
+  // 裏メロ（対位法）
+  const counterB = [A4, 0, D4, F4, A4, 0, Bb4, A4, F4, 0, D4, A4, Bb4, 0, A4, 0];
+  for (let i = 0; i < counterB.length; i++) {
+    if (counterB[i] === 0) continue;
+    notes.push({ freq: counterB[i], start: off2 + i * h, duration: h * 0.4, type: 'square', volume: 0.09 });
+  }
+
+  // ===== Part C (bar 5-6): 重厚な展開 - ベースライン主導 =====
+  const off3 = 32 * h;
+  const heavyMel = [Bb4, 0, A4, G4, F4, 0, G4, A4, Bb4, 0, C5, Bb4, A4, 0, G4, 0];
+  for (let i = 0; i < heavyMel.length; i++) {
+    if (heavyMel[i] === 0) continue;
+    notes.push({ freq: heavyMel[i], start: off3 + i * h, duration: h * 0.5, type: 'sawtooth', volume: 0.16 });
+  }
+  // パワーコード風ベース
+  const powerBass = [Bb3, Bb3, Bb3, Bb3, A3, A3, G3, G3, F3, F3, G3, G3, A3, A3, A3, A3];
+  for (let i = 0; i < powerBass.length; i++) {
+    notes.push({ freq: powerBass[i], start: off3 + i * h, duration: h * 0.6, type: 'square', volume: 0.1 });
+    // 5度上を重ねてパワーコード
+    notes.push({ freq: powerBass[i] * 1.5, start: off3 + i * h, duration: h * 0.4, type: 'square', volume: 0.04 });
+  }
+
+  // ===== Part D (bar 7-8): クライマックス - 全パート全開 =====
+  const off4 = 48 * h;
+  // 主旋律（最高音域）
+  const climaxMel = [D5, F5, G5, A4, D5, F5, G5, F5, D5, F5, A4, G5, F5, D5, G5, 0];
+  for (let i = 0; i < climaxMel.length; i++) {
+    if (climaxMel[i] === 0) continue;
+    notes.push({ freq: climaxMel[i], start: off4 + i * h, duration: h * 0.4, type: 'sawtooth', volume: 0.2 });
+    notes.push({ freq: climaxMel[i] / 2, start: off4 + i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.07 });
+  }
+  // ハーモニー（3度上）
+  const harmD = [F5, A4, Bb4, D5, F5, A4, Bb4, A4, F5, A4, D5, Bb4, A4, F5, Bb4, 0];
+  for (let i = 0; i < harmD.length; i++) {
+    if (harmD[i] === 0) continue;
+    notes.push({ freq: harmD[i], start: off4 + i * h, duration: h * 0.35, type: 'triangle', volume: 0.1 });
+  }
+  // 高速アルペジオ装飾
+  const arpD = [D5, A4, F4, D4, A4, F4, D4, A3, D5, A4, F4, D4, A4, F4, D4, A3];
+  for (let i = 0; i < arpD.length; i++) {
+    notes.push({ freq: arpD[i], start: off4 + i * h, duration: h * 0.2, type: 'triangle', volume: 0.05 });
+  }
+
+  // ===== 通奏低音（全体） =====
+  const fullBass = [
+    D3, D3, D3, D3, D3, D3, A3, A3,   // Part A
+    D3, D3, Bb3, Bb3, A3, A3, D3, D3,  // Part B
+    Bb3, Bb3, A3, A3, G3, G3, A3, A3,  // Part C
+    D3, D3, D3, D3, Bb3, A3, G3, D3,   // Part D
+  ];
+  for (let i = 0; i < fullBass.length; i++) {
+    notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
+  }
+
+  // ===== 重低音ドローン（全体を支える） =====
+  notes.push({ freq: D3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 }); // サブベース
+  notes.push({ freq: D3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
+  notes.push({ freq: A3 / 2, start: 16 * b, duration: 16 * b, type: 'sine', volume: 0.07 });
+
+  // ===== パーカッション =====
+  // Part A: 重い4つ打ち
+  for (let bt = 0; bt < 8; bt++) {
+    perc.push({ start: bt * b, duration: 0.08, volume: 0.2 });
+  }
+  // Part B: 8分刻み
+  for (let bt = 0; bt < 16; bt++) {
+    perc.push({ start: 8 * b + bt * h, duration: bt % 2 === 0 ? 0.07 : 0.03, volume: bt % 2 === 0 ? 0.22 : 0.12 });
+  }
+  // Part C: 変則リズム（3+3+2）
+  const cRhythm = [0, 3, 6, 8, 11, 14, 16, 19, 22, 24, 27, 30];
+  for (const r of cRhythm) {
+    perc.push({ start: 16 * b + r * h, duration: 0.06, volume: 0.2 });
+  }
+  // Part D: フルスロットル16分
+  for (let bt = 0; bt < 16; bt++) {
+    perc.push({ start: 24 * b + bt * h, duration: 0.05, volume: 0.24 });
+    if (bt % 2 === 1) perc.push({ start: 24 * b + bt * h + h * 0.5, duration: 0.02, volume: 0.1 }); // ゴーストノート
+  }
+
+  return { duration: 32 * b, notes, perc };
 }
 
 const TRACKS: Record<BGMTrack, () => TrackData> = {
