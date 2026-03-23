@@ -237,6 +237,8 @@ export function DiceEditorScreen() {
                 <div>
                   {(currentFace as FixedFace).sockets.map((s, i) => {
                     const skill = FIXED_SKILLS[s.skillId];
+                    const eff = skill?.effect;
+                    const etNames: Record<string, string> = { damage: 'ダメージ', heal: '回復', dot: '継続', buff: 'バフ', debuff: 'デバフ', shield: 'シールド' };
                     return (
                       <div key={i} style={{
                         display: 'flex', gap: 6, alignItems: 'center',
@@ -245,7 +247,15 @@ export function DiceEditorScreen() {
                         <span style={{ fontSize: 10, color: '#705828' }}>🔒</span>
                         <ElementBadge element={s.element} />
                         <span style={{ fontSize: 11 }}>{skill?.name ?? s.skillId}</span>
-                        <span style={{ fontSize: 9, color: '#998a78', marginLeft: 'auto' }}>{skill?.effect.description}</span>
+                        {eff && (
+                          <span style={{ fontSize: 8, color: '#6a5a4a', display: 'flex', gap: 4, alignItems: 'center', marginLeft: 'auto' }}>
+                            <span style={{ padding: '0 3px', borderRadius: 2, background: '#d8d0c4' }}>{etNames[eff.type] ?? eff.type}</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {eff.type === 'buff' || eff.type === 'debuff' ? `x${eff.power}` : eff.power}
+                            </span>
+                            {eff.duration && <span>{eff.duration}T</span>}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -276,13 +286,23 @@ export function DiceEditorScreen() {
                         }}>
                           [{s.socketTier}]
                         </span>
-                        {rune ? (
-                          <>
-                            <ElementBadge element={rune.element} />
-                            <span style={{ fontSize: 11 }}>{rune.name}</span>
-                            <span style={{ fontSize: 9, color: '#998a78', marginLeft: 'auto' }}>{rune.effect.description}</span>
-                          </>
-                        ) : (
+                        {rune ? (() => {
+                          const eff = rune.effect;
+                          const etNames: Record<string, string> = { damage: 'ダメージ', heal: '回復', dot: '継続', buff: 'バフ', debuff: 'デバフ', shield: 'シールド' };
+                          return (
+                            <>
+                              <ElementBadge element={rune.element} />
+                              <span style={{ fontSize: 11 }}>{rune.name}</span>
+                              <span style={{ fontSize: 8, color: '#6a5a4a', display: 'flex', gap: 4, alignItems: 'center', marginLeft: 'auto' }}>
+                                <span style={{ padding: '0 3px', borderRadius: 2, background: '#d8d0c4' }}>{etNames[eff.type] ?? eff.type}</span>
+                                <span style={{ fontWeight: 'bold' }}>
+                                  {eff.type === 'buff' || eff.type === 'debuff' ? `x${eff.power}` : eff.power}
+                                </span>
+                                {eff.duration && <span>{eff.duration}T</span>}
+                              </span>
+                            </>
+                          );
+                        })() : (
                           <span style={{ fontSize: 10, color: '#998a78' }}>— 空きソケット —</span>
                         )}
                       </div>

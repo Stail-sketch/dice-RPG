@@ -256,23 +256,54 @@ function MonsterDetail({ monster }: { monster: typeof ALL_MONSTERS[0] }) {
           <div style={{ fontSize: 9, color: '#705828', fontWeight: 'bold', marginBottom: 2 }}>
             面{face.faceNumber}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {face.sockets.map((s, i) => {
               const skill = FIXED_SKILLS[s.skillId];
+              if (!skill) {
+                return (
+                  <span key={i} style={{ fontSize: 8, color: '#998a78' }}>{s.skillId}</span>
+                );
+              }
+              const effectColor = skill.effect.type === 'damage' ? '#a04030'
+                : skill.effect.type === 'heal' ? '#30a050'
+                : skill.effect.type === 'dot' ? '#906020'
+                : skill.effect.type === 'buff' ? '#3070a0'
+                : skill.effect.type === 'debuff' ? '#7050a0'
+                : '#5080a0';
               return (
-                <span key={i} style={{
-                  fontSize: 8, padding: '1px 4px', borderRadius: 3,
-                  background: ELEMENT_COLORS[s.element] + '20',
-                  border: '1px solid ' + ELEMENT_COLORS[s.element] + '40',
-                  color: ELEMENT_COLORS[s.element],
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: ELEMENT_COLORS[s.element] + '10',
+                  border: '1px solid ' + ELEMENT_COLORS[s.element] + '30',
+                  borderRadius: 4, padding: '3px 6px',
                 }}>
-                  {skill ? skill.name : s.skillId}
-                  {skill && (
-                    <span style={{ color: '#998a78', marginLeft: 2 }}>
-                      ({skill.effect.description})
+                  <span style={{
+                    fontSize: 9, fontWeight: 'bold',
+                    color: ELEMENT_COLORS[s.element], minWidth: 50,
+                  }}>
+                    {skill.name}
+                  </span>
+                  <span style={{
+                    fontSize: 7, padding: '1px 4px', borderRadius: 3,
+                    background: effectColor + '20', color: effectColor,
+                    border: '1px solid ' + effectColor + '40',
+                  }}>
+                    {EFFECT_TYPE_NAMES[skill.effect.type]}
+                  </span>
+                  <span style={{ fontSize: 8, color: '#3a2a1a', fontWeight: 'bold' }}>
+                    {skill.effect.type === 'buff' || skill.effect.type === 'debuff'
+                      ? `x${skill.effect.power}`
+                      : skill.effect.power}
+                  </span>
+                  {skill.effect.duration && (
+                    <span style={{ fontSize: 7, color: '#6a5a4a' }}>
+                      {skill.effect.duration}T
                     </span>
                   )}
-                </span>
+                  <span style={{ fontSize: 7, color: '#998a78', marginLeft: 'auto' }}>
+                    {skill.effect.description}
+                  </span>
+                </div>
               );
             })}
           </div>
