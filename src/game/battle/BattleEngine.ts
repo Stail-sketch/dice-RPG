@@ -7,6 +7,8 @@ import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE } fr
 import { rollParty } from '../dice/DiceEngine';
 import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
 import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } from '../synergy/SynergyEngine';
+import { getRecipeSynergy } from '../../data/synergies';
+import type { RecipeSynergy } from '../../types';
 
 // ==============================
 // バトル初期化
@@ -217,6 +219,29 @@ export function consumeChargeCost(gauge: ChargeGauge, cost: number): ChargeGauge
 }
 
 // ==============================
+// レシピコンボからSkillAction生成
+// ==============================
+function createRecipeAction(recipe: RecipeSynergy, targetIsPlayer: boolean): SkillAction {
+  const eff = recipe.effect;
+  return {
+    skillId: `recipe-${recipe.id}`,
+    skillName: `[${recipe.name}]`,
+    element: recipe.requiredElements[0] as Element,
+    effectType: eff.type as SkillAction['effectType'],
+    rawDamage: eff.power,
+    tierMultiplier: 1.0,
+    decayMultiplier: 1.0,
+    elementMultiplier: 1.0,
+    synergyMultiplier: 1.0,
+    finalDamage: eff.power,
+    crossDiceMultiplier: 1.0,
+    buffMultiplier: 1.0,
+    actualDamage: eff.power,
+    targetIsPlayer,
+  };
+}
+
+// ==============================
 // 敵AI選択ロジック
 // ==============================
 export function aiSelectDice(
@@ -317,6 +342,29 @@ export function executeTurnFull(
 
   if (firstDefender.hp > 0) {
     applyActions(secondActions, firstDefender, firstAttacker, secondCrossMult);
+  }
+
+  // レシピコンボ効果適用
+  const playerElements = new Set<Element>();
+  for (const roll of playerActiveRolls) {
+    for (const el of getFaceElements(roll.face)) playerElements.add(el);
+  }
+  const enemyElements = new Set<Element>();
+  for (const roll of enemyActiveRolls) {
+    for (const el of getFaceElements(roll.face)) enemyElements.add(el);
+  }
+  const playerRecipes = getRecipeSynergy(Array.from(playerElements));
+  const enemyRecipes = getRecipeSynergy(Array.from(enemyElements));
+
+  for (const recipe of playerRecipes) {
+    const bonusAction = createRecipeAction(recipe, false);
+    applyActions([bonusAction], state.player, state.enemy, 1.0);
+    (playerFirst ? firstActions : secondActions).push(bonusAction);
+  }
+  for (const recipe of enemyRecipes) {
+    const bonusAction = createRecipeAction(recipe, true);
+    applyActions([bonusAction], state.enemy, state.player, 1.0);
+    (playerFirst ? secondActions : firstActions).push(bonusAction);
   }
 
   // 充填処理（捨てたダイスの出目=ピップ数を加算）
