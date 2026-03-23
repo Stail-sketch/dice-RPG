@@ -1,4 +1,7 @@
 import { useGameStore } from './stores/gameStore';
+
+// デバッグ用: ブラウザコンソールからアクセス可能
+(window as any).__store = useGameStore;
 import { TitleScreen } from './components/TitleScreen';
 import { TownScreen } from './components/town/TownScreen';
 import { DungeonScreen } from './components/dungeon/DungeonScreen';
