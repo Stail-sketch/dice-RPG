@@ -1110,7 +1110,7 @@ export function BattleScreen() {
       </div>
 
       {phase === 'capture' && currentEnemy && currentEnemy[0] && (
-        <CaptureScene monster={currentEnemy[0]} onComplete={onCaptureComplete} onSkip={() => autoSaveAndGo('dungeon')} />
+        <CaptureScene monster={currentEnemy[0]} onComplete={onCaptureComplete} onSkip={() => autoSaveAndGo('dungeon')} captureBonus={getPartyBonus().captureBonus} />
       )}
     </div>
   );

@@ -22,6 +22,7 @@ interface CaptureSceneProps {
   monster: MonsterDice;
   onComplete: (result: CaptureResult) => void;
   onSkip: () => void;
+  captureBonus?: number; // ヒーローダイスボーナス等
 }
 
 // パーティクル
@@ -38,7 +39,7 @@ interface Particle {
 
 let pid = 0;
 
-export function CaptureScene({ monster, onComplete, onSkip }: CaptureSceneProps) {
+export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: CaptureSceneProps) {
   const [phase, setPhase] = useState<CapturePhase>('intro');
   const [result, setResult] = useState<CaptureResult | null>(null);
   const [diceDisplay, setDiceDisplay] = useState(1);
@@ -102,7 +103,7 @@ export function CaptureScene({ monster, onComplete, onSkip }: CaptureSceneProps)
     }, 60);
     const timer = setTimeout(() => {
       clearInterval(interval);
-      const captureResult = attemptCapture(monster);
+      const captureResult = attemptCapture(monster, captureBonus);
       setResult(captureResult);
       setDiceDisplay(captureResult.roll);
       setPhase('slam');
