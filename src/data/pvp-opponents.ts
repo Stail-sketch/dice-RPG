@@ -1,5 +1,4 @@
 import { ALL_MONSTERS } from './monsters';
-import { SKILL_RUNES } from './skill-runes';
 import type { MonsterDice, CustomSocket } from '../types';
 
 export interface PvpOpponent {
