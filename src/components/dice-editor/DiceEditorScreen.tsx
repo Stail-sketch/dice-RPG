@@ -191,10 +191,11 @@ export function DiceEditorScreen() {
           <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
             onClick={() => {
               unequipAllRunes(currentDice.id);
-              setMessage('ルーンを全て外しました');
+              setMessage(`${currentDice.name}のルーンを全て外しました`);
+              setSelectedFace(null); setSelectedSocket(null);
               setTimeout(() => setMessage(null), 1200);
             }}
-          >一括はずし</button>
+          >{currentDice.name}のルーン全外し</button>
           {currentDice.id !== 'protagonist' && !party.includes(currentDice.id) && (
             <button className="rpg-btn rpg-btn-danger" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
               onClick={() => {
