@@ -3,7 +3,7 @@ import { useGameStore } from '../../stores/gameStore';
 import { SHOP_ITEMS } from '../../data/shop';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 
-import { ELEMENT_NAMES, type Element } from '../../types';
+import { ELEMENT_NAMES } from '../../types';
 
 type Filter = 'all' | 'rune' | 'material' | 'magic-dice';
 type ShopMode = 'buy' | 'sell';
