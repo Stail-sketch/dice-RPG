@@ -816,8 +816,14 @@ export function BattleScreen() {
                   const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier * hardMult);
                   addGold(goldReward);
                   const expReward = Math.round((20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10) * hardMult);
-                  addExp(expReward);
+                  const expResult = addExp(expReward);
                   addLog(`  ${goldReward}G / ${expReward}EXP`);
+                  addLog(`  EXP ${expResult.currentExp}/${expResult.expToNext} (Lv${expResult.newLevel})`);
+                  if (expResult.levelsGained > 0) {
+                    sfx.levelUp();
+                    addLog(`  ★ レベルアップ！ Lv${expResult.newLevel} (HP ${expResult.newMaxHp})`);
+                    setTimeout(() => flash(`LEVEL UP! Lv${expResult.newLevel}`, 1500), 500);
+                  }
                   // ルーンドロップ（章属性に70%偏り）
                   const chapterElements: Record<number, string> = { 1: 'blaze', 2: 'frost', 3: 'volt', 4: 'venom', 5: 'alloy', 6: 'mirage', 7: 'blaze' };
                   const chapterEl = chapterElements[currentChapter] || 'blaze';

@@ -295,7 +295,7 @@ function drawGrass(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
 // メインコンポーネント
 // ==============================
 export function TownScreen() {
-  const { setScreen, playerMaxHp, playerLevel, gold, gems, gemFragments, currentChapter, save } = useGameStore();
+  const { setScreen, playerMaxHp, playerLevel, playerExp, getExpToNext, gold, gems, gemFragments, currentChapter, save } = useGameStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
@@ -568,8 +568,16 @@ export function TownScreen() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontSize: 11, color: '#3a3018', fontFamily: "'DotGothic16', monospace",
       }}>
-        <span>Lv{playerLevel}</span>
-        <span>HP {playerMaxHp}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 70 }}>
+          <span>Lv{playerLevel} HP{playerMaxHp}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 8, color: '#998a78' }}>EXP</span>
+            <div style={{ flex: 1, height: 5, background: '#d8d0c4', borderRadius: 1, border: '1px solid #c0b8a8', overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, (playerExp / getExpToNext()) * 100)}%`, height: '100%', background: '#a08830', borderRadius: 1, transition: 'width 0.4s' }} />
+            </div>
+            <span style={{ fontSize: 7, color: '#998a78' }}>{playerExp}/{getExpToNext()}</span>
+          </div>
+        </div>
         <span style={{ color: '#705828', fontWeight: 'bold' }}>{gold}G</span>
         <span style={{ color: '#4070a0' }}>{gems}Gem({gemFragments})</span>
         <span>Ch.{currentChapter}</span>

@@ -34,7 +34,7 @@ interface GameState {
   gemFragments: number; // 10個で1ジェム（ショップで還元）
   materials: Materials;
   addGemFragments: (amount: number) => void;
-  addExp: (amount: number) => void;
+  addExp: (amount: number) => { levelsGained: number; newLevel: number; newMaxHp: number; currentExp: number; expToNext: number };
   getExpToNext: () => number;
 
   protagonistDice: MonsterDice;
@@ -430,6 +430,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     return s.playerLevel * 100; // Lv1=100, Lv2=200, ...
   },
   addExp: (amount) => {
+    const prev = get().playerLevel;
     set((s) => {
       let exp = s.playerExp + amount;
       let level = s.playerLevel;
@@ -444,6 +445,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       return { playerExp: exp, playerLevel: level, playerMaxHp: hp };
     });
     get().checkAchievements();
+    const after = get();
+    return { levelsGained: after.playerLevel - prev, newLevel: after.playerLevel, newMaxHp: after.playerMaxHp, currentExp: after.playerExp, expToNext: after.getExpToNext() };
   },
   addMaterial: (id, amount) => set((s) => ({
     materials: { ...s.materials, [id]: Math.max(0, (s.materials[id] || 0) + amount) },
