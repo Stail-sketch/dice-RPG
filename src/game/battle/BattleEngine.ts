@@ -334,7 +334,7 @@ function applyPassiveEffects(combatant: Combatant, opponent: Combatant): void {
   }
 
   // セットボーナス: 同じsetIdが2個以上でボーナス
-  for (const [setId, count] of setCount) {
+  for (const [, count] of setCount) {
     if (count >= 2) {
       // 2セット: damageMultiplier +20%
       combatant.damageMultiplier *= 1.2;
