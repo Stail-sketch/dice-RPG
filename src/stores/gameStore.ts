@@ -164,7 +164,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     tutorial: { completed: true, currentStep: 0 },
     gold: s.gold + 500,
     gems: s.gems + 30,
-    materials: { 'forge-stone': s.materials['forge-stone'] + 3, 'rare-ore': s.materials['rare-ore'] },
+    materials: { ...s.materials, 'forge-stone': s.materials['forge-stone'] + 3 },
     currentScreen: 'town' as Screen,
   })),
 
