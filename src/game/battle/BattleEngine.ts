@@ -270,8 +270,15 @@ function getCrossDiceMultiplier(
 
   for (const element of allElements) {
     if (allElementSets.every(set => set.has(element))) {
-      if (element === 'blaze') return 3.0;
-      if (element === 'volt') return 2.0;
+      // GDD準拠: 各属性の3ダイス一致ボーナス
+      switch (element) {
+        case 'blaze': return 3.0;  // 業火: 全ダメージ3倍
+        case 'volt':  return 2.0;  // 神雷: 全ダメージ2倍
+        case 'frost': return 2.0;  // 絶対零度: 2倍
+        case 'venom': return 2.0;  // 猛毒沼: 2倍
+        case 'alloy': return 1.5;  // 絶対防御: 1.5倍（防御寄り）
+        case 'mirage': return 2.5; // 万華鏡: 2.5倍
+      }
     }
   }
   return 1.0;
@@ -458,9 +465,9 @@ export function executeTurnFull(
   const playerCrossMult = getCrossDiceMultiplier(playerActiveRolls, playerRolls);
   const enemyCrossMult = getCrossDiceMultiplier(enemyActiveRolls, enemyRolls);
 
-  // シナジー判定（発動2個のみ）
-  const playerSynergies = checkAllSynergies(playerActiveRolls);
-  const enemySynergies = checkAllSynergies(enemyActiveRolls);
+  // シナジー判定（同面+レシピは発動2個、クロスダイスは全3個で判定）
+  const playerSynergies = checkAllSynergies(playerActiveRolls, playerRolls);
+  const enemySynergies = checkAllSynergies(enemyActiveRolls, enemyRolls);
   const allSynergies = [...playerSynergies, ...enemySynergies];
 
   // 先攻→後攻

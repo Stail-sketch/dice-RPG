@@ -100,12 +100,14 @@ export function checkRecipeSynergies(rolls: DiceRollResult[]): SynergyActivation
 
 /**
  * 全シナジーをまとめて判定
+ * @param activeRolls 発動する2個のロール（同面+レシピ判定用）
+ * @param allRolls 全3個のロール（クロスダイス判定用、省略時はactiveRollsを使用）
  */
-export function checkAllSynergies(rolls: DiceRollResult[]): SynergyActivation[] {
+export function checkAllSynergies(activeRolls: DiceRollResult[], allRolls?: DiceRollResult[]): SynergyActivation[] {
   const synergies: SynergyActivation[] = [];
 
-  // 同面シナジー
-  for (const roll of rolls) {
+  // 同面シナジー（発動2個のみ）
+  for (const roll of activeRolls) {
     const { multiplier, element } = calcSameFaceSynergyMultiplier(roll.face);
     if (multiplier > 1.0 && element) {
       synergies.push({
@@ -116,11 +118,11 @@ export function checkAllSynergies(rolls: DiceRollResult[]): SynergyActivation[] 
     }
   }
 
-  // クロスダイスシナジー
-  synergies.push(...checkCrossDiceSynergy(rolls));
+  // クロスダイスシナジー（全3個で判定）
+  synergies.push(...checkCrossDiceSynergy(allRolls || activeRolls));
 
-  // レシピコンボ
-  synergies.push(...checkRecipeSynergies(rolls));
+  // レシピコンボ（発動2個のみ）
+  synergies.push(...checkRecipeSynergies(activeRolls));
 
   return synergies;
 }
