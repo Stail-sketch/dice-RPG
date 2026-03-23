@@ -156,7 +156,7 @@ export function DungeonScreen() {
   const { setScreen, setCurrentEnemy, capturedMonsters, bossesDefeated, currentChapter, advanceChapter } = useGameStore();
   const [hardMode, setHardMode] = useState(false);
   const [bossDialogueTarget, setBossDialogueTarget] = useState<MonsterDice | null>(null);
-  const [displayChapter, setDisplayChapter] = useState(currentChapter);
+  const [displayChapter, setDisplayChapter] = useState(() => Math.min(currentChapter, 7));
 
   const chapterMonsters = CHAPTER_MONSTERS[displayChapter] || CHAPTER1_MONSTERS;
   const normalMonsters = chapterMonsters.filter(m => m.rarity <= 2);
@@ -168,8 +168,8 @@ export function DungeonScreen() {
 
   // この表示中の章のボスが撃破済みか
   const bossDefeated = bossMonster ? bossesDefeated.includes(bossMonster.id) : false;
-  // ゲーム進行度として次の章に進めるか（現在の最大到達章で判定）
-  const canAdvanceToNext = displayChapter < currentChapter || (bossDefeated && displayChapter === currentChapter && currentChapter < 7);
+  // 次の章に進めるか: 既にクリア済みの章か、現在の最前線でボスを倒した場合
+  const canAdvanceToNext = displayChapter < 7 && (displayChapter < currentChapter || (bossDefeated && displayChapter === currentChapter));
 
   const doStartBattle = (monster: MonsterDice) => {
     // 高難度モード: 敵のルーン装着率100%＋全ソケットsilver化
