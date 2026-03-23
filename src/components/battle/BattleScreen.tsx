@@ -128,20 +128,22 @@ export function BattleScreen() {
     if (playerDice.length < 3 || enemyDiceList.length < 3) return;
     sfx.click();
     // プレイヤーHP: playerMaxHpを使用（レベルで成長）
-    const { playerMaxHp } = useGameStore.getState();
+    const { playerMaxHp, isHardMode } = useGameStore.getState();
     const playerHp = playerMaxHp;
     // 敵HP: 章1-3は従来通り、章4+は15~30倍スケーリング
     const maxRarity = Math.max(...enemyDiceList.map(d => d.rarity));
     let enemyMaxHp: number;
     if (currentChapter <= 3) {
-      // 従来通り
       enemyMaxHp = 40 + maxRarity * 10 + (currentChapter - 1) * 15;
     } else {
-      // 章4-7: 基礎HP × (15 + 章ボーナス + ★ボーナス) 倍率
       const baseHp = 40 + maxRarity * 10;
-      const chapterMult = 15 + (currentChapter - 4) * 5; // ch4=15, ch5=20, ch6=25, ch7=30
-      const rarityMult = 1 + maxRarity * 0.1; // ★1=1.1, ★3=1.3, ★5=1.5
+      const chapterMult = 15 + (currentChapter - 4) * 5;
+      const rarityMult = 1 + maxRarity * 0.1;
       enemyMaxHp = Math.round(baseHp * chapterMult * rarityMult);
+    }
+    // 高難度: 敵HP×2 + 敵ダメージ倍率が初期1.3
+    if (isHardMode) {
+      enemyMaxHp = Math.round(enemyMaxHp * 2);
     }
     const state = createBattleState(playerDice, enemyDiceList, playerHp, enemyMaxHp);
     setBattle(state);
@@ -772,11 +774,13 @@ export function BattleScreen() {
                   addLog('  PVP勝利！ +3pt +300G');
                 } else {
                   // 報酬まとめ
-                  addLog('── 報酬 ──');
+                  const { isHardMode: hardMode } = useGameStore.getState();
+                  const hardMult = hardMode ? 1.5 : 1;
+                  addLog(hardMode ? '── 報酬【高難度】 ──' : '── 報酬 ──');
                   const bonus = getPartyBonus();
-                  const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier);
+                  const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier * hardMult);
                   addGold(goldReward);
-                  const expReward = 20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10;
+                  const expReward = Math.round((20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10) * hardMult);
                   addExp(expReward);
                   addLog(`  ${goldReward}G / ${expReward}EXP`);
                   // ルーンドロップ（章属性に70%偏り）
