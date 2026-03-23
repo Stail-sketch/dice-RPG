@@ -115,9 +115,22 @@ export function BattleScreen() {
   const startBattle = useCallback(() => {
     if (playerDice.length < 3 || enemyDiceList.length < 3) return;
     sfx.click();
-    const chapterBonus = (currentChapter - 1) * 15;
-    const enemyMaxHp = 40 + Math.max(...enemyDiceList.map(d => d.rarity)) * 10 + chapterBonus;
-    const state = createBattleState(playerDice, enemyDiceList, 60, enemyMaxHp);
+    // プレイヤーHP: 15倍
+    const playerHp = 900;
+    // 敵HP: 章1-3は従来通り、章4+は15~30倍スケーリング
+    const maxRarity = Math.max(...enemyDiceList.map(d => d.rarity));
+    let enemyMaxHp: number;
+    if (currentChapter <= 3) {
+      // 従来通り
+      enemyMaxHp = 40 + maxRarity * 10 + (currentChapter - 1) * 15;
+    } else {
+      // 章4-7: 基礎HP × (15 + 章ボーナス + ★ボーナス) 倍率
+      const baseHp = 40 + maxRarity * 10;
+      const chapterMult = 15 + (currentChapter - 4) * 5; // ch4=15, ch5=20, ch6=25, ch7=30
+      const rarityMult = 1 + maxRarity * 0.1; // ★1=1.1, ★3=1.3, ★5=1.5
+      enemyMaxHp = Math.round(baseHp * chapterMult * rarityMult);
+    }
+    const state = createBattleState(playerDice, enemyDiceList, playerHp, enemyMaxHp);
     setBattle(state);
     setPhase('rolling');
     setLog([]); addLog('BATTLE START!');
