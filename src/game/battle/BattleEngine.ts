@@ -496,8 +496,8 @@ export function executeTurnFull(
   for (const roll of enemyActiveRolls) {
     for (const el of getFaceElements(roll.face)) enemyElements.add(el);
   }
-  const playerRecipes = getRecipeSynergy(Array.from(playerElements)).slice(0, 2);
-  const enemyRecipes = getRecipeSynergy(Array.from(enemyElements)).slice(0, 2);
+  const playerRecipes = getRecipeSynergy(Array.from(playerElements));
+  const enemyRecipes = getRecipeSynergy(Array.from(enemyElements));
 
   for (const recipe of playerRecipes) {
     const bonusAction = createRecipeAction(recipe, false);
