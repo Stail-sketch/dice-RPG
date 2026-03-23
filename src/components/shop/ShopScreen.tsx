@@ -6,7 +6,7 @@ import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 import { ELEMENT_NAMES } from '../../types';
 
 type Filter = 'all' | 'rune' | 'material' | 'magic-dice';
-type ShopMode = 'buy' | 'sell';
+type ShopMode = 'buy' | 'sell' | 'exchange';
 
 const SELL_TIER_COLORS: Record<string, string> = {
   common: '#6a5a4a', rare: '#3070a0', epic: '#7050a0', legendary: '#b08020',
@@ -65,16 +65,14 @@ export function ShopScreen() {
         <span style={{ color: '#7050a0' }}>鉱:{materials['rare-ore']}</span>
       </div>
 
-      {/* 購入/売却切替 */}
+      {/* 購入/売却/還元切替 */}
       <div style={{ display: 'flex', gap: 4, margin: '4px 0' }}>
-        <button
-          style={{ flex: 1, padding: '6px 0', fontSize: 11, fontWeight: 'bold', border: `1px solid ${mode === 'buy' ? '#705828' : '#c0b8a8'}`, borderRadius: 4, background: mode === 'buy' ? '#705828' : '#ece5d8', color: mode === 'buy' ? '#f5f0e8' : '#6a5a4a', cursor: 'pointer' }}
-          onClick={() => setMode('buy')}
-        >購入</button>
-        <button
-          style={{ flex: 1, padding: '6px 0', fontSize: 11, fontWeight: 'bold', border: `1px solid ${mode === 'sell' ? '#b04030' : '#c0b8a8'}`, borderRadius: 4, background: mode === 'sell' ? '#b04030' : '#ece5d8', color: mode === 'sell' ? '#f5f0e8' : '#6a5a4a', cursor: 'pointer' }}
-          onClick={() => setMode('sell')}
-        >売却</button>
+        {([['buy', '購入', '#705828'], ['sell', '売却', '#b04030'], ['exchange', '還元', '#4070a0']] as const).map(([key, label, color]) => (
+          <button key={key}
+            style={{ flex: 1, padding: '6px 0', fontSize: 11, fontWeight: 'bold', border: `1px solid ${mode === key ? color : '#c0b8a8'}`, borderRadius: 4, background: mode === key ? color : '#ece5d8', color: mode === key ? '#f5f0e8' : '#6a5a4a', cursor: 'pointer' }}
+            onClick={() => setMode(key)}
+          >{label}</button>
+        ))}
       </div>
 
       {message && (
@@ -283,6 +281,52 @@ export function ShopScreen() {
             )}
           </div>
         </>
+      )}
+
+      {mode === 'exchange' && (
+        <div className="rpg-panel" style={{ padding: 12 }}>
+          <div style={{ fontSize: 12, color: '#4070a0', fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
+            ジェムのかけら還元所
+          </div>
+          <div style={{ fontSize: 10, color: '#6a5a4a', textAlign: 'center', marginBottom: 12 }}>
+            かけら10個 → ジェム1個に還元
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 18, color: '#4070a0', fontWeight: 'bold' }}>{gemFragments}</span>
+            <span style={{ fontSize: 11, color: '#998a78' }}> かけら所持</span>
+            <span style={{ fontSize: 11, color: '#6a5a4a', margin: '0 8px' }}>→</span>
+            <span style={{ fontSize: 18, color: '#4070a0', fontWeight: 'bold' }}>{Math.floor(gemFragments / 10)}</span>
+            <span style={{ fontSize: 11, color: '#998a78' }}> ジェム還元可能</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <button className="rpg-btn rpg-btn-primary"
+              style={{ width: 'auto', padding: '6px 16px', margin: 0, fontSize: 11 }}
+              disabled={gemFragments < 10}
+              onClick={() => {
+                const count = Math.floor(gemFragments / 10);
+                if (count <= 0) return;
+                useGameStore.setState((s) => ({
+                  gemFragments: s.gemFragments - count * 10,
+                  gems: s.gems + count,
+                }));
+                setMessage(`かけら${count * 10}個 → ${count}ジェム還元！`);
+                setTimeout(() => setMessage(null), 1500);
+              }}
+            >全て還元 ({Math.floor(gemFragments / 10)}個)</button>
+            <button className="rpg-btn"
+              style={{ width: 'auto', padding: '6px 16px', margin: 0, fontSize: 11 }}
+              disabled={gemFragments < 10}
+              onClick={() => {
+                useGameStore.setState((s) => ({
+                  gemFragments: s.gemFragments - 10,
+                  gems: s.gems + 1,
+                }));
+                setMessage('かけら10個 → 1ジェム還元！');
+                setTimeout(() => setMessage(null), 1200);
+              }}
+            >1個還元</button>
+          </div>
+        </div>
       )}
 
       <div style={{ padding: '4px 0' }}>

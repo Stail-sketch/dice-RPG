@@ -30,7 +30,7 @@ interface GameState {
   playerMaxHp: number;
   gold: number;
   gems: number;
-  gemFragments: number; // 100個で1ジェム
+  gemFragments: number; // 10個で1ジェム（ショップで還元）
   materials: Materials;
   addGemFragments: (amount: number) => void;
   addExp: (amount: number) => void;
@@ -350,11 +350,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   addGold: (amount) => set((s) => ({ gold: Math.max(0, s.gold + amount) })),
   addGems: (amount) => set((s) => ({ gems: Math.max(0, s.gems + amount) })),
   addGemFragments: (amount) => set((s) => {
-    const total = s.gemFragments + amount;
-    const gemsEarned = Math.floor(total / 100);
     return {
-      gemFragments: total % 100,
-      gems: s.gems + gemsEarned,
+      gemFragments: s.gemFragments + amount,
     };
   }),
   getExpToNext: () => {
@@ -389,11 +386,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedDice: s.ownedDice.filter((_, i) => i !== idx),
       gemFragments: s.gemFragments + 1,
     }));
-    // gemFragments → gems変換チェック
-    const updated = get();
-    if (updated.gemFragments >= 100) {
-      set({ gems: updated.gems + 1, gemFragments: updated.gemFragments - 100 });
-    }
     return true;
   },
 
