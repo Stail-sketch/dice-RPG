@@ -19,11 +19,10 @@ const RARITY_RATES: { rarity: 1 | 2 | 3 | 4 | 5; rate: number }[] = [
 
 // ルーンティア排出率
 const RUNE_TIER_RATES: { tier: 'common' | 'rare' | 'epic' | 'legendary'; rate: number }[] = [
-  { tier: 'common', rate: 0.45 },
-  { tier: 'rare', rate: 0.30 },
-  { tier: 'epic', rate: 0.045 },
+  { tier: 'common', rate: 0.465 },
+  { tier: 'rare', rate: 0.50 },
+  { tier: 'epic', rate: 0.03 },
   { tier: 'legendary', rate: 0.005 },
-  // 残り20%はrare扱い（端数調整）
 ];
 
 function pickRarity(pityCount: number): 1 | 2 | 3 | 4 | 5 {

@@ -223,7 +223,7 @@ export function GachaScreen() {
               スキルルーンを入手！
             </div>
             <div style={{ fontSize: 9, color: '#6a5a4a', textAlign: 'center', lineHeight: 1.6 }}>
-              コモン: 45% / レア: 50% / エピック: 4.5% / レジェンド: 0.5%
+              コモン: 46.5% / レア: 50% / エピック: 3% / レジェンド: 0.5%
             </div>
           </>
         )}
@@ -310,46 +310,112 @@ export function GachaScreen() {
               召喚の儀...
             </div>
           )}
-          {animPhase === 'spin' && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: 60,
-                animation: 'gachaSpin 0.6s linear infinite',
-                color: '#e0d0b0',
-              }}>⚅</div>
-              <div style={{
-                fontSize: 12, color: '#c0b090', marginTop: 12,
-                animation: 'gachaPulse 0.5s ease infinite',
-              }}>
-                運命のダイスが回る...
+          {animPhase === 'spin' && (() => {
+            const bestRarity = getHighestRarity(results);
+            const isLeg = bestRarity === 'legendary';
+            const isEpic = bestRarity === 'epic';
+            const spinColor = isLeg ? '#d4a020' : isEpic ? '#9060d0' : '#e0d0b0';
+            return (
+              <div style={{ textAlign: 'center' }}>
+                {/* 背景パーティクル */}
+                {(isLeg || isEpic) && Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} style={{
+                    position: 'absolute',
+                    width: 4, height: 4, borderRadius: '50%',
+                    background: spinColor,
+                    left: `${20 + Math.random() * 60}%`,
+                    top: `${20 + Math.random() * 60}%`,
+                    animation: `gachaParticle ${0.8 + Math.random() * 1.2}s ease infinite`,
+                    animationDelay: `${Math.random() * 0.5}s`,
+                    opacity: 0.6,
+                  }} />
+                ))}
+                <div style={{
+                  fontSize: isLeg ? 80 : isEpic ? 70 : 60,
+                  animation: `gachaSpin ${isLeg ? 0.3 : isEpic ? 0.4 : 0.6}s linear infinite`,
+                  color: spinColor,
+                  textShadow: (isLeg || isEpic) ? `0 0 20px ${spinColor}, 0 0 40px ${spinColor}` : 'none',
+                }}>⚅</div>
+                <div style={{
+                  fontSize: 12, color: spinColor, marginTop: 12,
+                  animation: 'gachaPulse 0.5s ease infinite',
+                  textShadow: (isLeg || isEpic) ? `0 0 8px ${spinColor}` : 'none',
+                }}>
+                  {isLeg ? '運命が...揺れている...！！' : isEpic ? '強い力を感じる...！' : '運命のダイスが回る...'}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
           {animPhase === 'burst' && (() => {
             const bestRarity = getHighestRarity(results);
             const burstColor = RARITY_BURST_COLORS[bestRarity];
             const isLeg = bestRarity === 'legendary';
             const isEpic = bestRarity === 'epic';
             return (
-              <div style={{ textAlign: 'center' }}>
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {/* 複数リング */}
+                {(isLeg || isEpic) && [0, 1, 2].map(i => (
+                  <div key={i} style={{
+                    position: 'absolute', left: '50%', top: '50%',
+                    width: (isLeg ? 200 : 140) + i * 40, height: (isLeg ? 200 : 140) + i * 40,
+                    marginLeft: -((isLeg ? 200 : 140) + i * 40) / 2,
+                    marginTop: -((isLeg ? 200 : 140) + i * 40) / 2,
+                    borderRadius: '50%',
+                    border: `2px solid ${burstColor}`,
+                    opacity: 0.4 - i * 0.1,
+                    animation: `gachaBurstRing ${0.6 + i * 0.2}s ease forwards`,
+                  }} />
+                ))}
+                {/* メインバースト */}
                 <div style={{
-                  width: isLeg ? 160 : 120, height: isLeg ? 160 : 120,
+                  width: isLeg ? 200 : isEpic ? 160 : 120,
+                  height: isLeg ? 200 : isEpic ? 160 : 120,
                   borderRadius: '50%',
-                  background: `radial-gradient(circle, ${burstColor}, transparent 70%)`,
+                  background: `radial-gradient(circle, white 0%, ${burstColor} 30%, transparent 70%)`,
                   animation: 'gachaBurst 0.8s ease forwards',
                   margin: '0 auto',
-                  boxShadow: `0 0 ${isLeg ? 80 : 40}px ${burstColor}`,
+                  boxShadow: `0 0 ${isLeg ? 120 : isEpic ? 60 : 30}px ${burstColor}, 0 0 ${isLeg ? 200 : isEpic ? 100 : 50}px ${burstColor}40`,
                 }} />
+                {/* パーティクル爆発 */}
+                {(isLeg || isEpic) && Array.from({ length: isLeg ? 24 : 12 }).map((_, i) => {
+                  const angle = (i / (isLeg ? 24 : 12)) * Math.PI * 2;
+                  const dist = 60 + Math.random() * 40;
+                  return (
+                    <div key={`p${i}`} style={{
+                      position: 'absolute',
+                      left: `calc(50% + ${Math.cos(angle) * dist}px)`,
+                      top: `calc(50% + ${Math.sin(angle) * dist}px)`,
+                      width: isLeg ? 6 : 4, height: isLeg ? 6 : 4,
+                      borderRadius: '50%', background: burstColor,
+                      animation: `gachaParticleExplode 1s ease forwards`,
+                      animationDelay: `${Math.random() * 0.3}s`,
+                      boxShadow: `0 0 ${isLeg ? 8 : 4}px ${burstColor}`,
+                    }} />
+                  );
+                })}
+                {/* テキスト */}
                 <div style={{
-                  fontSize: isLeg ? 22 : isEpic ? 18 : 14,
-                  color: burstColor,
+                  fontSize: isLeg ? 28 : isEpic ? 20 : 14,
+                  color: isLeg ? '#fff' : burstColor,
                   fontWeight: 'bold',
-                  marginTop: 16,
-                  textShadow: `0 0 10px ${burstColor}`,
-                  animation: 'fadeIn 0.5s ease',
+                  marginTop: 20,
+                  textShadow: isLeg
+                    ? `0 0 10px #d4a020, 0 0 20px #d4a020, 0 0 40px #d4a020`
+                    : isEpic ? `0 0 10px ${burstColor}, 0 0 20px ${burstColor}` : `0 0 8px ${burstColor}`,
+                  animation: isLeg ? 'legendaryTextPulse 0.5s ease infinite' : 'fadeIn 0.5s ease',
+                  letterSpacing: isLeg ? 6 : isEpic ? 4 : 2,
                 }}>
                   {isLeg ? '★ LEGENDARY ★' : isEpic ? '◆ EPIC ◆' : bestRarity === 'rare' ? '◇ RARE ◇' : ''}
                 </div>
+                {isLeg && (
+                  <div style={{
+                    fontSize: 11, color: '#d4a020', marginTop: 8,
+                    animation: 'fadeIn 0.8s ease',
+                    textShadow: '0 0 6px #d4a020',
+                  }}>
+                    伝説の力が目覚めた...！
+                  </div>
+                )}
               </div>
             );
           })()}
