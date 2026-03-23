@@ -7,7 +7,7 @@ import { ELEMENT_NAMES, type Element } from '../../types';
 import { ELEMENT_COLORS } from '../common/ElementBadge';
 import { MonsterSprite } from '../common/MonsterSprite';
 
-type CodexTab = 'monsters' | 'runes' | 'recipes';
+type CodexTab = 'monsters' | 'runes' | 'skills' | 'recipes';
 
 
 
@@ -76,9 +76,10 @@ export function CodexScreen() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
         {([
-          ['monsters', 'モンスター図鑑'],
-          ['runes', 'ルーン図鑑'],
-          ['recipes', 'レシピ図鑑'],
+          ['monsters', 'モンスター'],
+          ['runes', 'ルーン'],
+          ['skills', 'スキル'],
+          ['recipes', 'レシピ'],
         ] as [CodexTab, string][]).map(([key, label]) => (
           <button
             key={key}
@@ -105,7 +106,8 @@ export function CodexScreen() {
           onSelect={setSelectedMonsterId}
         />
       )}
-      {tab === 'runes' && <RuneCodex />}
+      {tab === 'runes' && <RuneCodex capturedMonsters={capturedMonsters} />}
+      {tab === 'skills' && <SkillCodex capturedMonsters={capturedMonsters} />}
       {tab === 'recipes' && <RecipeCodex />}
     </div>
   );
@@ -343,13 +345,82 @@ function MonsterDetail({ monster }: { monster: typeof ALL_MONSTERS[0] }) {
 }
 
 // ==============================
-// Rune Codex
+// Skill Detail Row (shared)
 // ==============================
-function RuneCodex() {
+function SkillDetailRow({ name, element, effect, badge }: {
+  name: string;
+  element: Element;
+  effect: { type: string; power: number; duration?: number; description: string };
+  badge?: React.ReactNode;
+}) {
+  const effectColor = effect.type === 'damage' ? '#a04030'
+    : effect.type === 'heal' ? '#30a050'
+    : effect.type === 'dot' ? '#906020'
+    : effect.type === 'buff' ? '#3070a0'
+    : effect.type === 'debuff' ? '#7050a0'
+    : '#5080a0';
+  return (
+    <div style={{
+      background: ELEMENT_COLORS[element] + '10',
+      border: '1px solid ' + ELEMENT_COLORS[element] + '30',
+      borderRadius: 4, padding: '3px 6px', marginBottom: 2,
+      display: 'flex', alignItems: 'center', gap: 6,
+    }}>
+      <span style={{ fontSize: 9, fontWeight: 'bold', color: ELEMENT_COLORS[element], minWidth: 50 }}>
+        {name}
+      </span>
+      {badge}
+      <span style={{
+        fontSize: 7, padding: '1px 4px', borderRadius: 3,
+        background: effectColor + '20', color: effectColor,
+        border: '1px solid ' + effectColor + '40',
+      }}>
+        {EFFECT_TYPE_NAMES[effect.type] ?? effect.type}
+      </span>
+      <span style={{ fontSize: 8, color: '#3a2a1a', fontWeight: 'bold' }}>
+        {effect.type === 'buff' || effect.type === 'debuff' ? `x${effect.power}` : effect.power}
+      </span>
+      {effect.duration && (
+        <span style={{ fontSize: 7, color: '#6a5a4a' }}>{effect.duration}T</span>
+      )}
+      <span style={{ fontSize: 7, color: '#998a78', marginLeft: 'auto' }}>
+        {effect.description}
+      </span>
+    </div>
+  );
+}
+
+// ==============================
+// Rune Codex (with fixed skills)
+// ==============================
+function RuneCodex({ capturedMonsters }: { capturedMonsters: string[] }) {
   const elements: Element[] = ['blaze', 'frost', 'volt', 'venom', 'alloy', 'mirage'];
+
+  // 捕獲済みモンスターの固有スキルを集める
+  const capturedMonstersData = ALL_MONSTERS.filter(m => capturedMonsters.includes(m.id));
+  const fixedSkillsByElement: Record<Element, { skill: typeof FIXED_SKILLS[string]; monsterName: string }[]> = {
+    blaze: [], frost: [], volt: [], venom: [], alloy: [], mirage: [],
+  };
+  for (const m of capturedMonstersData) {
+    for (const face of m.fixedFaces) {
+      for (const s of face.sockets) {
+        const skill = FIXED_SKILLS[s.skillId];
+        if (skill && !fixedSkillsByElement[skill.element].some(x => x.skill.id === skill.id)) {
+          fixedSkillsByElement[skill.element].push({ skill, monsterName: m.name });
+        }
+      }
+    }
+  }
 
   return (
     <div>
+      {/* 装備可能ルーン */}
+      <div style={{
+        fontSize: 11, fontWeight: 'bold', color: '#705828',
+        borderBottom: '2px solid #c0b8a8', paddingBottom: 3, marginBottom: 6,
+      }}>
+        装備可能ルーン ({SKILL_RUNES.length})
+      </div>
       {elements.map(el => {
         const runes = SKILL_RUNES.filter(r => r.element === el);
         if (runes.length === 0) return null;
@@ -359,36 +430,218 @@ function RuneCodex() {
               fontSize: 10, fontWeight: 'bold', color: ELEMENT_COLORS[el],
               borderBottom: '1px solid #d8d0c4', paddingBottom: 2, marginBottom: 4,
             }}>
-              {ELEMENT_NAMES[el]}属性ルーン
+              {ELEMENT_NAMES[el]}属性 ({runes.length})
             </div>
             {runes.map(r => (
-              <div key={r.id} style={{
-                background: '#ece5d8', border: '1px solid #d8d0c4', borderRadius: 4,
-                padding: '4px 6px', marginBottom: 3,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              }}>
-                <div>
-                  <span style={{ fontSize: 10, color: '#3a2a1a', fontWeight: 'bold' }}>
-                    {r.name}
-                  </span>
+              <SkillDetailRow
+                key={r.id}
+                name={r.name}
+                element={r.element}
+                effect={r.effect}
+                badge={
                   <span style={{
-                    fontSize: 8, marginLeft: 4, padding: '0 3px', borderRadius: 2,
+                    fontSize: 7, padding: '0 3px', borderRadius: 2,
                     background: TIER_COLORS[r.tier] + '20',
                     color: TIER_COLORS[r.tier],
                     border: '1px solid ' + TIER_COLORS[r.tier] + '40',
                   }}>
                     {TIER_NAMES[r.tier]}
                   </span>
-                </div>
-                <div style={{ fontSize: 8, color: '#6a5a4a', textAlign: 'right' }}>
-                  <div>{EFFECT_TYPE_NAMES[r.effect.type]} / 威力{r.effect.power}</div>
-                  <div style={{ color: '#998a78' }}>{r.effect.description}</div>
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         );
       })}
+
+      {/* 固有スキル（捕獲済み） */}
+      <div style={{
+        fontSize: 11, fontWeight: 'bold', color: '#705828',
+        borderBottom: '2px solid #c0b8a8', paddingBottom: 3, marginBottom: 6, marginTop: 12,
+      }}>
+        固有スキル（捕獲済みモンスター）
+      </div>
+      {capturedMonstersData.length === 0 ? (
+        <div style={{ fontSize: 9, color: '#998a78', textAlign: 'center', padding: 8 }}>
+          モンスターを捕獲すると固有スキルが閲覧できます
+        </div>
+      ) : (
+        elements.map(el => {
+          const skills = fixedSkillsByElement[el];
+          if (skills.length === 0) return null;
+          return (
+            <div key={`fixed-${el}`} style={{ marginBottom: 8 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 'bold', color: ELEMENT_COLORS[el],
+                borderBottom: '1px solid #d8d0c4', paddingBottom: 2, marginBottom: 4,
+              }}>
+                {ELEMENT_NAMES[el]}属性 ({skills.length})
+              </div>
+              {skills.map(({ skill, monsterName }) => (
+                <SkillDetailRow
+                  key={skill.id}
+                  name={skill.name}
+                  element={skill.element}
+                  effect={skill.effect}
+                  badge={
+                    <span style={{
+                      fontSize: 7, padding: '0 3px', borderRadius: 2,
+                      background: '#705828' + '20', color: '#705828',
+                      border: '1px solid #705828' + '40',
+                    }}>
+                      {monsterName}
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+// ==============================
+// Skill Codex (all skills)
+// ==============================
+function SkillCodex({ capturedMonsters }: { capturedMonsters: string[] }) {
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterElement, setFilterElement] = useState<Element | 'all'>('all');
+  const elements: Element[] = ['blaze', 'frost', 'volt', 'venom', 'alloy', 'mirage'];
+  const effectTypes = ['damage', 'heal', 'dot', 'buff', 'debuff', 'shield'];
+
+  // 全スキルを統合
+  type SkillEntry = {
+    id: string; name: string; element: Element;
+    effect: { type: string; power: number; duration?: number; description: string };
+    source: string; // 'ルーン' or モンスター名
+    isRune: boolean;
+  };
+
+  const allSkills: SkillEntry[] = [];
+
+  // 装備ルーン
+  for (const r of SKILL_RUNES) {
+    allSkills.push({
+      id: r.id, name: r.name, element: r.element,
+      effect: r.effect, source: `ルーン(${TIER_NAMES[r.tier]})`, isRune: true,
+    });
+  }
+
+  // 固有スキル（捕獲済みのみ）
+  const capturedMonstersData = ALL_MONSTERS.filter(m => capturedMonsters.includes(m.id));
+  const addedFixedIds = new Set<string>();
+  for (const m of capturedMonstersData) {
+    for (const face of m.fixedFaces) {
+      for (const s of face.sockets) {
+        const skill = FIXED_SKILLS[s.skillId];
+        if (skill && !addedFixedIds.has(skill.id)) {
+          addedFixedIds.add(skill.id);
+          allSkills.push({
+            id: skill.id, name: skill.name, element: skill.element,
+            effect: skill.effect, source: m.name, isRune: false,
+          });
+        }
+      }
+    }
+  }
+
+  // 未発見の固有スキル数
+  const totalFixedCount = Object.keys(FIXED_SKILLS).length;
+  const undiscoveredCount = totalFixedCount - addedFixedIds.size;
+
+  // フィルタ
+  const filtered = allSkills.filter(s => {
+    if (filterElement !== 'all' && s.element !== filterElement) return false;
+    if (filterType !== 'all' && s.effect.type !== filterType) return false;
+    return true;
+  });
+
+  return (
+    <div>
+      {/* フィルタ */}
+      <div style={{ marginBottom: 6 }}>
+        <div style={{ display: 'flex', gap: 2, marginBottom: 4, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 8, color: '#998a78', lineHeight: '20px' }}>属性:</span>
+          <button
+            onClick={() => setFilterElement('all')}
+            style={{
+              fontSize: 8, padding: '2px 5px', cursor: 'pointer', borderRadius: 3,
+              background: filterElement === 'all' ? '#d8d0c4' : 'transparent',
+              border: '1px solid #c0b8a8', color: '#3a2a1a',
+            }}
+          >全</button>
+          {elements.map(el => (
+            <button
+              key={el}
+              onClick={() => setFilterElement(el)}
+              style={{
+                fontSize: 8, padding: '2px 5px', cursor: 'pointer', borderRadius: 3,
+                background: filterElement === el ? ELEMENT_COLORS[el] + '40' : 'transparent',
+                border: `1px solid ${ELEMENT_COLORS[el]}60`, color: ELEMENT_COLORS[el],
+              }}
+            >{ELEMENT_NAMES[el]}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 8, color: '#998a78', lineHeight: '20px' }}>効果:</span>
+          <button
+            onClick={() => setFilterType('all')}
+            style={{
+              fontSize: 8, padding: '2px 5px', cursor: 'pointer', borderRadius: 3,
+              background: filterType === 'all' ? '#d8d0c4' : 'transparent',
+              border: '1px solid #c0b8a8', color: '#3a2a1a',
+            }}
+          >全</button>
+          {effectTypes.map(t => (
+            <button
+              key={t}
+              onClick={() => setFilterType(t)}
+              style={{
+                fontSize: 8, padding: '2px 5px', cursor: 'pointer', borderRadius: 3,
+                background: filterType === t ? '#d8d0c4' : 'transparent',
+                border: '1px solid #c0b8a8', color: '#3a2a1a',
+              }}
+            >{EFFECT_TYPE_NAMES[t]}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* 件数 */}
+      <div style={{ fontSize: 9, color: '#998a78', marginBottom: 4 }}>
+        表示: {filtered.length} / {allSkills.length}件
+        {undiscoveredCount > 0 && (
+          <span style={{ marginLeft: 6 }}>（未発見の固有スキル: {undiscoveredCount}）</span>
+        )}
+      </div>
+
+      {/* リスト */}
+      <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
+        {filtered.map(s => (
+          <SkillDetailRow
+            key={s.id}
+            name={s.name}
+            element={s.element}
+            effect={s.effect}
+            badge={
+              <span style={{
+                fontSize: 7, padding: '0 3px', borderRadius: 2,
+                background: s.isRune ? '#3070a0' + '20' : '#705828' + '20',
+                color: s.isRune ? '#3070a0' : '#705828',
+                border: '1px solid ' + (s.isRune ? '#3070a0' : '#705828') + '40',
+              }}>
+                {s.source}
+              </span>
+            }
+          />
+        ))}
+        {filtered.length === 0 && (
+          <div style={{ fontSize: 9, color: '#998a78', textAlign: 'center', padding: 12 }}>
+            該当するスキルがありません
+          </div>
+        )}
+      </div>
     </div>
   );
 }
