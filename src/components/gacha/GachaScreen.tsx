@@ -102,13 +102,6 @@ export function GachaScreen() {
       // 昇格タイマー: 溜め→昇格を繰り返す
       let delay = 1200; // 最初のCommon表示時間（長め）
       for (let lvl = 1; lvl <= maxLevel; lvl++) {
-        // 溜めフェーズ: 「来るか...？」のテキスト
-        const teaseDelay = delay;
-        const tTease = window.setTimeout(() => {
-          setCrystalMsg(CRYSTAL_TEASE[lvl]);
-        }, teaseDelay);
-        skipTimers.push(tTease);
-
         // 昇格フェーズ: 溜めの後に昇格
         delay += lvl === 1 ? 1000 : lvl === 2 ? 1500 : 2000;
         const targetLvl = lvl;
