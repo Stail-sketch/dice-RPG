@@ -16,6 +16,7 @@ import {
 import type { MonsterDice, SkillRune } from '../../types';
 
 type GachaTab = 'dice' | 'rune';
+type AnimPhase = 'idle' | 'darken' | 'spin' | 'burst' | 'reveal';
 
 interface DiceResult {
   type: 'dice';
@@ -29,6 +30,29 @@ interface RuneResult {
 
 type GachaResult = DiceResult | RuneResult;
 
+function getHighestRarity(results: GachaResult[]): string {
+  let best = 'common';
+  for (const r of results) {
+    if (r.type === 'dice') {
+      if (r.monster.rarity >= 5) return 'legendary';
+      if (r.monster.rarity >= 4) best = best === 'legendary' ? best : 'epic';
+      if (r.monster.rarity >= 3 && best === 'common') best = 'rare';
+    } else {
+      if (r.rune.tier === 'legendary') return 'legendary';
+      if (r.rune.tier === 'epic' && best !== 'legendary') best = 'epic';
+      if (r.rune.tier === 'rare' && best === 'common') best = 'rare';
+    }
+  }
+  return best;
+}
+
+const RARITY_BURST_COLORS: Record<string, string> = {
+  common: '#998a78',
+  rare: '#4070a0',
+  epic: '#7050a0',
+  legendary: '#d4a020',
+};
+
 export function GachaScreen() {
   const {
     setScreen, gems, addGems, addDice, addRune,
@@ -39,9 +63,46 @@ export function GachaScreen() {
   const [tab, setTab] = useState<GachaTab>('dice');
   const [results, setResults] = useState<GachaResult[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [animating, setAnimating] = useState(false);
+  const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
+  const animating = animPhase !== 'idle';
+  const skipTimers = useState<number[]>([])[0];
 
-  // ダイスガチャ単発
+  const skipToResults = () => {
+    // 全timerをクリアして即結果表示
+    for (const t of skipTimers) clearTimeout(t);
+    skipTimers.length = 0;
+    setAnimPhase('idle');
+    setShowResults(true);
+  };
+
+  const runAnimation = (newResults: GachaResult[]) => {
+    setResults(newResults);
+    setShowResults(false);
+    const bestRarity = getHighestRarity(newResults);
+    const isLeg = bestRarity === 'legendary';
+    const isEpic = bestRarity === 'epic';
+
+    // Phase 1: 暗転
+    setAnimPhase('darken');
+    const t1 = window.setTimeout(() => {
+      // Phase 2: スピン
+      setAnimPhase('spin');
+      const t2 = window.setTimeout(() => {
+        // Phase 3: バースト
+        setAnimPhase('burst');
+        const t3 = window.setTimeout(() => {
+          // Phase 4: 結果
+          setAnimPhase('idle');
+          setShowResults(true);
+        }, isLeg ? 1500 : isEpic ? 1000 : 600);
+        skipTimers.push(t3);
+      }, isLeg ? 2000 : isEpic ? 1200 : 600);
+      skipTimers.push(t2);
+    }, 400);
+    skipTimers.push(t1);
+  };
+
+  // ダイスガチャ
   const doDiceRoll = (count: number) => {
     const cost = count === 1 ? DICE_GACHA_COST : DICE_GACHA_10_COST;
     if (gems < cost) return;
@@ -56,15 +117,10 @@ export function GachaScreen() {
       newResults.push({ type: 'dice', monster });
     }
     setGachaPityDice(pity);
-    setResults(newResults);
-    setAnimating(true);
-    setTimeout(() => {
-      setAnimating(false);
-      setShowResults(true);
-    }, 400);
+    runAnimation(newResults);
   };
 
-  // ルーンガチャ単発
+  // ルーンガチャ
   const doRuneRoll = (count: number) => {
     const cost = count === 1 ? RUNE_GACHA_COST : RUNE_GACHA_10_COST;
     if (gems < cost) return;
@@ -76,14 +132,8 @@ export function GachaScreen() {
       addRune(rune);
       newResults.push({ type: 'rune', rune });
     }
-    // ルーンガチャはpity不要だが一応カウント
     setGachaPityRune(gachaPityRune + count);
-    setResults(newResults);
-    setAnimating(true);
-    setTimeout(() => {
-      setAnimating(false);
-      setShowResults(true);
-    }, 400);
+    runAnimation(newResults);
   };
 
   const closeResults = () => {
@@ -240,16 +290,71 @@ export function GachaScreen() {
         </div>
       )}
 
-      {/* アニメーション中 */}
+      {/* ガチャ演出 */}
       {animating && (
-        <div className="rpg-panel" style={{
-          marginTop: 4, textAlign: 'center', padding: 24,
-        }}>
-          <div style={{
-            fontSize: 14, color: '#705828', fontWeight: 'bold',
-            animation: 'gachaPulse 0.4s ease-in-out infinite',
-          }}>
-            召喚中...
+        <div
+          onClick={skipToResults}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 500,
+            background: animPhase === 'darken' ? 'rgba(0,0,0,0.8)'
+              : animPhase === 'spin' ? 'rgba(0,0,0,0.9)'
+              : 'rgba(0,0,0,0.7)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'background 0.4s ease',
+          }}
+        >
+          {animPhase === 'darken' && (
+            <div style={{ fontSize: 14, color: '#998a78', animation: 'fadeIn 0.3s ease' }}>
+              召喚の儀...
+            </div>
+          )}
+          {animPhase === 'spin' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: 60,
+                animation: 'gachaSpin 0.6s linear infinite',
+                color: '#e0d0b0',
+              }}>⚅</div>
+              <div style={{
+                fontSize: 12, color: '#c0b090', marginTop: 12,
+                animation: 'gachaPulse 0.5s ease infinite',
+              }}>
+                運命のダイスが回る...
+              </div>
+            </div>
+          )}
+          {animPhase === 'burst' && (() => {
+            const bestRarity = getHighestRarity(results);
+            const burstColor = RARITY_BURST_COLORS[bestRarity];
+            const isLeg = bestRarity === 'legendary';
+            const isEpic = bestRarity === 'epic';
+            return (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: isLeg ? 160 : 120, height: isLeg ? 160 : 120,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${burstColor}, transparent 70%)`,
+                  animation: 'gachaBurst 0.8s ease forwards',
+                  margin: '0 auto',
+                  boxShadow: `0 0 ${isLeg ? 80 : 40}px ${burstColor}`,
+                }} />
+                <div style={{
+                  fontSize: isLeg ? 22 : isEpic ? 18 : 14,
+                  color: burstColor,
+                  fontWeight: 'bold',
+                  marginTop: 16,
+                  textShadow: `0 0 10px ${burstColor}`,
+                  animation: 'fadeIn 0.5s ease',
+                }}>
+                  {isLeg ? '★ LEGENDARY ★' : isEpic ? '◆ EPIC ◆' : bestRarity === 'rare' ? '◇ RARE ◇' : ''}
+                </div>
+              </div>
+            );
+          })()}
+          <div style={{ position: 'absolute', bottom: 30, fontSize: 10, color: '#998a78' }}>
+            タップでスキップ
           </div>
         </div>
       )}
