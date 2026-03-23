@@ -159,6 +159,7 @@ export function BattleScreen() {
     }
     const state = createBattleState(playerDice, enemyDiceList, playerHp, enemyMaxHp);
     setBattle(state);
+    setPhase('rolling'); // すぐにphaseを変更してボタンを非表示に
     setLog([]);
 
     // ボス演出: カットイン → 通常開始
@@ -169,7 +170,6 @@ export function BattleScreen() {
     }
 
     setTimeout(() => {
-      setPhase('rolling');
       addLog('BATTLE START!');
       flash('BATTLE START!', 800);
 
