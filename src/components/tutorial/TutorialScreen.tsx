@@ -47,7 +47,7 @@ function PipDialogue({ text, onNext, buttonLabel }: { text: string; onNext: () =
 function StepIndicator({ step }: { step: number }) {
   return (
     <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
-      {[1, 2, 3, 4].map(s => (
+      {[1, 2, 3, 4, 5, 6].map(s => (
         <div key={s} style={{
           width: 8, height: 8, borderRadius: '50%',
           background: s === step ? '#705828' : s < step ? '#b09050' : '#e0d8cc',
@@ -183,6 +183,10 @@ export function TutorialScreen() {
       // ======================
       case 4:
         return renderStep4();
+      case 5:
+        return renderStep5();
+      case 6:
+        return renderStep6();
       default:
         return null;
     }
@@ -233,7 +237,10 @@ export function TutorialScreen() {
         {subStep === 2 && <PipDialogue text="世界がモンスターだらけで...きみの力が必要なんだ。" onNext={advance} />}
         {subStep === 3 && <PipDialogue text="これがきみのダイスだよ。面ごとにソケット(穴)があるでしょ？" onNext={advance} />}
         {subStep === 4 && <PipDialogue text="穴にスキルルーンをはめると、その面が出た時にスキルが発動するんだ！" onNext={advance} />}
-        {subStep === 5 && <PipDialogue text="よし！面の穴が多いほどスキルがたくさん入るよ。さあ、実戦だ！" onNext={nextStep} />}
+        {subStep === 5 && <PipDialogue text="面の穴が多いほどスキルがたくさん入るよ。でも大きい面は出にくい！" onNext={advance} />}
+        {subStep === 6 && <PipDialogue text="属性は6種類あるよ。炎・氷・雷・毒・鋼・幻。それぞれ得意と苦手があるんだ。" onNext={advance} />}
+        {subStep === 7 && <PipDialogue text="有利属性なら1.5倍、不利だと0.5倍のダメージ！属性を考えてパーティを組もう！" onNext={advance} />}
+        {subStep === 8 && <PipDialogue text="モンスターダイスにはロックされたルーンが最初から入ってるよ。HEROダイスだけは全部自由にカスタムできる！" onNext={nextStep} />}
       </>
     );
   };
@@ -317,7 +324,7 @@ export function TutorialScreen() {
             <div style={{ fontSize: 14, color: '#b04030', fontWeight: 'bold' }}>スキル発動！</div>
           </div>
         )}
-        {subStep === 3 && <PipDialogue text="やった！出た面のスキルが全部発動するんだ。面の数字が大きいほど穴が多いけど、出にくいよ。" onNext={nextStep} />}
+        {subStep === 3 && <PipDialogue text="やった！出た面のスキルが全部同時に発動するんだ。シールドで敵のダメージも防げるし、バフで攻撃力も上がるよ！" onNext={nextStep} />}
       </>
     );
   };
@@ -591,15 +598,13 @@ export function TutorialScreen() {
           <PipDialogue text="すごい！倒したぞ！" onNext={() => setSubStep(7)} />
         )}
         {subStep === 7 && (
-          <PipDialogue text="やったね！街に行こう、冒険はこれからだ！" onNext={() => {
-            // Give remaining starter resources and complete
+          <PipDialogue text="やったね！まだ教えることがあるよ！" onNext={() => {
+            // Give remaining starter resources
             const store = useGameStore.getState();
-            // Add remaining common runes
             const starterRunes = SKILL_RUNES
               .filter(r => r.tier === 'common')
               .flatMap(r => [{ ...r }, { ...r }]);
-            useGameStore.getState().addRunes(starterRunes);
-            // Add remaining starter dice
+            store.addRunes(starterRunes);
             const pyrachnid = CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')!;
             const salamander = CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')!;
             store.addDice(applyDefaultSocketTiers({ ...pyrachnid }));
@@ -608,8 +613,102 @@ export function TutorialScreen() {
             store.captureMonster('frost-jelly');
             store.captureMonster('pyrachnid');
             store.captureMonster('salamander-v2');
+            nextStep();
+          }} buttonLabel="次へ！" />
+        )}
+      </>
+    );
+  };
+
+  // ==============================
+  // STEP 5: 属性相性 & スキルタイプ
+  // ==============================
+  const renderStep5 = () => {
+    return (
+      <>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          {subStep >= 1 && (
+            <div style={{ background: '#ece5d8', borderRadius: 6, padding: 10, width: '100%', maxWidth: 280 }}>
+              <div style={{ fontSize: 10, color: '#705828', fontWeight: 'bold', marginBottom: 6, textAlign: 'center' }}>属性相性表</div>
+              <div style={{ fontSize: 8, color: '#6a5a4a', lineHeight: 1.8 }}>
+                <div>炎 → <span style={{ color: '#308050' }}>氷・鋼に強い</span> / <span style={{ color: '#b04030' }}>雷・毒に弱い</span></div>
+                <div>氷 → <span style={{ color: '#308050' }}>雷・毒に強い</span> / <span style={{ color: '#b04030' }}>炎・幻に弱い</span></div>
+                <div>雷 → <span style={{ color: '#308050' }}>炎・幻に強い</span> / <span style={{ color: '#b04030' }}>氷・鋼に弱い</span></div>
+                <div>毒 → <span style={{ color: '#308050' }}>炎・幻に強い</span> / <span style={{ color: '#b04030' }}>氷・鋼に弱い</span></div>
+                <div>鋼 → <span style={{ color: '#308050' }}>雷・毒に強い</span> / <span style={{ color: '#b04030' }}>炎・幻に弱い</span></div>
+                <div>幻 → <span style={{ color: '#308050' }}>氷・鋼に強い</span> / <span style={{ color: '#b04030' }}>雷・毒に弱い</span></div>
+              </div>
+            </div>
+          )}
+          {subStep >= 3 && (
+            <div style={{ background: '#ece5d8', borderRadius: 6, padding: 10, width: '100%', maxWidth: 280 }}>
+              <div style={{ fontSize: 10, color: '#705828', fontWeight: 'bold', marginBottom: 6, textAlign: 'center' }}>スキルタイプ</div>
+              <div style={{ fontSize: 8, color: '#6a5a4a', lineHeight: 1.8 }}>
+                <div><span style={{ color: '#a04030' }}>ダメージ</span> — 直接ダメージを与える</div>
+                <div><span style={{ color: '#906020' }}>継続(DoT)</span> — 毎ターンダメージ</div>
+                <div><span style={{ color: '#30a050' }}>回復</span> — HPを回復する</div>
+                <div><span style={{ color: '#5080a0' }}>シールド</span> — ダメージを吸収する盾</div>
+                <div><span style={{ color: '#3070a0' }}>バフ</span> — 攻撃力UP（3ターン）</div>
+                <div><span style={{ color: '#7050a0' }}>デバフ</span> — 敵の攻撃力DOWN（3ターン）</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {subStep === 0 && <PipDialogue text="属性相性とスキルについて教えるよ！これがバトルの鍵だ！" onNext={advance} />}
+        {subStep === 1 && <PipDialogue text="有利属性なら×1.5倍、不利なら×0.5倍！パーティの属性を考えて戦おう。" onNext={advance} />}
+        {subStep === 2 && <PipDialogue text="次はスキルタイプ！攻撃だけじゃないよ。" onNext={advance} />}
+        {subStep === 3 && <PipDialogue text="シールドはダメージを吸収するよ。バフ・デバフは3ターンで切れるから、タイミングが大事！" onNext={advance} />}
+        {subStep === 4 && <PipDialogue text="同じ面に同属性スキルを集めるとシナジーで威力UP！異なる属性を組み合わせるとレシピコンボも発動するよ！" onNext={nextStep} />}
+      </>
+    );
+  };
+
+  // ==============================
+  // STEP 6: 町の施設紹介
+  // ==============================
+  const renderStep6 = () => {
+    const facilities = [
+      { name: 'ダンジョン', desc: 'モンスターと戦い、ダイスに封印する', icon: '🏔' },
+      { name: '鍛冶屋', desc: 'ソケットを強化（bronze→silver→gold）＋拡張', icon: '🔨' },
+      { name: 'ショップ', desc: 'ルーンや素材を購入。売却もできる', icon: '🏪' },
+      { name: 'ダイス装備', desc: 'パーティ編成とルーン装着', icon: '🎲' },
+      { name: 'ガチャ', desc: 'ジェムで新しいダイスやルーンをゲット', icon: '🎰' },
+      { name: '決闘場', desc: 'AI対戦でポイントを稼ぐ', icon: '⚔' },
+      { name: '図鑑', desc: 'モンスター・ルーン・スキル・レシピを確認', icon: '📖' },
+    ];
+
+    return (
+      <>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {subStep >= 1 && (
+            <div style={{ width: '100%', maxWidth: 300 }}>
+              <div style={{ fontSize: 11, color: '#705828', fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>町の施設</div>
+              {facilities.map((f, i) => (
+                <div key={i} style={{
+                  display: 'flex', gap: 8, alignItems: 'center',
+                  padding: '4px 8px', background: i % 2 === 0 ? '#ece5d8' : '#f5f0e8',
+                  borderRadius: 4, marginBottom: 2,
+                }}>
+                  <span style={{ fontSize: 16 }}>{f.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 10, color: '#3a2a1a', fontWeight: 'bold' }}>{f.name}</div>
+                    <div style={{ fontSize: 8, color: '#998a78' }}>{f.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {subStep === 0 && <PipDialogue text="最後に町の施設を紹介するよ！" onNext={advance} />}
+        {subStep === 1 && <PipDialogue text="町にはいろんな施設があるよ。ダンジョンで戦って、鍛冶で強化、ショップで買い物！" onNext={advance} />}
+        {subStep === 2 && <PipDialogue text="ボスを倒して封印すると次の章に進めるよ。全7章の冒険が待ってる！" onNext={advance} />}
+        {subStep === 3 && <PipDialogue text="レベルが上がるとHPが増えるよ。どんどん戦って強くなろう！" onNext={advance} />}
+        {subStep === 4 && (
+          <PipDialogue text="準備はいい？冒険の始まりだ！" onNext={() => {
             completeTutorial();
-          }} buttonLabel="街へ！" />
+          }} buttonLabel="冒険へ！" />
         )}
       </>
     );
