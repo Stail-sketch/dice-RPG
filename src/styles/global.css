@@ -113,6 +113,22 @@ body {
 
 .rpg-btn:active {
   transform: scale(0.97);
+  background: var(--bg-overlay);
+}
+
+.rpg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rpg-btn:disabled:hover {
+  border-color: var(--btn-border);
+  color: var(--btn-text);
+}
+
+.rpg-btn:disabled:active {
+  transform: none;
+  background: var(--btn-bg);
 }
 
 .rpg-btn-primary {
@@ -468,6 +484,15 @@ body {
   50% { opacity: 0.7; height: 35px; }
 }
 
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen-enter {
+  animation: screenFadeIn 200ms ease both;
+}
+
 .shake { animation: shake 0.4s ease; }
 .heavy-shake { animation: heavyShake 0.5s ease; }
 .fade-in { animation: fadeIn 0.4s ease; }
@@ -539,6 +564,28 @@ body {
 @keyframes chargePulse {
   from { opacity: 0.6; }
   to { opacity: 1.0; }
+}
+
+/* ヒットフラッシュ */
+@keyframes hitFlash {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* ステータスエフェクトポップ */
+@keyframes statusPop {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.8; transform: scale(1); }
+}
+
+/* クリティカルヒットポップ */
+@keyframes criticalPop {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  10% { opacity: 1; transform: translateY(-12px) scale(2.0); }
+  25% { opacity: 1; transform: translateY(-18px) scale(1.5); }
+  50% { opacity: 1; transform: translateY(-26px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
 }
 
 /* スクロールバー */

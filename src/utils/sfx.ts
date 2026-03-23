@@ -227,6 +227,50 @@ class SFXEngine {
     this.osc('sine', 1319, 1319, 0.4, 0.06, 0.3);
   }
 
+  /** Shield: metallic ring for shield activation */
+  shield() {
+    this.osc('triangle', 1200, 800, 0.15, 0.12);
+    this.osc('square', 1500, 1000, 0.12, 0.08, 0.02);
+    this.osc('sine', 900, 600, 0.2, 0.06, 0.05);
+  }
+
+  /** Counter: sharp ping for counter activation */
+  counter() {
+    this.osc('square', 1400, 1800, 0.08, 0.15);
+    this.osc('triangle', 1800, 2200, 0.06, 0.08, 0.03);
+    this.noise(0.04, 0.08);
+  }
+
+  /** DoT: sizzle sound for poison/burn tick */
+  dot() {
+    this.noise(0.15, 0.08);
+    this.osc('sawtooth', 200, 100, 0.12, 0.06, 0.02);
+    this.osc('square', 150, 80, 0.1, 0.04, 0.06);
+  }
+
+  /** Level up: short ascending celebratory fanfare (4 notes) */
+  levelUp() {
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((f, i) => {
+      this.osc('square', f, f, 0.12, 0.14, i * 0.1);
+      this.osc('triangle', f * 2, f * 2, 0.12, 0.05, i * 0.1);
+    });
+    // sustain final note
+    this.osc('triangle', 1047, 1047, 0.35, 0.08, 0.4);
+    this.osc('sine', 1047, 1047, 0.35, 0.06, 0.4);
+  }
+
+  /** Capture: dramatic whoosh + slam for capture scene */
+  capture() {
+    // whoosh rising
+    this.osc('sawtooth', 150, 800, 0.25, 0.15);
+    this.noise(0.25, 0.1);
+    // slam impact
+    this.osc('sine', 120, 40, 0.3, 0.25, 0.25);
+    this.osc('square', 200, 60, 0.15, 0.15, 0.25);
+    this.noise(0.1, 0.2, 0.25);
+  }
+
   /** Synergy: dramatic whoosh with sparkle */
   synergy() {
     this.osc('sawtooth', 200, 800, 0.3, 0.12);

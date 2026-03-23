@@ -57,7 +57,7 @@ function buildEnemyParty(mainMonster: MonsterDice, chapterMonsters: MonsterDice[
 }
 
 export function DungeonScreen() {
-  const { setScreen, setCurrentEnemy, capturedMonsters, currentChapter, advanceChapter } = useGameStore();
+  const { setScreen, setCurrentEnemy, capturedMonsters, bossesDefeated, currentChapter, advanceChapter } = useGameStore();
   const [hardMode, setHardMode] = useState(false);
 
   const displayChapter = currentChapter;
@@ -67,10 +67,10 @@ export function DungeonScreen() {
   const bossMonster = chapterMonsters.find(m => m.rarity >= 4);
 
   // 全章クリアで高難度解禁
-  const allCleared = currentChapter >= 7 && bossMonster && capturedMonsters.includes(bossMonster.id);
+  const allCleared = currentChapter >= 7 && bossMonster && bossesDefeated.includes(bossMonster.id);
 
-  // ボス捕獲済みかチェック（章進行条件）
-  const bossCaptured = bossMonster ? capturedMonsters.includes(bossMonster.id) : false;
+  // ボス撃破済みかチェック（章進行条件）
+  const bossDefeated = bossMonster ? bossesDefeated.includes(bossMonster.id) : false;
 
   const startBattle = (monster: MonsterDice) => {
     // 高難度モード: 敵のルーン装着率100%＋全ソケットsilver化
@@ -180,7 +180,7 @@ export function DungeonScreen() {
               前の章へ
             </button>
           )}
-          {bossCaptured && currentChapter < 7 && (
+          {bossDefeated && currentChapter < 7 && (
             <button
               className="rpg-btn"
               style={{ flex: 1 }}

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { useGameStore, type Screen } from '../../stores/gameStore';
+import { AchievementPanel } from './AchievementPanel';
 
 // ==============================
 // Canvas設定
@@ -298,6 +299,7 @@ export function TownScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
 
   const theme = getTheme(currentChapter);
 
@@ -582,7 +584,22 @@ export function TownScreen() {
         >
           {saveMsg ? 'OK!' : 'SAVE'}
         </span>
+        <span
+          onClick={() => setShowAchievements(true)}
+          style={{
+            cursor: 'pointer', padding: '2px 8px', pointerEvents: 'auto',
+            background: '#c8c0a8',
+            border: '1px solid #a09878', borderRadius: 2,
+            color: '#605838', fontWeight: 'bold',
+          }}
+        >
+          実績
+        </span>
       </div>
+
+      {showAchievements && (
+        <AchievementPanel onClose={() => setShowAchievements(false)} />
+      )}
     </div>
   );
 }

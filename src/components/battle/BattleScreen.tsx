@@ -731,8 +731,7 @@ export function BattleScreen() {
           }
           if (dmg2 > 0) {
             doShake(firstIsPlayer ? 'player' : 'enemy');
-            doScreenFlash(ELEMENT_COLORS[result.secondActions.find(a => a.effectType === 'damage')?.element ?? 'alloy']);
-            if (hasCrit2) { setFlashDuration(250); setTimeout(() => setFlashDuration(800), 300); }
+            doScreenFlash(ELEMENT_COLORS[result.secondActions.find(a => a.effectType === 'damage')?.element ?? 'alloy'], hasCrit2 ? 250 : 180);
             const mainEl = result.secondActions.find(a => a.effectType === 'damage')?.element;
             if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'bottom' : 'top'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 65 : 22, mainEl); }
           }

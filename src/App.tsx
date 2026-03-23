@@ -1,4 +1,5 @@
 import { useGameStore } from './stores/gameStore';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // デバッグ用: ブラウザコンソールからアクセス可能
 (window as any).__store = useGameStore;
@@ -14,21 +15,37 @@ import { CodexScreen } from './components/codex/CodexScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { PvpScreen } from './components/pvp/PvpScreen';
 
-export default function App() {
+function ScreenRouter() {
   const { currentScreen } = useGameStore();
 
-  switch (currentScreen) {
-    case 'title':  return <TitleScreen />;
-    case 'town':   return <TownScreen />;
-    case 'dungeon': return <DungeonScreen />;
-    case 'battle': return <BattleScreen />;
-    case 'dice-editor': return <DiceEditorScreen />;
-    case 'forge':  return <ForgeScreen />;
-    case 'shop':   return <ShopScreen />;
-    case 'gacha':  return <GachaScreen />;
-    case 'codex':  return <CodexScreen />;
-    case 'pvp':    return <PvpScreen />;
-    case 'tutorial': return <TutorialScreen />;
-    default:       return <TitleScreen />;
-  }
+  const screen = (() => {
+    switch (currentScreen) {
+      case 'title':  return <TitleScreen />;
+      case 'town':   return <TownScreen />;
+      case 'dungeon': return <DungeonScreen />;
+      case 'battle': return <BattleScreen />;
+      case 'dice-editor': return <DiceEditorScreen />;
+      case 'forge':  return <ForgeScreen />;
+      case 'shop':   return <ShopScreen />;
+      case 'gacha':  return <GachaScreen />;
+      case 'codex':  return <CodexScreen />;
+      case 'pvp':    return <PvpScreen />;
+      case 'tutorial': return <TutorialScreen />;
+      default:       return <TitleScreen />;
+    }
+  })();
+
+  return (
+    <div key={currentScreen} className="screen-enter">
+      {screen}
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <ScreenRouter />
+    </ErrorBoundary>
+  );
 }
