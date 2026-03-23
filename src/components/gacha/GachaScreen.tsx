@@ -315,90 +315,126 @@ export function GachaScreen() {
             const isLeg = bestRarity === 'legendary';
             const isEpic = bestRarity === 'epic';
             const isRare = bestRarity === 'rare';
-            // 昇格演出: common→rare→epic→legendaryと色が変わる
-            const phases = isLeg ? ['#998a78', '#4070a0', '#9060d0', '#d4a020']
-              : isEpic ? ['#998a78', '#4070a0', '#9060d0']
-              : isRare ? ['#998a78', '#4070a0']
-              : ['#998a78'];
-            const spinColor = phases[phases.length - 1];
-            const particleCount = isLeg ? 20 : isEpic ? 14 : isRare ? 8 : 4;
+
+            // FFBE風クリスタル昇格: 色が段階的に変わる
+            const crystalPhases: { color: string; label: string; delay: number; size: number }[] = [
+              { color: '#998a78', label: '', delay: 0, size: 60 },
+            ];
+            if (isRare || isEpic || isLeg) {
+              crystalPhases.push({ color: '#4070a0', label: '— Rare —', delay: 0.4, size: 65 });
+            }
+            if (isEpic || isLeg) {
+              crystalPhases.push({ color: '#9060d0', label: '— ◆ Epic ◆ —', delay: 1.0, size: 72 });
+            }
+            if (isLeg) {
+              crystalPhases.push({ color: '#d4a020', label: '— ★ LEGENDARY ★ —', delay: 1.8, size: 80 });
+            }
+            const finalColor = crystalPhases[crystalPhases.length - 1].color;
+
             return (
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
               }}>
+                {/* クリスタル昇格エフェクト — 下から上に色が変わる波 */}
+                {crystalPhases.map((phase, idx) => idx > 0 && (
+                  <div key={`crystal-${idx}`} style={{
+                    position: 'absolute', left: 0, right: 0, bottom: 0,
+                    height: '100%',
+                    background: `linear-gradient(to top, ${phase.color}40 0%, transparent 60%)`,
+                    animation: `crystalRise 0.6s ease forwards`,
+                    animationDelay: `${phase.delay}s`,
+                    animationFillMode: 'both',
+                    opacity: 0,
+                    zIndex: idx,
+                  }} />
+                ))}
+
+                {/* 昇格フラッシュ（色が変わる瞬間の閃光） */}
+                {crystalPhases.map((phase, idx) => idx > 0 && (
+                  <div key={`flash-${idx}`} style={{
+                    position: 'absolute', inset: 0,
+                    background: phase.color,
+                    animation: `crystalFlash 0.3s ease forwards`,
+                    animationDelay: `${phase.delay}s`,
+                    animationFillMode: 'both',
+                    opacity: 0,
+                    zIndex: idx + 10,
+                  }} />
+                ))}
+
                 {/* 回転する背景オーラリング */}
                 {(isLeg || isEpic) && [0, 1, 2].map(i => (
                   <div key={`ring${i}`} style={{
                     position: 'absolute',
                     width: 140 + i * 30, height: 140 + i * 30,
                     borderRadius: '50%',
-                    border: `1px solid ${spinColor}40`,
+                    border: `1px solid ${finalColor}40`,
                     animation: `gachaOrbitRing ${3 + i}s linear infinite${i % 2 ? ' reverse' : ''}`,
+                    zIndex: 20,
                   }} />
                 ))}
-                {/* パーティクル */}
-                {Array.from({ length: particleCount }).map((_, i) => {
-                  const angle = (i / particleCount) * Math.PI * 2;
+
+                {/* ダイス本体 — ⚀(1の目)で中心回転 */}
+                <div style={{
+                  width: 80, height: 80,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: `gachaSpinCenter ${isLeg ? 0.25 : isEpic ? 0.35 : 0.5}s linear infinite`,
+                  zIndex: 30,
+                }}>
+                  <span style={{
+                    fontSize: 72,
+                    color: finalColor,
+                    textShadow: `0 0 20px ${finalColor}, 0 0 40px ${finalColor}60`,
+                    lineHeight: 1,
+                    display: 'block',
+                  }}>⚀</span>
+                </div>
+
+                {/* パーティクル（昇格時に増える） */}
+                {Array.from({ length: isLeg ? 20 : isEpic ? 14 : isRare ? 8 : 4 }).map((_, i) => {
+                  const angle = (i / 20) * Math.PI * 2;
                   const dist = 50 + Math.random() * 60;
                   return (
-                    <div key={i} style={{
+                    <div key={`p${i}`} style={{
                       position: 'absolute',
                       width: isLeg ? 5 : 3, height: isLeg ? 5 : 3,
-                      borderRadius: '50%', background: spinColor,
+                      borderRadius: '50%', background: finalColor,
                       left: `calc(50% + ${Math.cos(angle) * dist}px)`,
                       top: `calc(50% + ${Math.sin(angle) * dist}px)`,
                       animation: `gachaParticle ${0.6 + Math.random()}s ease infinite`,
                       animationDelay: `${Math.random() * 0.8}s`,
-                      boxShadow: `0 0 ${isLeg ? 6 : 3}px ${spinColor}`,
+                      boxShadow: `0 0 ${isLeg ? 6 : 3}px ${finalColor}`,
+                      zIndex: 25,
                     }} />
                   );
                 })}
-                {/* ダイス本体 - 中央固定 */}
-                <div style={{
-                  width: isLeg ? 90 : isEpic ? 80 : 68,
-                  height: isLeg ? 90 : isEpic ? 80 : 68,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  animation: `gachaSpinCenter ${isLeg ? 0.25 : isEpic ? 0.35 : 0.5}s linear infinite`,
-                }}>
-                  <span style={{
-                    fontSize: isLeg ? 80 : isEpic ? 72 : 60,
-                    color: spinColor,
-                    textShadow: `0 0 20px ${spinColor}, 0 0 40px ${spinColor}60`,
-                    lineHeight: 1,
-                    display: 'block',
-                  }}>⚅</span>
+
+                {/* 昇格テキスト（下から順に出現） */}
+                <div style={{ position: 'absolute', bottom: '15%', textAlign: 'center', zIndex: 30 }}>
+                  {crystalPhases.map((phase, idx) => idx > 0 && (
+                    <div key={`txt-${idx}`} style={{
+                      fontSize: idx === 3 ? 18 : idx === 2 ? 13 : 10,
+                      color: phase.color,
+                      fontWeight: idx >= 2 ? 'bold' : 'normal',
+                      marginBottom: 4,
+                      animation: 'fadeIn 0.4s ease forwards',
+                      animationDelay: `${phase.delay + 0.1}s`,
+                      animationFillMode: 'both',
+                      textShadow: idx >= 2 ? `0 0 10px ${phase.color}, 0 0 20px ${phase.color}` : `0 0 4px ${phase.color}`,
+                      letterSpacing: idx === 3 ? 4 : 2,
+                    }}>{phase.label}</div>
+                  ))}
                 </div>
-                {/* 昇格テキスト演出 */}
-                <div style={{ marginTop: 16, textAlign: 'center' }}>
-                  {phases.length >= 2 && (
-                    <div style={{
-                      fontSize: 10, color: phases[1], marginBottom: 4,
-                      animation: 'fadeIn 0.5s ease', animationDelay: '0.3s', animationFillMode: 'both',
-                    }}>— Rare —</div>
-                  )}
-                  {phases.length >= 3 && (
-                    <div style={{
-                      fontSize: 12, color: phases[2], fontWeight: 'bold', marginBottom: 4,
-                      animation: 'fadeIn 0.5s ease', animationDelay: '0.8s', animationFillMode: 'both',
-                      textShadow: `0 0 8px ${phases[2]}`,
-                    }}>— ◆ Epic ◆ —</div>
-                  )}
-                  {phases.length >= 4 && (
-                    <div style={{
-                      fontSize: 16, color: phases[3], fontWeight: 'bold',
-                      animation: 'fadeIn 0.5s ease', animationDelay: '1.3s', animationFillMode: 'both',
-                      textShadow: `0 0 12px ${phases[3]}, 0 0 24px ${phases[3]}`,
-                      letterSpacing: 4,
-                    }}>— ★ LEGENDARY ★ —</div>
-                  )}
-                </div>
+
+                {/* メッセージ */}
                 <div style={{
-                  position: 'absolute', bottom: '20%',
-                  fontSize: 11, color: spinColor,
+                  position: 'absolute', bottom: '8%',
+                  fontSize: 11, color: finalColor,
                   animation: 'gachaPulse 0.5s ease infinite',
-                  textShadow: `0 0 6px ${spinColor}`,
+                  textShadow: `0 0 6px ${finalColor}`,
+                  zIndex: 30,
                 }}>
                   {isLeg ? '運命が...揺れている...！！' : isEpic ? '強い力を感じる...！' : isRare ? '何かが光る...' : '運命のダイスが回る...'}
                 </div>

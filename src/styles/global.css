@@ -302,6 +302,18 @@ body {
   100% { transform: rotate(360deg) scale(1); }
 }
 
+@keyframes crystalRise {
+  0% { opacity: 0; transform: translateY(100%); }
+  50% { opacity: 0.8; transform: translateY(20%); }
+  100% { opacity: 0.4; transform: translateY(0%); }
+}
+
+@keyframes crystalFlash {
+  0% { opacity: 0; }
+  30% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
 @keyframes gachaSpinCenter {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
