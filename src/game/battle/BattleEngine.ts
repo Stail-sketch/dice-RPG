@@ -168,14 +168,14 @@ function applyActions(
         const buffVal = action.rawDamage > 1 ? action.rawDamage : 1.3;
         action.actualDamage = buffVal;
         attacker.statusEffects.push({ type: 'buff', power: buffVal, remainingTurns: 3, element: action.element });
-        attacker.damageMultiplier *= buffVal;
+        attacker.damageMultiplier = Math.min(2.0, attacker.damageMultiplier * buffVal);
         break;
       }
       case 'debuff': {
         const debuffVal = action.rawDamage < 1 ? action.rawDamage : 0.7;
         action.actualDamage = debuffVal;
         defender.statusEffects.push({ type: 'debuff', power: debuffVal, remainingTurns: 3, element: action.element });
-        defender.damageMultiplier *= debuffVal;
+        defender.damageMultiplier = Math.max(0.3, defender.damageMultiplier * debuffVal);
         break;
       }
       case 'shield':
@@ -239,19 +239,20 @@ function processStatusEffects(combatant: Combatant): number {
     effect.remainingTurns--;
     if (effect.remainingTurns > 0) {
       remaining.push(effect);
-    } else {
-      // バフ/デバフ期限切れ → 倍率を戻す
-      if (effect.type === 'buff') {
-        combatant.damageMultiplier /= effect.power;
-      } else if (effect.type === 'debuff') {
-        combatant.damageMultiplier /= effect.power;
-      }
-      // シールドのpower=0は自然消滅（吸収済み）
     }
+    // シールドのpower=0は自然消滅
   }
   combatant.statusEffects = remaining;
-  combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, combatant.damageMultiplier));
-  combatant.defenseMultiplier = Math.min(2.0, Math.max(0.3, combatant.defenseMultiplier));
+
+  // バフ/デバフ倍率を残存エフェクトから毎ターン再計算（累積誤差防止）
+  let dmgMult = 1.0;
+  let defMult = 1.0;
+  for (const eff of remaining) {
+    if (eff.type === 'buff') dmgMult *= eff.power;
+    if (eff.type === 'debuff') dmgMult *= eff.power;
+  }
+  combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, dmgMult));
+  combatant.defenseMultiplier = Math.min(2.0, Math.max(0.3, defMult));
   return totalDotDmg;
 }
 
@@ -327,7 +328,7 @@ function applyPassiveEffects(combatant: Combatant, opponent: Combatant): void {
     const desc = rune.effect.description;
     if (desc.includes('DoT')) {
       // 敵にDoT
-      opponent.statusEffects.push({ type: 'poison', power: rune.effect.power, remainingTurns: 99, element: rune.element });
+      opponent.statusEffects.push({ type: 'poison', power: rune.effect.power, remainingTurns: 5, element: rune.element });
     } else if (desc.includes('防御')) {
       // defenseMultiplier UP
       combatant.defenseMultiplier *= 1 + rune.effect.power / 100;
@@ -336,7 +337,7 @@ function applyPassiveEffects(combatant: Combatant, opponent: Combatant): void {
       combatant.damageMultiplier *= 1 + rune.effect.power / 100;
     } else if (desc.includes('HP回復')) {
       // 毎ターン回復（statusEffectとして）
-      combatant.statusEffects.push({ type: 'shield', power: rune.effect.power, remainingTurns: 99, element: rune.element });
+      combatant.statusEffects.push({ type: 'shield', power: rune.effect.power, remainingTurns: 5, element: rune.element });
     }
   }
 
