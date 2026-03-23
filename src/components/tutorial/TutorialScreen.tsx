@@ -157,9 +157,7 @@ export function TutorialScreen() {
   const [chargeGauge, setChargeGauge] = useState(0);
   const CHARGE_MAX_TUT = 10;
 
-  // ---- Capture state for step 3 ----
-  const [captureRolling, setCaptureRolling] = useState(false);
-  const [captureDone, setCaptureDone] = useState(false);
+  // (capture state removed - using CaptureScene component)
 
   // ---- Render per step ----
   const renderContent = () => {
