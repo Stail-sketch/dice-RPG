@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { bgm } from '../../utils/bgm';
+import { sfx } from '../../utils/sfx';
 import type { BGMTrack } from '../../utils/bgm';
 
 /**
  * BGMController - Manages BGM playback based on current screen.
- * Also renders a small mute/unmute toggle button (fixed position).
+ * Also renders a small mute toggle button (fixed position).
+ * Loads saved audio settings from localStorage on mount.
  */
 export function BGMController() {
   const currentScreen = useGameStore((s) => s.currentScreen);
   const [muted, setMuted] = useState(bgm.muted);
+
+  // Load saved audio settings on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('pip-socket-audio-settings');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.bgmVolume !== undefined) bgm.volume = s.bgmVolume;
+        if (s.bgmMuted !== undefined) { bgm.muted = s.bgmMuted; setMuted(s.bgmMuted); }
+        if (s.seVolume !== undefined) sfx.volume = s.seVolume;
+        if (s.seMuted !== undefined) sfx.muted = s.seMuted;
+      } catch { /* ignore corrupt data */ }
+    }
+  }, []);
 
   useEffect(() => {
     const trackMap: Record<string, BGMTrack> = {
@@ -25,6 +41,7 @@ export function BGMController() {
       'dice-editor': 'town',
       pvp: 'battle',
       tutorial: 'town',
+      settings: 'town',
     };
     const track = trackMap[currentScreen] ?? 'town';
     bgm.play(track);
@@ -33,6 +50,12 @@ export function BGMController() {
   const handleToggle = () => {
     const nowMuted = bgm.toggleMute();
     setMuted(nowMuted);
+    // Persist quick-toggle to storage too
+    const saved = localStorage.getItem('pip-socket-audio-settings');
+    let settings: Record<string, unknown> = {};
+    if (saved) { try { settings = JSON.parse(saved); } catch { /* */ } }
+    settings.bgmMuted = nowMuted;
+    localStorage.setItem('pip-socket-audio-settings', JSON.stringify(settings));
   };
 
   return (
@@ -44,13 +67,13 @@ export function BGMController() {
         top: 6,
         right: 6,
         zIndex: 9999,
-        width: 32,
-        height: 32,
+        width: 28,
+        height: 28,
         border: '1px solid #a09878',
         borderRadius: 4,
         background: muted ? '#d8d0c0' : '#c8c0a8',
         color: '#3a3018',
-        fontSize: 16,
+        fontSize: 14,
         cursor: 'pointer',
         fontFamily: "'DotGothic16', monospace",
         display: 'flex',
@@ -58,6 +81,7 @@ export function BGMController() {
         justifyContent: 'center',
         padding: 0,
         lineHeight: 1,
+        opacity: 0.7,
       }}
       title={muted ? 'BGM ON' : 'BGM OFF'}
     >

@@ -8,7 +8,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
-export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial' | 'event';
+export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial' | 'event' | 'settings';
 
 interface TutorialState {
   completed: boolean;

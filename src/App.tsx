@@ -15,6 +15,7 @@ import { CodexScreen } from './components/codex/CodexScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { PvpScreen } from './components/pvp/PvpScreen';
 import { EventScreen } from './components/event/EventScreen';
+import { SettingsScreen } from './components/settings/SettingsScreen';
 import { BGMController } from './components/common/BGMController';
 
 function ScreenRouter() {
@@ -33,6 +34,7 @@ function ScreenRouter() {
       case 'codex':  return <CodexScreen />;
       case 'pvp':    return <PvpScreen />;
       case 'event':  return <EventScreen />;
+      case 'settings': return <SettingsScreen />;
       case 'tutorial': return <TutorialScreen />;
       default:       return <TitleScreen />;
     }

@@ -595,6 +595,17 @@ export function TownScreen() {
         >
           実績
         </span>
+        <span
+          onClick={() => setScreen('settings')}
+          style={{
+            cursor: 'pointer', padding: '2px 8px', pointerEvents: 'auto',
+            background: '#c8c0a8',
+            border: '1px solid #a09878', borderRadius: 2,
+            color: '#605838', fontWeight: 'bold',
+          }}
+        >
+          設定
+        </span>
       </div>
 
       {showAchievements && (

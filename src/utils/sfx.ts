@@ -4,6 +4,14 @@
  */
 class SFXEngine {
   private ctx: AudioContext | null = null;
+  private _volume = 0.7;
+  private _muted = false;
+
+  get volume() { return this._volume; }
+  set volume(v: number) { this._volume = Math.max(0, Math.min(1, v)); }
+
+  get muted() { return this._muted; }
+  set muted(m: boolean) { this._muted = m; }
 
   private getCtx(): AudioContext {
     if (!this.ctx) this.ctx = new AudioContext();
@@ -20,6 +28,10 @@ class SFXEngine {
     delay = 0,
     volEnd = 0.001,
   ) {
+    if (this._muted) return;
+    vol *= this._volume;
+    volEnd *= this._volume;
+    if (vol < 0.001) return;
     const ctx = this.getCtx();
     const o = ctx.createOscillator();
     const g = ctx.createGain();
@@ -30,13 +42,16 @@ class SFXEngine {
     o.frequency.setValueAtTime(freq, t);
     o.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 20), t + duration);
     g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(volEnd, t + duration);
+    g.gain.exponentialRampToValueAtTime(Math.max(volEnd, 0.001), t + duration);
     o.start(t);
     o.stop(t + duration);
   }
 
   /** Noise burst helper using a buffer of random samples */
   private noise(duration: number, vol: number, delay = 0) {
+    if (this._muted) return;
+    vol *= this._volume;
+    if (vol < 0.001) return;
     const ctx = this.getCtx();
     const len = ctx.sampleRate * duration;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
