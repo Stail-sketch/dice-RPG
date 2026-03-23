@@ -68,7 +68,11 @@ export type SkillEffectType =
   | 'dot'           // 継続ダメージ (毒/燃焼)
   | 'buff'          // バフ
   | 'debuff'        // デバフ
-  | 'shield';       // シールド
+  | 'shield'        // シールド
+  | 'counter'       // 反撃（受けたダメージの一部を返す）
+  | 'lifesteal'     // 吸収（ダメージ+HP回復）
+  | 'seal'          // 封印（敵スキル1T無効）
+  | 'passive';      // パッシブ（装備するだけで常時効果）
 
 export interface SkillEffect {
   type: SkillEffectType;
@@ -84,6 +88,8 @@ export interface SkillRune {
   tier: SkillTier;
   effect: SkillEffect;
   description: string;
+  cursed?: boolean;       // 呪いルーン: 威力高いが自分にもデバフ
+  setId?: string;         // セットボーナスID: 同名セットを複数面に入れると追加効果
 }
 
 // ==============================
@@ -150,7 +156,7 @@ export function getAllFaces(dice: MonsterDice): DiceFace[] {
 // バトルステート
 // ==============================
 export interface StatusEffect {
-  type: 'burn' | 'poison' | 'freeze' | 'slow' | 'atkUp' | 'defUp' | 'atkDown' | 'defDown' | 'shield' | 'confusion' | 'buff' | 'debuff';
+  type: 'burn' | 'poison' | 'freeze' | 'slow' | 'atkUp' | 'defUp' | 'atkDown' | 'defDown' | 'shield' | 'confusion' | 'buff' | 'debuff' | 'counter';
   power: number;
   remainingTurns: number;
   element: Element;

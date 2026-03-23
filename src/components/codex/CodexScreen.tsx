@@ -43,6 +43,10 @@ const EFFECT_TYPE_NAMES: Record<string, string> = {
   dot: '継続ダメージ',
   buff: 'バフ',
   debuff: 'デバフ',
+  counter: '反撃',
+  lifesteal: '吸収',
+  seal: '封印',
+  passive: 'パッシブ',
   shield: 'シールド',
 };
 

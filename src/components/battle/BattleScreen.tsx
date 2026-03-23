@@ -111,6 +111,14 @@ export function BattleScreen() {
         addLog(`  ${who}${a.skillName}(${elName}) → 敵攻撃x${a.actualDamage}`);
       } else if (a.effectType === 'shield') {
         addLog(`  ${who}${a.skillName}(${elName}) → シールド${a.actualDamage} (2T)`);
+      } else if (a.effectType === 'counter') {
+        addLog(`  ${who}${a.skillName}(${elName}) → 反撃${a.actualDamage}% (2T)`);
+      } else if (a.effectType === 'lifesteal') {
+        addLog(`  ${who}${a.skillName}(${elName}) → 吸収${a.actualDamage}dmg`);
+      } else if (a.effectType === 'seal') {
+        addLog(`  ${who}${a.skillName}(${elName}) → 封印！`);
+      } else if (a.effectType === 'passive') {
+        // パッシブはログに出さない
       }
     }
   }, [addLog]);

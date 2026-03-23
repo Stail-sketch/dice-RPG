@@ -5,7 +5,7 @@ import type {
 } from '../../types';
 import { ELEMENT_CHART, isFixedFace, SOCKET_TIER_MULTIPLIER, PIP_DECAY_RATE } from '../../types';
 import { rollParty } from '../dice/DiceEngine';
-import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
+import { FIXED_SKILLS, getSkillRune, SKILL_RUNES } from '../../data/skill-runes';
 import { calcSameFaceSynergyMultiplier, checkAllSynergies, getFaceElements } from '../synergy/SynergyEngine';
 import { getRecipeSynergy } from '../../data/synergies';
 import type { RecipeSynergy } from '../../types';
@@ -147,6 +147,13 @@ function applyActions(
         }
         action.actualDamage = remaining;
         defender.hp = Math.max(0, defender.hp - remaining);
+        // 反撃チェック: defenderにcounterエフェクトがあればダメージを返す
+        for (const eff of defender.statusEffects) {
+          if (eff.type === 'counter' && eff.power > 0 && remaining > 0) {
+            const counterDmg = Math.round(remaining * eff.power / 100);
+            attacker.hp = Math.max(0, attacker.hp - counterDmg);
+          }
+        }
         break;
       }
       case 'heal':
@@ -175,6 +182,44 @@ function applyActions(
         action.actualDamage = action.rawDamage;
         attacker.statusEffects.push({ type: 'shield', power: action.rawDamage, remainingTurns: 2, element: action.element });
         break;
+      case 'counter':
+        // 反撃: 被ダメージの power% を返す（ステータスエフェクトとして登録）
+        action.actualDamage = action.rawDamage;
+        attacker.statusEffects.push({ type: 'counter', power: action.rawDamage, remainingTurns: 2, element: action.element });
+        break;
+      case 'lifesteal': {
+        // 吸収: ダメージ + HP回復
+        let lsRemaining = damage;
+        for (const eff of defender.statusEffects) {
+          if (eff.type === 'shield' && eff.power > 0 && lsRemaining > 0) {
+            const absorbed = Math.min(eff.power, lsRemaining);
+            eff.power -= absorbed;
+            lsRemaining -= absorbed;
+          }
+        }
+        action.actualDamage = lsRemaining;
+        defender.hp = Math.max(0, defender.hp - lsRemaining);
+        const healAmount = Math.round(lsRemaining * 0.5);
+        attacker.hp = Math.min(attacker.maxHp, attacker.hp + healAmount);
+        break;
+      }
+      case 'seal':
+        // 封印: 敵のダメージ倍率を1Tだけ大幅ダウン
+        action.actualDamage = action.rawDamage;
+        defender.statusEffects.push({ type: 'debuff', power: 0.3, remainingTurns: 1, element: action.element });
+        defender.damageMultiplier *= 0.3;
+        break;
+      case 'passive':
+        // パッシブ: バトル中は何もしない（装備しているだけで効果）
+        action.actualDamage = 0;
+        break;
+    }
+    // 呪いルーン: 使用時に自分にダメージ/デバフ
+    const runeData = SKILL_RUNES.find(r => r.id === action.skillId);
+    if (runeData?.cursed) {
+      const curseDmg = Math.round(action.rawDamage * 0.2);
+      attacker.hp = Math.max(1, attacker.hp - curseDmg);
+      attacker.statusEffects.push({ type: 'poison', power: 3, remainingTurns: 2, element: action.element });
     }
   }
 }
