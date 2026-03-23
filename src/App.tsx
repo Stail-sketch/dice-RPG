@@ -15,6 +15,7 @@ import { CodexScreen } from './components/codex/CodexScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { PvpScreen } from './components/pvp/PvpScreen';
 import { EventScreen } from './components/event/EventScreen';
+import { BGMController } from './components/common/BGMController';
 
 function ScreenRouter() {
   const { currentScreen } = useGameStore();
@@ -47,6 +48,7 @@ function ScreenRouter() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <BGMController />
       <ScreenRouter />
     </ErrorBoundary>
   );
