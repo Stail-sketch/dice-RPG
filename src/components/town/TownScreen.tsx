@@ -201,7 +201,7 @@ const BUILDINGS: Building[] = [
   { id: 'shop', label: 'SHOP', sub: 'ショップ', screen: 'shop', x: 16, y: 288, w: 56, h: 42, draw: drawShop },
   { id: 'gacha', label: 'GACHA', sub: 'ガチャ', screen: 'gacha', x: 200, y: 286, w: 52, h: 44, draw: drawGacha },
   { id: 'codex', label: 'BOOK', sub: '図鑑', screen: 'codex', x: 40, y: 400, w: 48, h: 38, draw: drawCodex },
-  { id: 'event', label: 'EVENT', sub: 'イベント', screen: 'town', x: 204, y: 398, w: 48, h: 38, draw: drawEvent, disabled: true },
+  { id: 'event', label: 'EVENT', sub: 'イベント', screen: 'event', x: 204, y: 398, w: 48, h: 38, draw: drawEvent },
 ];
 
 // ==============================

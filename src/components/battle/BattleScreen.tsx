@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, eventRewardMult, completeEvent } = useGameStore();
   const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
     save().then(() => setScreen(screen));
   }, [save, setScreen]);
@@ -55,6 +55,10 @@ export function BattleScreen() {
   const [screenFlash, setScreenFlash] = useState<string | null>(null);
   const [filmBars, setFilmBars] = useState(false);
 
+  // ボス演出用
+  const [_bossEntrance, setBossEntrance] = useState(false);
+  void _bossEntrance;
+
   // マジックダイス用
   const [magicUsedThisTurn, setMagicUsedThisTurn] = useState(false);
   const [magicEffect, setMagicEffect] = useState<string | null>(null);
@@ -69,6 +73,8 @@ export function BattleScreen() {
     return ownedDice.find(d => d.id === id);
   }).filter(Boolean) as MonsterDice[];
   const enemyDiceList = currentEnemy || [];
+  const isBoss = enemyDiceList.length > 0 && enemyDiceList[0].rarity >= 4;
+  void isEventBattle; void eventRewardMult; void completeEvent; // event battle hooks (used in reward section)
 
   useEffect(() => { if (popups.length > 0) { const t = setTimeout(() => setPopups([]), 1500); return () => clearTimeout(t); } }, [popups]);
   useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [log]);
@@ -133,44 +139,57 @@ export function BattleScreen() {
     // プレイヤーHP: playerMaxHpを使用（レベルで成長）
     const { playerMaxHp, isHardMode } = useGameStore.getState();
     const playerHp = playerMaxHp;
-    // 敵HP: 章1-3は従来通り、章4+は15~30倍スケーリング
+    // 敵HP: 章ごとのスケーリングテーブル
+    const ENEMY_HP_TABLE: Record<number, { base: number; rarityMult: number }> = {
+      1: { base: 40, rarityMult: 10 },
+      2: { base: 55, rarityMult: 12 },
+      3: { base: 75, rarityMult: 15 },
+      4: { base: 100, rarityMult: 20 },
+      5: { base: 140, rarityMult: 25 },
+      6: { base: 200, rarityMult: 30 },
+      7: { base: 280, rarityMult: 40 },
+    };
     const maxRarity = Math.max(...enemyDiceList.map(d => d.rarity));
-    let enemyMaxHp: number;
-    if (currentChapter <= 3) {
-      enemyMaxHp = 40 + maxRarity * 10 + (currentChapter - 1) * 15;
-    } else {
-      const baseHp = 40 + maxRarity * 10;
-      const chapterMult = 15 + (currentChapter - 4) * 5;
-      const rarityMult = 1 + maxRarity * 0.1;
-      enemyMaxHp = Math.round(baseHp * chapterMult * rarityMult);
-    }
+    const hpEntry = ENEMY_HP_TABLE[currentChapter] || ENEMY_HP_TABLE[7];
+    let enemyMaxHp = hpEntry.base + maxRarity * hpEntry.rarityMult;
     // 高難度: 敵HP×2 + 敵ダメージ倍率が初期1.3
     if (isHardMode) {
       enemyMaxHp = Math.round(enemyMaxHp * 2);
     }
     const state = createBattleState(playerDice, enemyDiceList, playerHp, enemyMaxHp);
     setBattle(state);
-    setPhase('rolling');
-    setLog([]); addLog('BATTLE START!');
-    flash('BATTLE START!', 800);
+    setLog([]);
 
-    // ダイスロール
-    setTimeout(() => {
-      sfx.diceRoll();
-    }, 100);
+    // ボス演出: カットイン → 通常開始
+    const bossDelay = isBoss ? 1500 : 0;
+    if (isBoss) {
+      setBossEntrance(true);
+      setTimeout(() => setBossEntrance(false), 1500);
+    }
 
     setTimeout(() => {
-      const pRolls = rollParty(state.player.dice);
-      const eRolls = rollParty(state.enemy.dice);
-      setCurrentRolls(pRolls);
-      setEnemyRolls(eRolls);
-      setSelectedDice(new Set());
-      setDiceLanded(true);
-      sfx.diceLand();
-      setPhase('selecting'); // 選択フェーズへ
-      addLog(`── Turn ${state.turn + 1} ──`);
-    }, 800);
-  }, [playerDice, enemyDiceList, flash, addLog]);
+      setPhase('rolling');
+      addLog('BATTLE START!');
+      flash('BATTLE START!', 800);
+
+      // ダイスロール
+      setTimeout(() => {
+        sfx.diceRoll();
+      }, 100);
+
+      setTimeout(() => {
+        const pRolls = rollParty(state.player.dice);
+        const eRolls = rollParty(state.enemy.dice);
+        setCurrentRolls(pRolls);
+        setEnemyRolls(eRolls);
+        setSelectedDice(new Set());
+        setDiceLanded(true);
+        sfx.diceLand();
+        setPhase('selecting');
+        addLog(`── Turn ${state.turn + 1} ──`);
+      }, 800);
+    }, bossDelay);
+  }, [playerDice, enemyDiceList, flash, addLog, isBoss]);
 
   // ===== ダイス選択トグル =====
   const toggleDiceSelection = useCallback((idx: number) => {
@@ -438,8 +457,9 @@ export function BattleScreen() {
       addLog('  JINX: enemy dice forced to face 6!');
     }
 
-    // 敵AI選択
-    const enemySel = aiSelectDice(battle.enemy.dice, actualEnemyRolls, battle.enemy.charge, battle.enemy.hp);
+    // 敵AI選択（章に応じた難易度でAIの賢さが変化）
+    const playerMainElement = battle.player.dice[0]?.element || null;
+    const enemySel = aiSelectDice(battle.enemy.dice, actualEnemyRolls, battle.enemy.charge, battle.enemy.hp, currentChapter, battle.enemy.maxHp, playerMainElement);
 
     if (isUnleash) {
       addLog(`発動: ダイス1,2,3 (全面発動)`);

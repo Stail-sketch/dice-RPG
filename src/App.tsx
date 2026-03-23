@@ -14,6 +14,7 @@ import { GachaScreen } from './components/gacha/GachaScreen';
 import { CodexScreen } from './components/codex/CodexScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { PvpScreen } from './components/pvp/PvpScreen';
+import { EventScreen } from './components/event/EventScreen';
 
 function ScreenRouter() {
   const { currentScreen } = useGameStore();
@@ -30,6 +31,7 @@ function ScreenRouter() {
       case 'gacha':  return <GachaScreen />;
       case 'codex':  return <CodexScreen />;
       case 'pvp':    return <PvpScreen />;
+      case 'event':  return <EventScreen />;
       case 'tutorial': return <TutorialScreen />;
       default:       return <TitleScreen />;
     }

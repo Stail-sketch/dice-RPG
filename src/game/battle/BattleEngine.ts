@@ -380,19 +380,68 @@ function createRecipeAction(recipe: RecipeSynergy, targetIsPlayer: boolean): Ski
 // ==============================
 // 敵AI選択ロジック
 // ==============================
+
+// 面にヒールスキルが含まれるかチェック
+function faceHasHeal(face: DiceFace): boolean {
+  if (isFixedFace(face)) {
+    const fixed = face as FixedFace;
+    for (const s of fixed.sockets) {
+      const skill = FIXED_SKILLS[s.skillId];
+      if (skill && skill.effect.type === 'heal') return true;
+    }
+  } else {
+    const custom = face as CustomFace;
+    for (const s of custom.sockets) {
+      if (!s.skillRuneId) continue;
+      const rune = getSkillRune(s.skillRuneId);
+      if (rune && rune.effect.type === 'heal') return true;
+    }
+  }
+  return false;
+}
+
+// 面の属性がプレイヤー主属性に有利かスコア加算
+function faceElementAdvantageScore(face: DiceFace, playerElement: Element | null): number {
+  if (!playerElement) return 0;
+  let bonus = 0;
+  if (isFixedFace(face)) {
+    const fixed = face as FixedFace;
+    for (const s of fixed.sockets) {
+      const mult = ELEMENT_CHART[s.element][playerElement];
+      if (mult > 1.0) bonus += mult;
+    }
+  } else {
+    const custom = face as CustomFace;
+    for (const s of custom.sockets) {
+      if (!s.skillRuneId) continue;
+      const rune = getSkillRune(s.skillRuneId);
+      if (rune) {
+        const mult = ELEMENT_CHART[rune.element][playerElement];
+        if (mult > 1.0) bonus += mult;
+      }
+    }
+  }
+  return bonus;
+}
+
 export function aiSelectDice(
   _dice: MonsterDice[],
   rolls: DiceRollResult[],
   _gauge: ChargeGauge,
   enemyHp: number,
+  difficulty: number = 1,
+  enemyMaxHp: number = 100,
+  playerElement: Element | null = null,
 ): TurnSelection {
   const combos: [number, number, number][] = [[0, 1, 2], [0, 2, 1], [1, 2, 0]];
   let bestScore = -Infinity;
   let best = combos[0];
 
+  const hpRatio = enemyMaxHp > 0 ? enemyHp / enemyMaxHp : 1;
+
   for (const [a, b, c] of combos) {
     let score = 0;
-    // 発動面のスキル数 × 出目で雑に威力見積もり
+    // 基本: 発動面の出目合計で威力見積もり
     score += rolls[a].faceNumber * 2;
     score += rolls[b].faceNumber * 2;
     // 充填価値
@@ -400,6 +449,18 @@ export function aiSelectDice(
     score += chargeVal * 0.5;
     // 瀕死なら火力優先
     if (enemyHp < 15) score -= chargeVal * 0.5;
+
+    // 難易度4-5: HP40%未満でヒール面を優先
+    if (difficulty >= 4 && hpRatio < 0.4) {
+      if (faceHasHeal(rolls[a].face)) score += 8;
+      if (faceHasHeal(rolls[b].face)) score += 8;
+    }
+
+    // 難易度6-7: 属性有利を考慮
+    if (difficulty >= 6 && playerElement) {
+      score += faceElementAdvantageScore(rolls[a].face, playerElement) * 3;
+      score += faceElementAdvantageScore(rolls[b].face, playerElement) * 3;
+    }
 
     if (score > bestScore) { bestScore = score; best = [a, b, c]; }
   }
@@ -556,6 +617,6 @@ export function executeTurn(state: BattleState): TurnResult {
   const enemyRolls = rollParty(state.enemy.dice);
   // AI選択（プレイヤー側もAI自動 — シミュレーション用）
   const pSel = aiSelectDice(state.player.dice, playerRolls, state.player.charge, state.player.hp);
-  const eSel = aiSelectDice(state.enemy.dice, enemyRolls, state.enemy.charge, state.enemy.hp);
+  const eSel = aiSelectDice(state.enemy.dice, enemyRolls, state.enemy.charge, state.enemy.hp, 1, state.enemy.maxHp, null);
   return executeTurnFull(state, playerRolls, enemyRolls, pSel, eSel);
 }

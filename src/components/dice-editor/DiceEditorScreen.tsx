@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
-import { getAllFaces, isFixedFace, ELEMENT_NAMES, type FixedFace, type CustomFace, type Element, type SocketTier, type SkillTier } from '../../types';
-import { FIXED_SKILLS, getSkillRune } from '../../data/skill-runes';
+import { getAllFaces, isFixedFace, ELEMENT_NAMES, type FixedFace, type CustomFace, type Element, type SocketTier, type SkillTier, type MonsterDice } from '../../types';
+import { FIXED_SKILLS, getSkillRune, SKILL_RUNES } from '../../data/skill-runes';
 import { getMagicDice, type MagicCategory } from '../../data/magic-dice';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 import { DiceFaceView } from '../common/DiceFaceView';
+import { MonsterDetailModal } from '../common/MonsterDetailModal';
+import { DicePreview } from '../common/DicePreview';
 import { calcSameFaceSynergyMultiplier } from '../../game/synergy/SynergyEngine';
 import { getPipColorsForFace } from '../../utils/pipColors';
 
@@ -28,6 +30,49 @@ const CATEGORY_NAMES: Record<MagicCategory, string> = {
   gamble: '賭け',
 };
 
+const SET_NAMES: Record<string, string> = {
+  ember: '残り火セット',
+  permafrost: '永久凍土セット',
+  static: '静電気セット',
+  toxin: '毒素セット',
+  fortress: '城壁セット',
+  phantom: '残影セット',
+};
+
+function getActiveSetBonuses(dice: MonsterDice): Array<{ setId: string; count: number; bonus: string }> {
+  const setCounts: Record<string, number> = {};
+  for (const face of dice.customFaces) {
+    for (const socket of face.sockets) {
+      if (socket.skillRuneId) {
+        const rune = SKILL_RUNES.find(r => r.id === socket.skillRuneId);
+        if (rune?.setId) {
+          setCounts[rune.setId] = (setCounts[rune.setId] || 0) + 1;
+        }
+      }
+    }
+  }
+  return Object.entries(setCounts)
+    .filter(([, count]) => count >= 2)
+    .map(([setId, count]) => ({
+      setId,
+      count,
+      bonus: count >= 3 ? '攻撃力 x1.5' : '攻撃力 x1.2',
+    }));
+}
+
+function getEquippedSetCount(dice: MonsterDice, setId: string): number {
+  let count = 0;
+  for (const face of dice.customFaces) {
+    for (const socket of face.sockets) {
+      if (socket.skillRuneId) {
+        const rune = SKILL_RUNES.find(r => r.id === socket.skillRuneId);
+        if (rune?.setId === setId) count++;
+      }
+    }
+  }
+  return count;
+}
+
 export function DiceEditorScreen() {
   const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, sellDice, sellRune } = useGameStore();
   const [message, setMessage] = useState<string | null>(null);
@@ -37,6 +82,8 @@ export function DiceEditorScreen() {
   const [filterElement, setFilterElement] = useState<Element | 'all'>('all');
   const [runeSort, setRuneSort] = useState<'default' | 'power' | 'tier' | 'type'>('default');
   const [diceSort, setDiceSort] = useState<'default' | 'rarity' | 'element' | 'name'>('default');
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const partyDice = party.map(id => {
     if (id === 'protagonist') return protagonistDice;
@@ -114,6 +161,9 @@ export function DiceEditorScreen() {
     const socket = currentCustomFace.sockets[selectedSocket];
     return socket ? TIER_COMPAT[socket.socketTier].includes(runeTier) : false;
   };
+
+  // セットボーナス計算
+  const setBonuses = currentDice ? getActiveSetBonuses(currentDice) : [];
 
   return (
     <div style={{ padding: 8 }}>
@@ -217,7 +267,7 @@ export function DiceEditorScreen() {
 
       {/* ダイス操作ボタン */}
       {currentDice && (
-        <div style={{ display: 'flex', gap: 4, margin: '4px 0' }}>
+        <div style={{ display: 'flex', gap: 4, margin: '4px 0', flexWrap: 'wrap' }}>
           {selectedFace && currentCustomFace && currentCustomFace.sockets.some(s => s.skillRuneId && !s.locked) && (
             <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
               onClick={() => {
@@ -232,6 +282,16 @@ export function DiceEditorScreen() {
               }}
             >{selectedFace}面ルーン全外し</button>
           )}
+          <button className="rpg-btn" style={{ padding: '4px 8px', margin: 0, fontSize: 9 }}
+            onClick={() => setShowDetailModal(true)}
+          >詳細</button>
+          <button className="rpg-btn" style={{
+            padding: '4px 8px', margin: 0, fontSize: 9,
+            background: showPreview ? '#e0d8cc' : undefined,
+            borderColor: showPreview ? '#705828' : undefined,
+          }}
+            onClick={() => setShowPreview(!showPreview)}
+          >全面プレビュー</button>
           {currentDice.id !== 'protagonist' && !party.includes(currentDice.id) && (
             <button className="rpg-btn rpg-btn-danger" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
               onClick={() => {
@@ -244,6 +304,50 @@ export function DiceEditorScreen() {
               }}
             >ダイス売却</button>
           )}
+        </div>
+      )}
+
+      {/* 全面プレビュー */}
+      {currentDice && showPreview && (
+        <div className="rpg-panel fade-in" style={{ padding: 8 }}>
+          <div className="rpg-panel-title" style={{ margin: '0 0 8px 0', fontSize: 11 }}>
+            {currentDice.name} — 全面プレビュー
+          </div>
+          <DicePreview dice={currentDice} size={48} />
+        </div>
+      )}
+
+      {/* セットボーナス表示 */}
+      {currentDice && setBonuses.length > 0 && (
+        <div className="rpg-panel fade-in" style={{ padding: 8 }}>
+          <div style={{ fontSize: 11, color: '#b09050', fontWeight: 'bold', marginBottom: 4 }}>
+            セットボーナス
+          </div>
+          {setBonuses.map(({ setId, count, bonus }) => {
+            const isComplete = count >= 3;
+            return (
+              <div key={setId} style={{
+                display: 'flex', gap: 6, alignItems: 'center',
+                padding: '4px 8px', borderRadius: 4, marginBottom: 3,
+                background: isComplete ? '#f8f0d8' : '#e8e0d4',
+                border: isComplete ? '2px solid #c0a030' : '1px solid #d0c8b8',
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 'bold', color: isComplete ? '#b09020' : '#8a7050' }}>
+                  {SET_NAMES[setId] || setId}
+                </span>
+                <span style={{
+                  fontSize: 9, color: isComplete ? '#b09020' : '#998a78',
+                  background: isComplete ? '#f0e8c8' : '#e0d8cc',
+                  padding: '1px 4px', borderRadius: 3,
+                }}>
+                  {count}/3
+                </span>
+                <span style={{ fontSize: 9, color: isComplete ? '#907010' : '#998a78', marginLeft: 'auto' }}>
+                  {bonus}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -465,6 +569,10 @@ export function DiceEditorScreen() {
             )}
             {filteredRunes.map((rune, i) => {
               const compatible = canEquipToSocket(rune.tier);
+              // セットID表示: このルーンにsetIdがあれば、現在のダイスに装備済みの同セット数を表示
+              const setInfo = rune.setId && currentDice
+                ? { setId: rune.setId, equipped: getEquippedSetCount(currentDice, rune.setId) }
+                : null;
               return (
                 <div
                   key={`${rune.id}-${i}`}
@@ -485,6 +593,17 @@ export function DiceEditorScreen() {
                   }}>
                     [{rune.tier}]
                   </span>
+                  {setInfo && (
+                    <span style={{
+                      fontSize: 8,
+                      color: setInfo.equipped >= 2 ? '#b09020' : '#998a78',
+                      background: setInfo.equipped >= 2 ? '#f0e8c8' : '#e8e0d8',
+                      padding: '0 3px', borderRadius: 2,
+                      border: setInfo.equipped >= 2 ? '1px solid #c0a030' : '1px solid #d0c8b8',
+                    }}>
+                      SET {setInfo.equipped}/3
+                    </span>
+                  )}
                   <span style={{ fontSize: 9, color: '#998a78', marginLeft: 'auto' }}>
                     {rune.effect.type === 'damage' ? `${rune.effect.power}dmg` :
                      rune.effect.type === 'heal' ? `+${rune.effect.power}HP` :
@@ -576,6 +695,11 @@ export function DiceEditorScreen() {
           街に戻る
         </button>
       </div>
+
+      {/* モンスター詳細モーダル */}
+      {showDetailModal && currentDice && (
+        <MonsterDetailModal monster={currentDice} onClose={() => setShowDetailModal(false)} />
+      )}
     </div>
   );
 }

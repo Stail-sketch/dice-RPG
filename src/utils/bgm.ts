@@ -1,0 +1,427 @@
+/**
+ * BGM Engine - Procedural 8-bit music using Web Audio API
+ * No audio files needed. All music is synthesized on-the-fly.
+ */
+
+type BGMTrack = 'title' | 'town' | 'battle' | 'boss' | 'victory' | 'event' | 'dungeon';
+
+interface Note {
+  freq: number;       // frequency in Hz
+  start: number;      // start time in seconds from loop beginning
+  duration: number;   // note duration in seconds
+  type: OscillatorType;
+  volume: number;     // 0-1
+}
+
+interface PercNote {
+  start: number;
+  duration: number;
+  volume: number;
+}
+
+interface TrackData {
+  duration: number;   // total loop duration in seconds
+  notes: Note[];
+  perc?: PercNote[];  // percussion (noise bursts)
+}
+
+// Note frequency reference
+const C4 = 262, D4 = 294, E4 = 330, F4 = 349, G4 = 392, A4 = 440, B4 = 494;
+const C5 = 523, D5 = 587, E5 = 659, F5 = 698, G5 = 784, _A5 = 880, _B5 = 988;
+void _A5; void _B5;
+const C3 = 131, D3 = 147, E3 = 165, F3 = 175, G3 = 196, A3 = 220, B3 = 247;
+const Bb3 = 233, _Eb4 = 311, _Ab4 = 415, Bb4 = 466;
+void _Eb4; void _Ab4;
+const C6 = 1047;
+// Minor scale extras
+const _Gs3 = 208, _Fs4 = 370;
+void _Gs3; void _Fs4;
+
+const BPM_TO_BEAT = (bpm: number) => 60 / bpm;
+
+// ============================================================
+// TRACK DEFINITIONS
+// ============================================================
+
+function makeTitleTrack(): TrackData {
+  // Mysterious, inviting - arpeggiated chords, triangle wave
+  // ~100 BPM, C major / Am
+  const b = BPM_TO_BEAT(100);
+  const notes: Note[] = [];
+
+  // Arpeggio pattern 1: Am  (A3 C4 E4 A4)
+  const arp1 = [A3, C4, E4, A4, E4, C4, A3, C4];
+  // Arpeggio pattern 2: F   (F3 A3 C4 F4)
+  const arp2 = [F3, A3, C4, F4, C4, A3, F3, A3];
+
+  for (let i = 0; i < 8; i++) {
+    notes.push({ freq: arp1[i], start: i * b, duration: b * 0.8, type: 'triangle', volume: 0.22 });
+  }
+  for (let i = 0; i < 8; i++) {
+    notes.push({ freq: arp2[i], start: (8 + i) * b, duration: b * 0.8, type: 'triangle', volume: 0.22 });
+  }
+
+  // Soft bass drone
+  notes.push({ freq: A3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.08 });
+  notes.push({ freq: F3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.08 });
+
+  return { duration: 16 * b, notes };
+}
+
+function makeTownTrack(): TrackData {
+  // Peaceful, warm - 120 BPM, C major
+  const b = BPM_TO_BEAT(120);
+  const notes: Note[] = [];
+
+  // Melody (triangle) - gentle ascending/descending
+  const melody = [
+    C4, E4, G4, C5, B4, G4, E4, D4,
+    E4, G4, B4, D5, C5, A4, G4, E4,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    notes.push({ freq: melody[i], start: i * b, duration: b * 0.75, type: 'triangle', volume: 0.2 });
+  }
+
+  // Harmony (triangle, soft)
+  const harmony = [
+    E4, G4, C5, E5, D5, B4, G4, F4,
+    G4, B4, D5, F5, E5, C5, B4, G4,
+  ];
+  for (let i = 0; i < harmony.length; i++) {
+    notes.push({ freq: harmony[i], start: i * b, duration: b * 0.5, type: 'triangle', volume: 0.08 });
+  }
+
+  // Bass (square, low volume) - root notes, half notes
+  const bass = [C3, C3, G3, G3, A3, A3, E3, E3, F3, F3, G3, G3, C3, C3, G3, G3];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.06 });
+  }
+
+  return { duration: 16 * b, notes };
+}
+
+function makeBattleTrack(): TrackData {
+  // Energetic, driving - 160 BPM, A minor
+  const b = BPM_TO_BEAT(160);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (sawtooth) - aggressive patterns
+  const melody = [
+    A4, 0, C5, A4, E4, 0, A4, G4,
+    F4, 0, A4, F4, D4, 0, F4, E4,
+    A4, 0, C5, D5, E5, 0, D5, C5,
+    A4, 0, G4, A4, E4, 0, A4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.4, type: 'sawtooth', volume: 0.14 });
+  }
+
+  // Bass (square) - driving eighth notes
+  const bass = [
+    A3, A3, A3, A3, A3, A3, A3, A3,
+    F3, F3, F3, F3, F3, F3, F3, F3,
+    A3, A3, A3, A3, E3, E3, E3, E3,
+    A3, A3, G3, G3, A3, A3, A3, A3,
+  ];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * (b / 2), duration: b * 0.35, type: 'square', volume: 0.07 });
+  }
+
+  // Percussion - kick on beats 1 & 3, snare-ish on 2 & 4
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * (b / 2) * 2;
+    // kick
+    perc.push({ start: offset, duration: 0.06, volume: 0.15 });
+    perc.push({ start: offset + b, duration: 0.06, volume: 0.15 });
+    // snare (shorter, quieter)
+    perc.push({ start: offset + b / 2, duration: 0.03, volume: 0.08 });
+    perc.push({ start: offset + b * 1.5, duration: 0.03, volume: 0.08 });
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossTrack(): TrackData {
+  // Epic, intense, dramatic - 140 BPM, D minor
+  const b = BPM_TO_BEAT(140);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+
+  // Melody (sawtooth) - dramatic minor key, wider intervals
+  const melody = [
+    D4, 0, F4, A4, D5, 0, C5, Bb4,
+    A4, 0, G4, F4, E4, 0, D4, 0,
+    D4, 0, F4, A4, D5, 0, F5, E5,
+    D5, 0, C5, Bb4, A4, 0, D4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.4, type: 'sawtooth', volume: 0.15 });
+  }
+
+  // Counter melody (square, lower)
+  const counter = [
+    A3, 0, D4, 0, F4, 0, A4, 0,
+    G3, 0, Bb3, 0, D4, 0, F4, 0,
+    A3, 0, D4, 0, F4, 0, A4, 0,
+    G3, 0, Bb3, 0, A3, 0, D4, 0,
+  ];
+  for (let i = 0; i < counter.length; i++) {
+    if (counter[i] === 0) continue;
+    notes.push({ freq: counter[i], start: i * (b / 2), duration: b * 0.35, type: 'square', volume: 0.08 });
+  }
+
+  // Heavy bass
+  const bass = [D3, D3, D3, D3, G3, G3, G3, G3, D3, D3, D3, D3, A3, A3, D3, D3];
+  for (let i = 0; i < bass.length; i++) {
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.08 });
+  }
+
+  // Ominous drone undertone
+  notes.push({ freq: D3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
+  notes.push({ freq: A3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.06 });
+
+  // Intense percussion
+  for (let bar = 0; bar < 4; bar++) {
+    const offset = bar * 4 * b;
+    for (let beat = 0; beat < 4; beat++) {
+      // kick every beat
+      perc.push({ start: offset + beat * b, duration: 0.06, volume: 0.18 });
+      // off-beat hits
+      perc.push({ start: offset + beat * b + b / 2, duration: 0.03, volume: 0.1 });
+    }
+  }
+
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeVictoryTrack(): TrackData {
+  // Short triumphant fanfare, loops
+  const b = BPM_TO_BEAT(130);
+  const notes: Note[] = [];
+
+  const melody = [C5, E5, G5, C6, C6, G5, C6, 0];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * b, duration: b * 0.8, type: 'triangle', volume: 0.2 });
+    notes.push({ freq: melody[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.06 });
+  }
+
+  // Harmony
+  const harm = [E4, G4, B4, E5, E5, B4, E5, 0];
+  for (let i = 0; i < harm.length; i++) {
+    if (harm[i] === 0) continue;
+    notes.push({ freq: harm[i], start: i * b, duration: b * 0.6, type: 'triangle', volume: 0.1 });
+  }
+
+  // Bass
+  notes.push({ freq: C3, start: 0, duration: 4 * b, type: 'square', volume: 0.06 });
+  notes.push({ freq: G3, start: 4 * b, duration: 4 * b, type: 'square', volume: 0.06 });
+
+  return { duration: 8 * b, notes };
+}
+
+function makeEventTrack(): TrackData {
+  // Calm, mysterious - for events/shops
+  const b = BPM_TO_BEAT(105);
+  const notes: Note[] = [];
+
+  // Gentle arpeggio in Em
+  const arp1 = [E3, G3, B3, E4, G4, B4, G4, E4];
+  const arp2 = [C3, E3, G3, C4, E4, G4, E4, C4];
+  for (let i = 0; i < 8; i++) {
+    notes.push({ freq: arp1[i], start: i * b, duration: b * 0.7, type: 'triangle', volume: 0.18 });
+  }
+  for (let i = 0; i < 8; i++) {
+    notes.push({ freq: arp2[i], start: (8 + i) * b, duration: b * 0.7, type: 'triangle', volume: 0.18 });
+  }
+
+  // Soft pad
+  notes.push({ freq: E3, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
+  notes.push({ freq: C3, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.06 });
+
+  return { duration: 16 * b, notes };
+}
+
+function makeDungeonTrack(): TrackData {
+  // Slightly tense, exploring - 110 BPM, E minor / sparse
+  const b = BPM_TO_BEAT(110);
+  const notes: Note[] = [];
+
+  // Sparse melody (triangle)
+  const melody = [
+    E4, 0, 0, G4, 0, B4, 0, A4,
+    0, G4, 0, 0, F4, 0, E4, 0,
+    E4, 0, 0, B4, 0, C5, 0, B4,
+    0, A4, 0, G4, 0, 0, E4, 0,
+  ];
+  for (let i = 0; i < melody.length; i++) {
+    if (melody[i] === 0) continue;
+    notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.6, type: 'triangle', volume: 0.16 });
+  }
+
+  // Low rumble bass
+  const bass = [E3, 0, E3, 0, B3, 0, B3, 0, A3, 0, A3, 0, E3, 0, E3, 0];
+  for (let i = 0; i < bass.length; i++) {
+    if (bass[i] === 0) continue;
+    notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.06 });
+  }
+
+  // Ambient tone
+  notes.push({ freq: E3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.04 });
+
+  return { duration: 16 * b, notes };
+}
+
+const TRACKS: Record<BGMTrack, () => TrackData> = {
+  title: makeTitleTrack,
+  town: makeTownTrack,
+  battle: makeBattleTrack,
+  boss: makeBossTrack,
+  victory: makeVictoryTrack,
+  event: makeEventTrack,
+  dungeon: makeDungeonTrack,
+};
+
+// ============================================================
+// BGM ENGINE
+// ============================================================
+
+class BGMEngine {
+  private ctx: AudioContext | null = null;
+  private currentTrack: BGMTrack | null = null;
+  private isPlaying = false;
+  private masterGain: GainNode | null = null;
+  private scheduledNodes: (OscillatorNode | AudioBufferSourceNode)[] = [];
+  private loopTimer: number | null = null;
+  private _volume = 0.3;
+  private _muted = false;
+
+  get volume() { return this._volume; }
+  set volume(v: number) {
+    this._volume = Math.max(0, Math.min(1, v));
+    if (this.masterGain && !this._muted) {
+      this.masterGain.gain.value = this._volume;
+    }
+  }
+
+  get muted() { return this._muted; }
+  set muted(m: boolean) {
+    this._muted = m;
+    if (this.masterGain) {
+      this.masterGain.gain.value = m ? 0 : this._volume;
+    }
+  }
+
+  toggleMute(): boolean {
+    this.muted = !this._muted;
+    return this._muted;
+  }
+
+  play(track: BGMTrack) {
+    if (this.currentTrack === track && this.isPlaying) return;
+    this.stop();
+    this.currentTrack = track;
+    this.isPlaying = true;
+    this.startLoop(track);
+  }
+
+  stop() {
+    this.isPlaying = false;
+    this.currentTrack = null;
+    // Stop all scheduled oscillators/buffers
+    for (const n of this.scheduledNodes) {
+      try { n.stop(); } catch { /* already stopped */ }
+    }
+    this.scheduledNodes = [];
+    if (this.loopTimer !== null) {
+      clearTimeout(this.loopTimer);
+      this.loopTimer = null;
+    }
+  }
+
+  private getCtx(): AudioContext {
+    if (!this.ctx) {
+      this.ctx = new AudioContext();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = this._muted ? 0 : this._volume;
+      this.masterGain.connect(this.ctx.destination);
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  }
+
+  private startLoop(track: BGMTrack) {
+    const trackData = TRACKS[track]();
+    this.playSequence(trackData);
+    this.loopTimer = window.setTimeout(() => {
+      if (this.isPlaying && this.currentTrack === track) {
+        this.scheduledNodes = [];
+        this.startLoop(track);
+      }
+    }, trackData.duration * 1000);
+  }
+
+  private playSequence(trackData: TrackData) {
+    const ctx = this.getCtx();
+    const now = ctx.currentTime;
+    const master = this.masterGain!;
+
+    // Schedule tonal notes
+    for (const note of trackData.notes) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(master);
+
+      osc.type = note.type;
+
+      const t0 = now + note.start;
+      const t1 = t0 + note.duration;
+      const attack = 0.01;
+      const release = 0.02;
+
+      osc.frequency.setValueAtTime(note.freq, t0);
+      // ADSR envelope: quick attack, sustain, quick release
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(note.volume, t0 + attack);
+      gain.gain.setValueAtTime(note.volume, t1 - release);
+      gain.gain.linearRampToValueAtTime(0.001, t1);
+
+      osc.start(t0);
+      osc.stop(t1 + 0.01);
+
+      this.scheduledNodes.push(osc);
+    }
+
+    // Schedule percussion (noise bursts)
+    if (trackData.perc) {
+      for (const p of trackData.perc) {
+        const len = Math.max(1, Math.floor(ctx.sampleRate * p.duration));
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const gain = ctx.createGain();
+        src.connect(gain);
+        gain.connect(master);
+
+        const t0 = now + p.start;
+        gain.gain.setValueAtTime(p.volume, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + p.duration);
+
+        src.start(t0);
+        src.stop(t0 + p.duration + 0.01);
+
+        this.scheduledNodes.push(src);
+      }
+    }
+  }
+}
+
+export type { BGMTrack };
+export const bgm = new BGMEngine();

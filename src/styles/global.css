@@ -589,6 +589,56 @@ body {
 }
 
 /* スクロールバー */
+/* ===== ボス演出 ===== */
+@keyframes bossWarning {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.05); }
+}
+
+@keyframes bossEntranceText {
+  0% { opacity: 0; transform: translateY(20px) scale(0.8); letter-spacing: 12px; }
+  40% { opacity: 1; transform: translateY(0) scale(1.1); letter-spacing: 6px; }
+  100% { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 4px; }
+}
+
+@keyframes bossRagePulse {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #b04030; }
+}
+
+@keyframes bossDefeatBurst {
+  0% { opacity: 1; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* ===== ガチャ拡張演出 ===== */
+@keyframes gachaRarityFlash {
+  0% { opacity: 0; }
+  20% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes gachaScreenShake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-4px, 2px); }
+  30% { transform: translate(3px, -3px); }
+  45% { transform: translate(-3px, 1px); }
+  60% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, 1px); }
+}
+
+@keyframes gachaRarityTextPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+@keyframes gachaSparkle {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px; }

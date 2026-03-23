@@ -8,7 +8,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
-export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial';
+export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial' | 'event';
 
 interface TutorialState {
   completed: boolean;
@@ -84,6 +84,14 @@ interface GameState {
   isPvpBattle: boolean;
   isHardMode: boolean;
   addPvpResult: (won: boolean) => void;
+
+  // イベントダンジョン
+  eventCompletedToday: string[];
+  eventLastDate: string;
+  isEventBattle: boolean;
+  eventRewardMult: Record<string, number>;
+  startEventBattle: (difficulty: string) => void;
+  completeEvent: (difficulty: string) => void;
 
   // ダイス
   addDice: (dice: MonsterDice) => void;
@@ -164,6 +172,8 @@ function getSaveableState(s: GameState) {
     pvpPoints: s.pvpPoints,
     pvpWins: s.pvpWins,
     pvpLosses: s.pvpLosses,
+    eventCompletedToday: s.eventCompletedToday,
+    eventLastDate: s.eventLastDate,
   };
 }
 
@@ -274,6 +284,29 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
     get().checkAchievements();
   },
+  // イベントダンジョン
+  eventCompletedToday: [],
+  eventLastDate: '',
+  isEventBattle: false,
+  eventRewardMult: {},
+  startEventBattle: (_difficulty: string) => {
+    // difficulty is stored for tracking; reward mult is set externally via setState
+    set({ isEventBattle: true });
+  },
+  completeEvent: (difficulty: string) => {
+    const s = get();
+    const today = new Date().toISOString().slice(0, 10);
+    const completedToday = s.eventLastDate === today ? s.eventCompletedToday : [];
+    if (!completedToday.includes(difficulty)) {
+      set({
+        eventCompletedToday: [...completedToday, difficulty],
+        eventLastDate: today,
+        isEventBattle: false,
+        eventRewardMult: {},
+      });
+    }
+  },
+
   addMagicDice: (id) => set((s) => ({
     ownedMagicDice: s.ownedMagicDice.includes(id) ? s.ownedMagicDice : [...s.ownedMagicDice, id],
   })),
@@ -666,6 +699,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const pvpPts = (d as any).pvpPoints || 0;
     const pvpW = (d as any).pvpWins || 0;
     const pvpL = (d as any).pvpLosses || 0;
+    const eventCompletedToday = (d as any).eventCompletedToday || [];
+    const eventLastDate = (d as any).eventLastDate || '';
     // HPがレベルに対して低すぎる場合（旧セーブ）→ レベル基準で再計算
     const expectedHp = 50 + (level - 1) * 50;
     const hp = d.playerMaxHp < expectedHp ? expectedHp : d.playerMaxHp;
@@ -684,6 +719,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpPoints: pvpPts,
       pvpWins: pvpW,
       pvpLosses: pvpL,
+      eventCompletedToday,
+      eventLastDate,
+      isEventBattle: false,
+      eventRewardMult: {},
       bossesDefeated: (d as any).bossesDefeated || [],
       achievements: (d as any).achievements || [],
       protagonistDice: migratedProtagonist,
