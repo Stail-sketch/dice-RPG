@@ -761,7 +761,6 @@ export function BattleScreen() {
                   const bonus = getPartyBonus();
                   const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier);
                   addGold(goldReward);
-                  addLog(`  +${goldReward}G`);
                 }
               } else {
                 sfx.defeat();
@@ -806,10 +805,15 @@ export function BattleScreen() {
   const onCaptureComplete = useCallback((captureRes: { success: boolean; roll: number; captureRate: number; effectiveRate: number }) => {
     if (!currentEnemy || !currentEnemy[0]) return;
     const monster = currentEnemy[0];
-    if (captureRes.success) { addDice({ ...monster }); captureMonster(monster.id); addLog(`封印成功！ ${monster.name}をGET！`); }
-    else addLog(`封印失敗... ${monster.name}は逃げた`);
+    if (captureRes.success) { addDice({ ...monster }); captureMonster(monster.id); }
     // ── 戦闘報酬 ──
     addLog('── 報酬 ──');
+    // ゴールド
+    const bonus = getPartyBonus();
+    const goldReward = Math.round((50 + monster.rarity * 30) * bonus.goldMultiplier);
+    addLog(`  ${goldReward}G`);
+    // 封印結果
+    if (captureRes.success) addLog(`  封印成功！ ${monster.name}をGET！`);
     const drops: typeof SKILL_RUNES = [];
     const dropCount = 1 + (Math.random() < 0.4 ? 1 : 0);
     const commonR = SKILL_RUNES.filter(r => r.tier === 'common');
