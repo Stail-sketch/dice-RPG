@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { bgm } from '../../utils/bgm';
 import { CHAPTER1_MONSTERS, CHAPTER2_MONSTERS, CHAPTER3_MONSTERS, CHAPTER4_MONSTERS, CHAPTER5_MONSTERS, CHAPTER6_MONSTERS, CHAPTER7_MONSTERS } from '../../data/monsters';
 import { SKILL_RUNES } from '../../data/skill-runes';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
@@ -67,6 +68,11 @@ const BOSS_DIALOGUE: Record<number, string[]> = {
 // ボス戦前ダイアログコンポーネント
 function BossDialogue({ monster, lines, onComplete }: { monster: MonsterDice; lines: string[]; onComplete: () => void }) {
   const [lineIndex, setLineIndex] = useState(0);
+
+  // ダイアログ表示と同時にボスBGM開始
+  useEffect(() => {
+    bgm.play('boss');
+  }, []);
 
   const handleAdvance = () => {
     if (lineIndex < lines.length - 1) {
