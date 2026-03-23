@@ -1073,12 +1073,9 @@ export function BattleScreen() {
           </div>
         )}
         {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && (
-          <div>
-            <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>+{Math.round((50 + enemyDiceList[0].rarity * 30) * getPartyBonus().goldMultiplier)} GOLD</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
-              <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
-            </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
+            <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
           </div>
         )}
         {phase === 'result' && battle?.status === 'player-win' && isPvpBattle && (
