@@ -376,20 +376,28 @@ export function GachaScreen() {
                   }} />
                 ))}
 
-                {/* ダイス本体 — ⚀(1の目)で中心回転 */}
+                {/* ダイス本体 — ⚀(1の目)で中心回転、昇格で色が変わる */}
                 <div style={{
                   width: 80, height: 80,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative',
                   animation: `gachaSpinCenter ${isLeg ? 0.25 : isEpic ? 0.35 : 0.5}s linear infinite`,
                   zIndex: 30,
                 }}>
-                  <span style={{
-                    fontSize: 72,
-                    color: finalColor,
-                    textShadow: `0 0 20px ${finalColor}, 0 0 40px ${finalColor}60`,
-                    lineHeight: 1,
-                    display: 'block',
-                  }}>⚀</span>
+                  {crystalPhases.map((phase, idx) => (
+                    <span key={`dice-${idx}`} style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: phase.size,
+                      color: phase.color,
+                      textShadow: `0 0 20px ${phase.color}, 0 0 40px ${phase.color}60`,
+                      lineHeight: 1,
+                      animation: idx === 0 ? 'none' : `fadeIn 0.3s ease forwards`,
+                      animationDelay: idx === 0 ? '0s' : `${phase.delay}s`,
+                      animationFillMode: 'both',
+                      opacity: idx === 0 ? 1 : 0,
+                      zIndex: idx,
+                    }}>⚀</span>
+                  ))}
                 </div>
 
                 {/* パーティクル（昇格時に増える） */}
