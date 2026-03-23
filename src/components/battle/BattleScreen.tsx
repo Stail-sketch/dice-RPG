@@ -525,12 +525,16 @@ export function BattleScreen() {
         const thirdRoll = currentRolls[thirdIdx];
         // Generate skills for 3rd dice
         // We'll add a bonus hit for simplification
+        const extraDmg = thirdRoll.faceNumber * 3;
         const extraActions: SkillAction[] = [{
           skillId: 'unleash-extra', skillName: '解放撃',
           element: (thirdRoll.face as any).element ?? 'alloy',
-          effectType: 'damage', rawDamage: thirdRoll.faceNumber * 3,
+          effectType: 'damage', rawDamage: extraDmg,
+          tierMultiplier: 1.0, decayMultiplier: 1.0,
           elementMultiplier: 1, synergyMultiplier: 1,
-          finalDamage: thirdRoll.faceNumber * 3, targetIsPlayer: false,
+          finalDamage: extraDmg,
+          crossDiceMultiplier: 1.0, buffMultiplier: 1.0, actualDamage: extraDmg,
+          targetIsPlayer: false,
         }];
         if (result.playerFirst) result.firstActions.push(...extraActions);
         else result.secondActions.push(...extraActions);
