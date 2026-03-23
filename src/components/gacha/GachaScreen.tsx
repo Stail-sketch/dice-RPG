@@ -72,7 +72,7 @@ export function GachaScreen() {
   const CRYSTAL_COLORS = ['#998a78', '#4070a0', '#9060d0', '#d4a020'];
   const CRYSTAL_LABELS = ['', '— Rare —', '— ◆ Epic ◆ —', '— ★ LEGENDARY ★ —'];
   const CRYSTAL_MSGS = ['運命のダイスが回る...', '何かが光る...！', '強い力を感じる...！', '運命が...揺れている...！！'];
-  const CRYSTAL_TEASE = ['...', '...まだ何か...', '...まさか...！？', '...来る...！！！'];
+  const CRYSTAL_TEASE = ['...', '...', '...！', '...！！'];
   const currentCrystalColor = CRYSTAL_COLORS[crystalLevel] || CRYSTAL_COLORS[0];
 
   const skipToResults = () => {
