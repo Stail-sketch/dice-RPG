@@ -295,13 +295,15 @@ function drawGrass(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
 // メインコンポーネント
 // ==============================
 export function TownScreen() {
-  const { setScreen, playerMaxHp, playerLevel, playerExp, getExpToNext, gold, gems, gemFragments, currentChapter, save } = useGameStore();
+  const { setScreen, playerMaxHp, playerLevel, playerExp, getExpToNext, gold, gems, gemFragments, currentChapter, battleChapter, save } = useGameStore();
+  // 町のテーマは直近で選んだ章に連動（battleChapterがあればそれを優先）
+  const themeChapter = battleChapter || currentChapter;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
 
-  const theme = getTheme(currentChapter);
+  const theme = getTheme(themeChapter);
 
   // ベースCanvas描画
   useEffect(() => {
@@ -320,7 +322,7 @@ export function TownScreen() {
       b.draw(ctx, b.x, b.y, b.w, b.h);
       ctx.globalAlpha = 1;
     }
-  }, [currentChapter, theme]);
+  }, [themeChapter, theme]);
 
   // アンビエントアニメーション（オーバーレイCanvas）
   useEffect(() => {
@@ -348,7 +350,7 @@ export function TownScreen() {
 
     function spawnChapterParticle() {
       if (chapterParticles.length >= MAX_PARTICLES) return;
-      const ch = currentChapter;
+      const ch = themeChapter;
       let p = { x: 0, y: 0, vy: 0, vx: 0, life: 0, maxLife: 16 };
       if (ch === 2) { // snow
         p = { x: Math.floor(Math.random() * W), y: -2, vy: 1.5, vx: (Math.random() - 0.5) * 0.5, life: 0, maxLife: Math.floor(H / 1.5) };
@@ -408,7 +410,7 @@ export function TownScreen() {
           continue;
         }
 
-        const ch = currentChapter;
+        const ch = themeChapter;
         if (ch === 2) { // snow - white dots
           ctx.fillStyle = '#e8e8f0';
           ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 2, 2);
@@ -435,7 +437,7 @@ export function TownScreen() {
     }, 250); // ~4fps for pixel art feel
 
     return () => clearInterval(interval);
-  }, [currentChapter]);
+  }, [themeChapter]);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -513,10 +515,10 @@ export function TownScreen() {
               PIP SOCKET CHRONICLE
             </div>
             <div style={{ fontSize: 9, color: '#606050', marginTop: 1 }}>
-              Chapter {currentChapter}
+              Chapter {themeChapter}
             </div>
             <div style={{ fontSize: 8, color: '#706858', marginTop: 1 }}>
-              {CHAPTER_DISPLAY[currentChapter] || ''}
+              {CHAPTER_DISPLAY[themeChapter] || ''}
             </div>
           </div>
 
@@ -580,7 +582,7 @@ export function TownScreen() {
         </div>
         <span style={{ color: '#705828', fontWeight: 'bold' }}>{gold}G</span>
         <span style={{ color: '#4070a0' }}>{gems}Gem({gemFragments})</span>
-        <span>Ch.{currentChapter}</span>
+        <span>Ch.{themeChapter}</span>
         <span
           onClick={handleSave}
           style={{
