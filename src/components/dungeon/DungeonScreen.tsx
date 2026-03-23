@@ -247,15 +247,15 @@ export function DungeonScreen() {
 
       <div className="rpg-panel">
         <div className="rpg-panel-title">
-          {hardMode ? '【高難度】' : ''}{CHAPTER_NAMES[currentChapter] || `第${currentChapter}章`}
+          {hardMode ? '【高難度】' : ''}{CHAPTER_NAMES[displayChapter] || `第${displayChapter}章`}
         </div>
-        {CHAPTER_FLAVOR[currentChapter] && (
+        {CHAPTER_FLAVOR[displayChapter] && (
           <>
             <div style={{ fontSize: 11, color: '#3a2a1a', textAlign: 'center', padding: '4px 8px', lineHeight: 1.5 }}>
-              {CHAPTER_FLAVOR[currentChapter].intro}
+              {CHAPTER_FLAVOR[displayChapter].intro}
             </div>
             <div style={{ fontSize: 10, color: '#998a78', textAlign: 'center', fontStyle: 'italic', marginBottom: 4 }}>
-              {CHAPTER_FLAVOR[currentChapter].atmosphere}
+              {CHAPTER_FLAVOR[displayChapter].atmosphere}
             </div>
           </>
         )}
