@@ -642,88 +642,220 @@ function makeCaptureFailTrack(): TrackData {
 // ============================================================
 
 function makeBossBlazeTrack(): TrackData {
-  // Ch1 boss - Heavy fire theme, 130 BPM Am, deeper than battle
-  const b = BPM_TO_BEAT(130);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [A4, 0, C5, E5, A4, 0, G4, A4, F4, 0, A4, C5, D5, 0, C5, A4, A4, 0, E5, D5, C5, 0, A4, G4, A4, 0, C5, A4, E4, 0, A4, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.45, type: 'sawtooth', volume: 0.16 }); }
-  const bass = [A3, A3, A3, A3, F3, F3, F3, F3, A3, A3, E3, E3, A3, A3, A3, A3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
-  notes.push({ freq: A3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.07, volume: 0.2 }); perc.push({ start: o + bt * b + b / 2, duration: 0.04, volume: 0.12 }); } }
-  return { duration: 16 * b, notes, perc };
+  // Ch1 boss - 灼熱の支配者 - 4パート構成 Am, 138 BPM
+  const b = BPM_TO_BEAT(138); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 不穏な炎の揺らぎ
+  const introA = [A3, 0, C4, E4, A3, 0, E4, C4, A3, 0, C4, E4, G4, 0, E4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.7, type: 'triangle', volume: 0.16 }); }
+  notes.push({ freq: A3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
+  // Part B: 主旋律爆発
+  const off2 = 16 * h;
+  const melB = [A4, 0, C5, E5, A4, 0, G4, A4, F4, 0, A4, C5, D5, 0, C5, A4];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.45, type: 'sawtooth', volume: 0.18 }); notes.push({ freq: melB[i] / 2, start: off2 + i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.06 }); }
+  const counterB = [E4, 0, A3, C4, E4, 0, D4, E4, C4, 0, E4, A4, F4, 0, E4, C4];
+  for (let i = 0; i < counterB.length; i++) { if (counterB[i] === 0) continue; notes.push({ freq: counterB[i], start: off2 + i * h, duration: h * 0.4, type: 'square', volume: 0.08 }); }
+  // Part C: 重厚展開
+  const off3 = 32 * h;
+  const melC = [E5, 0, D5, C5, A4, 0, C5, D5, E5, 0, G4, A4, C5, 0, A4, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.5, type: 'sawtooth', volume: 0.16 }); }
+  const pwrC = [F3, F3, F3, F3, E3, E3, E3, E3, D3, D3, D3, D3, A3, A3, A3, A3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.6, type: 'square', volume: 0.1 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.4, type: 'square', volume: 0.04 }); }
+  // Part D: クライマックス
+  const off4 = 48 * h;
+  const melD = [A4, C5, E5, A4, C5, E5, G4, A4, A4, C5, E5, D5, C5, A4, E5, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.4, type: 'sawtooth', volume: 0.2 }); notes.push({ freq: melD[i] / 2, start: off4 + i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.07 }); }
+  // 全体ベース
+  const fullBass = [A3, A3, A3, A3, A3, A3, E3, E3, F3, F3, A3, A3, E3, E3, A3, A3, F3, F3, E3, E3, D3, D3, A3, A3, A3, A3, F3, A3, E3, A3, A3, A3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
+  notes.push({ freq: A3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // パーカッション
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.07, volume: 0.18 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 8 * b + bt * h, duration: bt % 2 === 0 ? 0.06 : 0.03, volume: bt % 2 === 0 ? 0.2 : 0.1 });
+  for (const r of [0, 3, 6, 8, 11, 14]) perc.push({ start: 16 * b + r * h, duration: 0.06, volume: 0.2 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 24 * b + bt * h, duration: 0.05, volume: 0.22 });
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossFrostTrack(): TrackData {
-  // Ch2 boss - Icy menace, 125 BPM Em
-  const b = BPM_TO_BEAT(125);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [E5, 0, G5, B4, E5, 0, D5, E5, B4, 0, E5, G5, A4, 0, G5, E5, E5, 0, B4, G5, E5, 0, D5, B4, E5, 0, G5, E5, B4, 0, E5, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.5, type: 'triangle', volume: 0.18 }); notes.push({ freq: melody[i] * 1.005, start: i * (b / 2), duration: b * 0.3, type: 'triangle', volume: 0.06 }); }
-  const bass = [E3, E3, B3, B3, A3, A3, E3, E3, E3, E3, G3, G3, A3, A3, B3, B3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.07 });
-  notes.push({ freq: E3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.06 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.06, volume: 0.16 }); perc.push({ start: o + bt * b + b / 2, duration: 0.03, volume: 0.09 }); } }
-  return { duration: 16 * b, notes, perc };
+  // Ch2 boss - 氷結の暴君 - 4パート構成 Em, 132 BPM
+  const b = BPM_TO_BEAT(132); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 凍てつくアルペジオ
+  const introA = [E4, 0, G4, B4, E4, 0, B4, G4, E4, 0, G4, B4, D5, 0, B4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.6, type: 'triangle', volume: 0.18 }); notes.push({ freq: introA[i] * 1.005, start: i * h, duration: h * 0.4, type: 'triangle', volume: 0.06 }); }
+  notes.push({ freq: E3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
+  // Part B: 吹雪の主旋律
+  const off2 = 16 * h;
+  const melB = [E5, 0, G5, B4, E5, 0, D5, E5, B4, 0, E5, G5, A4, 0, G5, E5];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.5, type: 'triangle', volume: 0.2 }); notes.push({ freq: melB[i] * 1.005, start: off2 + i * h, duration: h * 0.35, type: 'triangle', volume: 0.07 }); notes.push({ freq: melB[i] / 2, start: off2 + i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.05 }); }
+  const counterB2 = [B4, 0, E4, G4, B4, 0, A4, B4, G4, 0, B4, D5, E4, 0, D5, B4];
+  for (let i = 0; i < counterB2.length; i++) { if (counterB2[i] === 0) continue; notes.push({ freq: counterB2[i], start: off2 + i * h, duration: h * 0.4, type: 'square', volume: 0.07 }); }
+  // Part C: 氷の咆哮
+  const off3 = 32 * h;
+  const melC = [G5, 0, E5, D5, B4, 0, D5, E5, G5, 0, B4, D5, E5, 0, D5, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.5, type: 'sawtooth', volume: 0.16 }); }
+  const pwrC = [A3, A3, A3, A3, G3, G3, G3, G3, E3, E3, E3, E3, B3, B3, B3, B3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.6, type: 'square', volume: 0.09 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.4, type: 'square', volume: 0.04 }); }
+  // Part D: 絶対零度
+  const off4 = 48 * h;
+  const melD = [E5, G5, B4, E5, G5, B4, D5, E5, E5, G5, B4, A4, G5, E5, B4, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.4, type: 'triangle', volume: 0.2 }); notes.push({ freq: melD[i] * 1.005, start: off4 + i * h, duration: h * 0.3, type: 'triangle', volume: 0.08 }); notes.push({ freq: melD[i] / 2, start: off4 + i * h, duration: h * 0.25, type: 'sawtooth', volume: 0.06 }); }
+  // 全体ベース
+  const fullBass = [E3, E3, E3, E3, E3, E3, B3, B3, A3, A3, E3, E3, B3, B3, E3, E3, A3, A3, G3, G3, E3, E3, B3, B3, E3, E3, A3, E3, B3, E3, E3, E3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.08 });
+  notes.push({ freq: E3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // パーカッション
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.06, volume: 0.16 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 8 * b + bt * h, duration: bt % 2 === 0 ? 0.06 : 0.03, volume: bt % 2 === 0 ? 0.18 : 0.09 });
+  for (const r of [0, 3, 6, 8, 11, 14]) perc.push({ start: 16 * b + r * h, duration: 0.05, volume: 0.18 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 24 * b + bt * h, duration: 0.04, volume: 0.2 });
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossVoltTrack(): TrackData {
-  // Ch3 boss - Electric fury, 150 BPM Bm
-  const b = BPM_TO_BEAT(150);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [B4, 0, D5, Fs4, B4, 0, B4, D5, Fs4, 0, B4, D5, E5, 0, D5, B4, Fs4, 0, D5, B4, Fs4, 0, B4, Fs4, D5, 0, B4, D5, Fs4, 0, B4, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.25, type: 'sawtooth', volume: 0.17 }); if (i % 4 === 0) notes.push({ freq: melody[i] * 2, start: i * (b / 2), duration: b * 0.1, type: 'square', volume: 0.06 }); }
-  const bass = [B3, B3, B3, B3, Gs3, Gs3, Gs3, Gs3, E3, E3, E3, E3, B3, B3, B3, B3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.08 });
-  notes.push({ freq: B3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.06 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: 0.04, volume: bt % 2 === 0 ? 0.18 : 0.1 }); } }
-  return { duration: 16 * b, notes, perc };
+  // Ch3 boss - 雷帝 - 4パート構成 Bm, 155 BPM (最速)
+  const b = BPM_TO_BEAT(155); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 静電気の前兆
+  const introA = [B3, 0, D4, Fs4, 0, B3, Fs4, 0, B3, 0, D4, Fs4, 0, B4, Fs4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.15 }); if (i % 3 === 0) notes.push({ freq: introA[i] * 2, start: i * h, duration: h * 0.1, type: 'square', volume: 0.05 }); }
+  notes.push({ freq: B3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
+  // Part B: 落雷の主旋律
+  const off2 = 16 * h;
+  const melB = [B4, 0, D5, Fs4, B4, 0, B4, D5, Fs4, 0, B4, D5, E5, 0, D5, B4];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.28, type: 'sawtooth', volume: 0.19 }); notes.push({ freq: melB[i] * 2, start: off2 + i * h, duration: h * 0.12, type: 'square', volume: 0.07 }); }
+  const counterB3 = [Fs4, 0, B3, D4, Fs4, 0, Fs4, B4, D4, 0, Fs4, B4, Gs3, 0, B4, Fs4];
+  for (let i = 0; i < counterB3.length; i++) { if (counterB3[i] === 0) continue; notes.push({ freq: counterB3[i], start: off2 + i * h, duration: h * 0.25, type: 'square', volume: 0.08 }); }
+  // Part C: 連鎖雷撃
+  const off3 = 32 * h;
+  const melC = [D5, Fs4, B4, D5, Fs4, B4, E5, D5, B4, Fs4, D5, B4, Fs4, D5, B4, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.22, type: 'sawtooth', volume: 0.18 }); }
+  const pwrC = [Gs3, Gs3, Gs3, Gs3, E3, E3, E3, E3, B3, B3, B3, B3, Fs3, Fs3, Fs3, Fs3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.5, type: 'square', volume: 0.09 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.3, type: 'square', volume: 0.04 }); }
+  // Part D: 万雷
+  const off4 = 48 * h;
+  const melD = [B4, D5, Fs4, B4, D5, Fs4, E5, B4, D5, Fs4, B4, E5, D5, B4, Fs4, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.25, type: 'sawtooth', volume: 0.2 }); notes.push({ freq: melD[i] * 2, start: off4 + i * h, duration: h * 0.1, type: 'square', volume: 0.08 }); }
+  // 全体ベース
+  const fullBass = [B3, B3, B3, B3, B3, B3, Gs3, Gs3, E3, E3, B3, B3, Gs3, Gs3, B3, B3, Gs3, Gs3, E3, E3, B3, B3, Fs3, Fs3, B3, B3, Gs3, B3, E3, B3, B3, B3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.08 });
+  notes.push({ freq: B3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // 高速パーカッション
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.04, volume: 0.16 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 8 * b + bt * h, duration: 0.03, volume: bt % 2 === 0 ? 0.2 : 0.1 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 16 * b + bt * h, duration: 0.03, volume: 0.18 });
+  for (let bt = 0; bt < 16; bt++) { perc.push({ start: 24 * b + bt * h, duration: 0.04, volume: 0.24 }); if (bt % 2 === 1) perc.push({ start: 24 * b + bt * h + h * 0.5, duration: 0.02, volume: 0.08 }); }
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossVenomTrack(): TrackData {
-  // Ch4 boss - Toxic dread, 120 BPM Ebm chromatic
-  const b = BPM_TO_BEAT(120);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [Eb4, 0, E4, F4, Eb4, 0, D4, Eb4, F4, 0, Eb4, D4, C4, 0, D4, Eb4, Eb4, 0, F4, Eb4, D4, 0, Eb4, F4, Eb4, 0, D4, C4, D4, 0, Eb4, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.5, type: 'sawtooth', volume: 0.14 }); notes.push({ freq: melody[i] * 1.01, start: i * (b / 2) + 0.03, duration: b * 0.3, type: 'sawtooth', volume: 0.05 }); }
-  const bass = [Eb3, Eb3, Eb3, Eb3, D3, D3, D3, D3, C3, C3, C3, C3, Eb3, Eb3, D3, Eb3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.08 });
-  notes.push({ freq: Eb3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.07, volume: 0.16 }); perc.push({ start: o + bt * b + b * 0.75, duration: 0.04, volume: 0.08 }); } }
-  return { duration: 16 * b, notes, perc };
+  // Ch4 boss - 毒竜ニーズヘッグ - 4パート構成 Ebm, 126 BPM
+  const b = BPM_TO_BEAT(126); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 瘴気の胎動
+  const introA = [Eb4, 0, E4, Eb4, D4, 0, Eb4, 0, D4, 0, C4, D4, Eb4, 0, D4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.6, type: 'sawtooth', volume: 0.14 }); notes.push({ freq: introA[i] * 1.01, start: i * h + 0.03, duration: h * 0.4, type: 'sawtooth', volume: 0.05 }); }
+  notes.push({ freq: Eb3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
+  notes.push({ freq: E3 / 2, start: 0, duration: 4 * b, type: 'sine', volume: 0.03 }); // 不協和ドローン
+  // Part B: 猛毒の牙
+  const off2 = 16 * h;
+  const melB = [Eb4, 0, E4, F4, Eb4, 0, D4, Eb4, F4, 0, Eb4, D4, C4, 0, D4, Eb4];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.5, type: 'sawtooth', volume: 0.17 }); notes.push({ freq: melB[i] * 1.01, start: off2 + i * h + 0.03, duration: h * 0.35, type: 'sawtooth', volume: 0.06 }); notes.push({ freq: melB[i] / 2, start: off2 + i * h, duration: h * 0.3, type: 'square', volume: 0.05 }); }
+  // Part C: 腐蝕の波
+  const off3 = 32 * h;
+  const melC = [F4, 0, Eb4, D4, C4, 0, D4, Eb4, F4, 0, Eb4, F4, Eb4, 0, D4, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.5, type: 'sawtooth', volume: 0.16 }); }
+  const pwrC = [D3, D3, D3, D3, C3, C3, C3, C3, Eb3, Eb3, Eb3, Eb3, D3, D3, Eb3, D3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.6, type: 'square', volume: 0.09 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.4, type: 'square', volume: 0.04 }); }
+  // Part D: 致死毒
+  const off4 = 48 * h;
+  const melD = [Eb4, F4, Eb4, D4, F4, Eb4, D4, C4, Eb4, F4, Eb4, D4, F4, Eb4, D4, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.45, type: 'sawtooth', volume: 0.19 }); notes.push({ freq: melD[i] * 1.01, start: off4 + i * h + 0.02, duration: h * 0.3, type: 'sawtooth', volume: 0.07 }); }
+  // 全体ベース
+  const fullBass = [Eb3, Eb3, Eb3, Eb3, Eb3, Eb3, D3, D3, D3, D3, C3, C3, Eb3, Eb3, D3, Eb3, D3, D3, C3, C3, Eb3, Eb3, D3, D3, Eb3, Eb3, D3, Eb3, C3, Eb3, D3, Eb3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.08 });
+  notes.push({ freq: Eb3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // パーカッション
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.07, volume: 0.16 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 8 * b + bt * h, duration: 0.05, volume: bt % 2 === 0 ? 0.18 : 0.08 });
+  for (const r of [0, 3, 5, 8, 11, 13]) perc.push({ start: 16 * b + r * h, duration: 0.06, volume: 0.18 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 24 * b + bt * h, duration: 0.05, volume: 0.2 });
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossAlloyTrack(): TrackData {
-  // Ch5 boss - Mechanical titan, 135 BPM Cm
-  const b = BPM_TO_BEAT(135);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [C5, C5, 0, G4, C5, C5, 0, Eb4, G4, G4, 0, C5, Eb4, 0, G4, C5, C5, C5, 0, Eb4, C5, C5, 0, G4, Eb4, Eb4, 0, G4, C5, 0, G4, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.3, type: 'square', volume: 0.15 }); }
-  const bass = [C3, C3, G3, C3, C3, C3, Eb3, C3, G3, G3, C3, G3, Eb3, Eb3, G3, C3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.09 });
-  notes.push({ freq: C3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: bt % 2 === 0 ? 0.06 : 0.03, volume: bt % 2 === 0 ? 0.2 : 0.12 }); } }
-  return { duration: 16 * b, notes, perc };
+  // Ch5 boss - 鋼鉄城塞 - 4パート構成 Cm, 140 BPM
+  const b = BPM_TO_BEAT(140); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 起動シーケンス
+  const introA = [C4, C4, 0, G3, C4, C4, 0, Eb4, G4, G4, 0, C4, Eb4, 0, G4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.35, type: 'square', volume: 0.15 }); }
+  notes.push({ freq: C3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
+  // Part B: 機械の咆哮
+  const off2 = 16 * h;
+  const melB = [C5, C5, 0, G4, C5, C5, 0, Eb4, G4, G4, 0, C5, Eb4, 0, G4, C5];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.3, type: 'square', volume: 0.18 }); notes.push({ freq: melB[i] / 2, start: off2 + i * h, duration: h * 0.25, type: 'square', volume: 0.06 }); }
+  const counterB5 = [G4, 0, C4, Eb4, G4, 0, G4, C5, Eb4, 0, G4, Eb4, C4, 0, Eb4, G4];
+  for (let i = 0; i < counterB5.length; i++) { if (counterB5[i] === 0) continue; notes.push({ freq: counterB5[i], start: off2 + i * h, duration: h * 0.25, type: 'sawtooth', volume: 0.08 }); }
+  // Part C: フルパワー
+  const off3 = 32 * h;
+  const melC = [Eb4, G4, C5, Eb4, G4, C5, G4, Eb4, C5, G4, Eb4, C5, G4, C5, Eb4, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.3, type: 'square', volume: 0.17 }); }
+  const pwrC = [G3, G3, G3, G3, Eb3, Eb3, Eb3, Eb3, C3, C3, C3, C3, G3, G3, G3, G3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.5, type: 'square', volume: 0.1 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.35, type: 'square', volume: 0.04 }); }
+  // Part D: 鉄の暴走
+  const off4 = 48 * h;
+  const melD = [C5, G4, C5, Eb4, C5, G4, Eb4, C5, G4, C5, Eb4, G4, C5, Eb4, G4, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.28, type: 'square', volume: 0.2 }); notes.push({ freq: melD[i] / 2, start: off4 + i * h, duration: h * 0.22, type: 'square', volume: 0.07 }); }
+  // 全体ベース
+  const fullBass = [C3, C3, G3, C3, C3, C3, Eb3, C3, G3, G3, C3, G3, Eb3, Eb3, G3, C3, G3, G3, Eb3, Eb3, C3, C3, G3, G3, C3, C3, Eb3, C3, G3, C3, G3, C3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.09 });
+  notes.push({ freq: C3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // ヘビーパーカッション
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.06, volume: 0.2 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 8 * b + bt * h, duration: bt % 2 === 0 ? 0.06 : 0.03, volume: bt % 2 === 0 ? 0.22 : 0.12 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 16 * b + bt * h, duration: 0.04, volume: 0.2 });
+  for (let bt = 0; bt < 16; bt++) { perc.push({ start: 24 * b + bt * h, duration: 0.05, volume: 0.24 }); if (bt % 2 === 1) perc.push({ start: 24 * b + bt * h + h * 0.5, duration: 0.02, volume: 0.1 }); }
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossMirageTrack(): TrackData {
-  // Ch6 boss - Ethereal nightmare, 115 BPM F#m
-  const b = BPM_TO_BEAT(115);
-  const notes: Note[] = [];
-  const perc: PercNote[] = [];
-  const melody = [Fs4, 0, A4, Fs4, 0, E4, Fs4, 0, A4, 0, B4, A4, Fs4, 0, E4, 0, Fs4, 0, A4, B4, 0, Fs4, A4, 0, B4, 0, A4, Fs4, E4, 0, Fs4, 0];
-  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.6, type: 'triangle', volume: 0.16 }); notes.push({ freq: melody[i], start: i * (b / 2) + b * 0.3, duration: b * 0.4, type: 'triangle', volume: 0.06 }); }
-  const bass = [Fs3, Fs3, Fs3, Fs3, D3, D3, D3, D3, A3, A3, A3, A3, Fs3, Fs3, E3, Fs3];
-  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.06 });
+  // Ch6 boss - 虚空のスフィンクス - 4パート構成 F#m, 120 BPM
+  const b = BPM_TO_BEAT(120); const h = b / 2;
+  const notes: Note[] = []; const perc: PercNote[] = [];
+  // Part A: 幻惑の序章
+  const introA = [Fs4, 0, A4, 0, E4, 0, Fs4, 0, A4, 0, B4, 0, A4, 0, Fs4, 0];
+  for (let i = 0; i < introA.length; i++) { if (introA[i] === 0) continue; notes.push({ freq: introA[i], start: i * h, duration: h * 0.7, type: 'triangle', volume: 0.16 }); notes.push({ freq: introA[i], start: i * h + h * 0.35, duration: h * 0.45, type: 'triangle', volume: 0.06 }); }
   notes.push({ freq: Fs3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
-  notes.push({ freq: D3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.06 });
-  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.05, volume: 0.14 }); } }
-  return { duration: 16 * b, notes, perc };
+  notes.push({ freq: G3 / 2, start: 0, duration: 4 * b, type: 'sine', volume: 0.03 }); // 不協和
+  // Part B: 現実崩壊
+  const off2 = 16 * h;
+  const melB = [Fs4, 0, A4, Fs4, 0, E4, Fs4, 0, A4, 0, B4, A4, Fs4, 0, E4, 0];
+  for (let i = 0; i < melB.length; i++) { if (melB[i] === 0) continue; notes.push({ freq: melB[i], start: off2 + i * h, duration: h * 0.6, type: 'triangle', volume: 0.18 }); notes.push({ freq: melB[i], start: off2 + i * h + h * 0.3, duration: h * 0.4, type: 'triangle', volume: 0.07 }); notes.push({ freq: melB[i] / 2, start: off2 + i * h, duration: h * 0.3, type: 'sawtooth', volume: 0.05 }); }
+  // Part C: 夢魔の回廊
+  const off3 = 32 * h;
+  const melC = [B4, 0, A4, Fs4, E4, 0, Fs4, A4, B4, 0, Fs4, A4, B4, 0, A4, 0];
+  for (let i = 0; i < melC.length; i++) { if (melC[i] === 0) continue; notes.push({ freq: melC[i], start: off3 + i * h, duration: h * 0.55, type: 'triangle', volume: 0.17 }); }
+  const pwrC = [D3, D3, D3, D3, A3, A3, A3, A3, E3, E3, E3, E3, Fs3, Fs3, Fs3, Fs3];
+  for (let i = 0; i < pwrC.length; i++) { notes.push({ freq: pwrC[i], start: off3 + i * h, duration: h * 0.5, type: 'square', volume: 0.08 }); notes.push({ freq: pwrC[i] * 1.5, start: off3 + i * h, duration: h * 0.35, type: 'square', volume: 0.03 }); }
+  // Part D: 虚実混在
+  const off4 = 48 * h;
+  const melD = [Fs4, A4, B4, Fs4, A4, E4, B4, Fs4, A4, B4, Fs4, E4, A4, Fs4, B4, 0];
+  for (let i = 0; i < melD.length; i++) { if (melD[i] === 0) continue; notes.push({ freq: melD[i], start: off4 + i * h, duration: h * 0.5, type: 'triangle', volume: 0.2 }); notes.push({ freq: melD[i], start: off4 + i * h + h * 0.25, duration: h * 0.35, type: 'triangle', volume: 0.08 }); }
+  // アルペジオ装飾
+  const arpD = [Fs4, E4, D4, A3, Fs4, E4, D4, A3, B4, A4, Fs4, E4, B4, A4, Fs4, E4];
+  for (let i = 0; i < arpD.length; i++) notes.push({ freq: arpD[i], start: off4 + i * h, duration: h * 0.2, type: 'triangle', volume: 0.04 });
+  // 全体ベース
+  const fullBass = [Fs3, Fs3, Fs3, Fs3, D3, D3, D3, D3, A3, A3, A3, A3, Fs3, Fs3, E3, Fs3, D3, D3, A3, A3, E3, E3, Fs3, Fs3, Fs3, Fs3, D3, Fs3, A3, Fs3, E3, Fs3];
+  for (let i = 0; i < fullBass.length; i++) notes.push({ freq: fullBass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.07 });
+  notes.push({ freq: Fs3 / 4, start: 0, duration: 32 * b, type: 'sine', volume: 0.05 });
+  // パーカッション（抑え気味だがPart Dで加速）
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: bt * b, duration: 0.05, volume: 0.12 });
+  for (let bt = 0; bt < 8; bt++) perc.push({ start: 8 * b + bt * b, duration: 0.05, volume: 0.14 });
+  for (let bt = 0; bt < 16; bt++) perc.push({ start: 16 * b + bt * h, duration: 0.04, volume: 0.16 });
+  for (let bt = 0; bt < 16; bt++) { perc.push({ start: 24 * b + bt * h, duration: 0.04, volume: 0.2 }); if (bt % 2 === 1) perc.push({ start: 24 * b + bt * h + h * 0.5, duration: 0.02, volume: 0.08 }); }
+  return { duration: 32 * b, notes, perc };
 }
 
 function makeBossFinalTrack(): TrackData {
