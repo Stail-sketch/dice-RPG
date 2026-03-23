@@ -5,6 +5,7 @@
 
 type BGMTrack = 'title' | 'town' | 'battle' | 'boss' | 'victory' | 'defeat' | 'event' | 'dungeon'
   | 'battle-frost' | 'battle-volt' | 'battle-venom' | 'battle-alloy' | 'battle-mirage' | 'battle-final'
+  | 'boss-blaze' | 'boss-frost' | 'boss-volt' | 'boss-venom' | 'boss-alloy' | 'boss-mirage' | 'boss-final'
   | 'capture' | 'capture-success' | 'capture-fail';
 
 interface Note {
@@ -635,6 +636,119 @@ function makeCaptureFailTrack(): TrackData {
   return { duration: 3 * b, notes };
 }
 
+// ============================================================
+// CHAPTER-SPECIFIC BOSS TRACKS
+// Each is a heavier, slower, more dramatic version of the chapter battle BGM
+// ============================================================
+
+function makeBossBlazeTrack(): TrackData {
+  // Ch1 boss - Heavy fire theme, 130 BPM Am, deeper than battle
+  const b = BPM_TO_BEAT(130);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [A4, 0, C5, E5, A4, 0, G4, A4, F4, 0, A4, C5, D5, 0, C5, A4, A4, 0, E5, D5, C5, 0, A4, G4, A4, 0, C5, A4, E4, 0, A4, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.45, type: 'sawtooth', volume: 0.16 }); }
+  const bass = [A3, A3, A3, A3, F3, F3, F3, F3, A3, A3, E3, E3, A3, A3, A3, A3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
+  notes.push({ freq: A3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.07, volume: 0.2 }); perc.push({ start: o + bt * b + b / 2, duration: 0.04, volume: 0.12 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossFrostTrack(): TrackData {
+  // Ch2 boss - Icy menace, 125 BPM Em
+  const b = BPM_TO_BEAT(125);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [E5, 0, G5, B4, E5, 0, D5, E5, B4, 0, E5, G5, A4, 0, G5, E5, E5, 0, B4, G5, E5, 0, D5, B4, E5, 0, G5, E5, B4, 0, E5, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.5, type: 'triangle', volume: 0.18 }); notes.push({ freq: melody[i] * 1.005, start: i * (b / 2), duration: b * 0.3, type: 'triangle', volume: 0.06 }); }
+  const bass = [E3, E3, B3, B3, A3, A3, E3, E3, E3, E3, G3, G3, A3, A3, B3, B3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.07 });
+  notes.push({ freq: E3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.06 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.06, volume: 0.16 }); perc.push({ start: o + bt * b + b / 2, duration: 0.03, volume: 0.09 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossVoltTrack(): TrackData {
+  // Ch3 boss - Electric fury, 150 BPM Bm
+  const b = BPM_TO_BEAT(150);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [B4, 0, D5, Fs4, B4, 0, B4, D5, Fs4, 0, B4, D5, E5, 0, D5, B4, Fs4, 0, D5, B4, Fs4, 0, B4, Fs4, D5, 0, B4, D5, Fs4, 0, B4, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.25, type: 'sawtooth', volume: 0.17 }); if (i % 4 === 0) notes.push({ freq: melody[i] * 2, start: i * (b / 2), duration: b * 0.1, type: 'square', volume: 0.06 }); }
+  const bass = [B3, B3, B3, B3, Gs3, Gs3, Gs3, Gs3, E3, E3, E3, E3, B3, B3, B3, B3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.08 });
+  notes.push({ freq: B3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.06 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: 0.04, volume: bt % 2 === 0 ? 0.18 : 0.1 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossVenomTrack(): TrackData {
+  // Ch4 boss - Toxic dread, 120 BPM Ebm chromatic
+  const b = BPM_TO_BEAT(120);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [Eb4, 0, E4, F4, Eb4, 0, D4, Eb4, F4, 0, Eb4, D4, C4, 0, D4, Eb4, Eb4, 0, F4, Eb4, D4, 0, Eb4, F4, Eb4, 0, D4, C4, D4, 0, Eb4, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.5, type: 'sawtooth', volume: 0.14 }); notes.push({ freq: melody[i] * 1.01, start: i * (b / 2) + 0.03, duration: b * 0.3, type: 'sawtooth', volume: 0.05 }); }
+  const bass = [Eb3, Eb3, Eb3, Eb3, D3, D3, D3, D3, C3, C3, C3, C3, Eb3, Eb3, D3, Eb3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.08 });
+  notes.push({ freq: Eb3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.07, volume: 0.16 }); perc.push({ start: o + bt * b + b * 0.75, duration: 0.04, volume: 0.08 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossAlloyTrack(): TrackData {
+  // Ch5 boss - Mechanical titan, 135 BPM Cm
+  const b = BPM_TO_BEAT(135);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [C5, C5, 0, G4, C5, C5, 0, Eb4, G4, G4, 0, C5, Eb4, 0, G4, C5, C5, C5, 0, Eb4, C5, C5, 0, G4, Eb4, Eb4, 0, G4, C5, 0, G4, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.3, type: 'square', volume: 0.15 }); }
+  const bass = [C3, C3, G3, C3, C3, C3, Eb3, C3, G3, G3, C3, G3, Eb3, Eb3, G3, C3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.5, type: 'square', volume: 0.09 });
+  notes.push({ freq: C3 / 2, start: 0, duration: 16 * b, type: 'sine', volume: 0.07 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: bt % 2 === 0 ? 0.06 : 0.03, volume: bt % 2 === 0 ? 0.2 : 0.12 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossMirageTrack(): TrackData {
+  // Ch6 boss - Ethereal nightmare, 115 BPM F#m
+  const b = BPM_TO_BEAT(115);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  const melody = [Fs4, 0, A4, Fs4, 0, E4, Fs4, 0, A4, 0, B4, A4, Fs4, 0, E4, 0, Fs4, 0, A4, B4, 0, Fs4, A4, 0, B4, 0, A4, Fs4, E4, 0, Fs4, 0];
+  for (let i = 0; i < melody.length; i++) { if (melody[i] === 0) continue; notes.push({ freq: melody[i], start: i * (b / 2), duration: b * 0.6, type: 'triangle', volume: 0.16 }); notes.push({ freq: melody[i], start: i * (b / 2) + b * 0.3, duration: b * 0.4, type: 'triangle', volume: 0.06 }); }
+  const bass = [Fs3, Fs3, Fs3, Fs3, D3, D3, D3, D3, A3, A3, A3, A3, Fs3, Fs3, E3, Fs3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.6, type: 'square', volume: 0.06 });
+  notes.push({ freq: Fs3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.06 });
+  notes.push({ freq: D3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.06 });
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 4; bt++) { perc.push({ start: o + bt * b, duration: 0.05, volume: 0.14 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
+function makeBossFinalTrack(): TrackData {
+  // Ch7 final boss - Ultimate showdown, 140 BPM Dm, most epic
+  const b = BPM_TO_BEAT(140);
+  const notes: Note[] = [];
+  const perc: PercNote[] = [];
+  // Dual melody lines interleaved
+  const mel1 = [D5, 0, F5, A4, D5, 0, C5, Bb4, A4, 0, D5, F5, G5, 0, F5, D5, D5, 0, A4, D5, F5, 0, G5, F5, D5, 0, C5, D5, A4, 0, D5, 0];
+  const mel2 = [A4, 0, D4, F4, A4, 0, G4, F4, D4, 0, A4, D5, Bb4, 0, A4, F4, A4, 0, F4, A4, D5, 0, Bb4, A4, F4, 0, G4, A4, D4, 0, F4, 0];
+  for (let i = 0; i < mel1.length; i++) {
+    if (mel1[i] !== 0) notes.push({ freq: mel1[i], start: i * (b / 2), duration: b * 0.4, type: 'sawtooth', volume: 0.16 });
+    if (mel2[i] !== 0) notes.push({ freq: mel2[i], start: i * (b / 2), duration: b * 0.35, type: 'square', volume: 0.08 });
+  }
+  const bass = [D3, D3, D3, D3, Bb3, Bb3, A3, A3, D3, D3, G3, G3, A3, A3, D3, D3];
+  for (let i = 0; i < bass.length; i++) notes.push({ freq: bass[i], start: i * b, duration: b * 0.7, type: 'square', volume: 0.09 });
+  // Dual drone for maximum weight
+  notes.push({ freq: D3 / 2, start: 0, duration: 8 * b, type: 'sine', volume: 0.07 });
+  notes.push({ freq: A3 / 2, start: 8 * b, duration: 8 * b, type: 'sine', volume: 0.07 });
+  notes.push({ freq: D3 / 4, start: 0, duration: 16 * b, type: 'sine', volume: 0.04 });
+  // Intense percussion - every 8th note
+  for (let bar = 0; bar < 4; bar++) { const o = bar * 4 * b; for (let bt = 0; bt < 8; bt++) { perc.push({ start: o + bt * (b / 2), duration: bt % 2 === 0 ? 0.07 : 0.04, volume: bt % 2 === 0 ? 0.22 : 0.13 }); } }
+  return { duration: 16 * b, notes, perc };
+}
+
 const TRACKS: Record<BGMTrack, () => TrackData> = {
   title: makeTitleTrack,
   town: makeTownTrack,
@@ -650,6 +764,13 @@ const TRACKS: Record<BGMTrack, () => TrackData> = {
   'battle-alloy': makeBattleAlloyTrack,
   'battle-mirage': makeBattleMirageTrack,
   'battle-final': makeBattleFinalTrack,
+  'boss-blaze': makeBossBlazeTrack,
+  'boss-frost': makeBossFrostTrack,
+  'boss-volt': makeBossVoltTrack,
+  'boss-venom': makeBossVenomTrack,
+  'boss-alloy': makeBossAlloyTrack,
+  'boss-mirage': makeBossMirageTrack,
+  'boss-final': makeBossFinalTrack,
   capture: makeCaptureTrack,
   'capture-success': makeCaptureSuccessTrack,
   'capture-fail': makeCaptureFailTrack,

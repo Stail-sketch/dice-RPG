@@ -69,10 +69,12 @@ const BOSS_DIALOGUE: Record<number, string[]> = {
 function BossDialogue({ monster, lines, onComplete }: { monster: MonsterDice; lines: string[]; onComplete: () => void }) {
   const [lineIndex, setLineIndex] = useState(0);
 
-  // ダイアログ表示と同時にボスBGM開始
+  // ダイアログ表示と同時に章別ボスBGM開始
+  const chapter = useGameStore((s) => s.currentChapter);
   useEffect(() => {
-    bgm.play('boss');
-  }, []);
+    const bossMap: Record<number, string> = { 1: 'boss-blaze', 2: 'boss-frost', 3: 'boss-volt', 4: 'boss-venom', 5: 'boss-alloy', 6: 'boss-mirage', 7: 'boss-final' };
+    bgm.play((bossMap[chapter] ?? 'boss') as any);
+  }, [chapter]);
 
   const handleAdvance = () => {
     if (lineIndex < lines.length - 1) {
