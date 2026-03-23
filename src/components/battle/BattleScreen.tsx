@@ -87,29 +87,26 @@ export function BattleScreen() {
     const who = isPlayerAttacking ? '' : '[敵]';
     for (const a of actions) {
       const elName = ELEMENT_NAMES[a.element];
-      if (a.effectType === 'damage' && a.finalDamage > 0) {
-        // 倍率情報を追加
+      if (a.effectType === 'damage') {
         const mults: string[] = [];
-        if (a.elementMultiplier !== 1.0) mults.push(`属性x${a.elementMultiplier}`);
-        if (a.synergyMultiplier !== 1.0) mults.push(`シナジーx${a.synergyMultiplier}`);
+        if (a.tierMultiplier !== 1.0) mults.push(`Tier${a.tierMultiplier}`);
+        if (a.decayMultiplier !== 1.0) mults.push(`減衰${a.decayMultiplier.toFixed(1)}`);
+        if (a.elementMultiplier !== 1.0) mults.push(`属性${a.elementMultiplier}`);
+        if (a.synergyMultiplier !== 1.0) mults.push(`同面${a.synergyMultiplier}`);
+        if (a.crossDiceMultiplier !== 1.0) mults.push(`共鳴${a.crossDiceMultiplier}`);
+        if (a.buffMultiplier !== 1.0) mults.push(`増減${a.buffMultiplier.toFixed(1)}`);
         const multStr = mults.length > 0 ? ` [${mults.join(' ')}]` : '';
-        if (a.rawDamage !== a.finalDamage) {
-          addLog(`  ${who}${a.skillName}(${elName}) ${a.rawDamage}→${a.finalDamage}dmg${multStr}`);
-        } else {
-          addLog(`  ${who}${a.skillName}(${elName}) → ${a.finalDamage}dmg`);
-        }
+        addLog(`  ${who}${a.skillName}(${elName}) ${a.rawDamage}→${a.actualDamage}dmg${multStr}`);
       } else if (a.effectType === 'heal') {
-        addLog(`  ${who}${a.skillName}(${elName}) → +${a.rawDamage}HP`);
+        addLog(`  ${who}${a.skillName}(${elName}) → +${a.actualDamage}HP`);
       } else if (a.effectType === 'dot') {
         addLog(`  ${who}${a.skillName}(${elName}) → 継続${a.rawDamage}dmg/T (3T)`);
       } else if (a.effectType === 'buff') {
-        const val = a.rawDamage > 1 ? a.rawDamage : 1.3;
-        addLog(`  ${who}${a.skillName}(${elName}) → 攻撃x${val}`);
+        addLog(`  ${who}${a.skillName}(${elName}) → 攻撃x${a.actualDamage}`);
       } else if (a.effectType === 'debuff') {
-        const val = a.rawDamage < 1 ? a.rawDamage : 0.7;
-        addLog(`  ${who}${a.skillName}(${elName}) → 敵攻撃x${val}`);
+        addLog(`  ${who}${a.skillName}(${elName}) → 敵攻撃x${a.actualDamage}`);
       } else if (a.effectType === 'shield') {
-        addLog(`  ${who}${a.skillName}(${elName}) → シールド${a.rawDamage} (2T)`);
+        addLog(`  ${who}${a.skillName}(${elName}) → シールド${a.actualDamage} (2T)`);
       }
     }
   }, [addLog]);
@@ -712,8 +709,8 @@ export function BattleScreen() {
             setCurrentActions([]); setAttackLabel('');
             // 合計ダメージ
             const allActions = [...result.firstActions, ...result.secondActions];
-            const playerTotalDmg = allActions.filter(a => !a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
-            const enemyTotalDmg = allActions.filter(a => a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+            const playerTotalDmg = allActions.filter(a => !a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.actualDamage, 0);
+            const enemyTotalDmg = allActions.filter(a => a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.actualDamage, 0);
             addLog(`  合計 → 自分${playerTotalDmg}dmg / 敵${enemyTotalDmg}dmg`);
             // HP変動詳細
             const pDelta = result.playerHp - result.prePlayerHp;

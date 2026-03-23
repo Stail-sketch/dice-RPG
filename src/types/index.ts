@@ -213,10 +213,15 @@ export interface SkillAction {
   skillName: string;
   element: Element;
   effectType: SkillEffectType;
-  rawDamage: number;
-  elementMultiplier: number;
-  synergyMultiplier: number;
-  finalDamage: number;
+  rawDamage: number;         // スキル素の威力
+  tierMultiplier: number;    // ソケットTier倍率
+  decayMultiplier: number;   // 同面減衰倍率
+  elementMultiplier: number; // 属性相性倍率
+  synergyMultiplier: number; // 同面シナジー倍率
+  finalDamage: number;       // raw × tier × decay × element × synergy
+  crossDiceMultiplier: number; // クロスダイス倍率（applyActions後に設定）
+  buffMultiplier: number;    // バフ/デバフ倍率（applyActions後に設定）
+  actualDamage: number;      // 最終的に与えた/受けたダメージ（applyActions後に設定）
   targetIsPlayer: boolean;
 }
 

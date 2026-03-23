@@ -70,8 +70,11 @@ function getSkillsFromFace(
       actions.push({
         skillId: socket.skillId, skillName: skill.name, element: socket.element,
         effectType: skill.effect.type, rawDamage: rawDmg,
+        tierMultiplier: tierMult, decayMultiplier: decayMult,
         elementMultiplier: elementMult, synergyMultiplier: synergyMult,
-        finalDamage: finalDmg, targetIsPlayer,
+        finalDamage: finalDmg,
+        crossDiceMultiplier: 1.0, buffMultiplier: 1.0, actualDamage: finalDmg,
+        targetIsPlayer,
       });
     }
   } else {
@@ -94,8 +97,11 @@ function getSkillsFromFace(
       actions.push({
         skillId: rune.id, skillName: rune.name, element: rune.element,
         effectType: rune.effect.type, rawDamage: rawDmg,
+        tierMultiplier: tierMult, decayMultiplier: decayMult,
         elementMultiplier: elementMult, synergyMultiplier: synergyMult,
-        finalDamage: finalDmg, targetIsPlayer,
+        finalDamage: finalDmg,
+        crossDiceMultiplier: 1.0, buffMultiplier: 1.0, actualDamage: finalDmg,
+        targetIsPlayer,
       });
     }
 
@@ -104,8 +110,11 @@ function getSkillsFromFace(
       actions.push({
         skillId: 'basic-hit', skillName: '素振り', element: 'alloy' as Element,
         effectType: 'damage', rawDamage: 2,
+        tierMultiplier: 1.0, decayMultiplier: 1.0,
         elementMultiplier: 1.0, synergyMultiplier: 1.0,
-        finalDamage: 2, targetIsPlayer,
+        finalDamage: 2,
+        crossDiceMultiplier: 1.0, buffMultiplier: 1.0, actualDamage: 2,
+        targetIsPlayer,
       });
     }
   }
@@ -119,16 +128,33 @@ function applyActions(
   actions: SkillAction[], attacker: Combatant, defender: Combatant, crossDiceMult: number,
 ): void {
   for (const action of actions) {
-    const damage = Math.round(action.finalDamage * attacker.damageMultiplier * crossDiceMult / defender.defenseMultiplier);
+    const buffMult = attacker.damageMultiplier * crossDiceMult / defender.defenseMultiplier;
+    const damage = Math.round(action.finalDamage * buffMult);
+    action.crossDiceMultiplier = crossDiceMult;
+    action.buffMultiplier = attacker.damageMultiplier / defender.defenseMultiplier;
     switch (action.effectType) {
-      case 'damage': defender.hp = Math.max(0, defender.hp - damage); break;
-      case 'heal': attacker.hp = Math.min(attacker.maxHp, attacker.hp + action.rawDamage); break;
+      case 'damage':
+        action.actualDamage = damage;
+        defender.hp = Math.max(0, defender.hp - damage);
+        break;
+      case 'heal':
+        action.actualDamage = Math.min(action.rawDamage, attacker.maxHp - attacker.hp);
+        attacker.hp = Math.min(attacker.maxHp, attacker.hp + action.rawDamage);
+        break;
       case 'dot':
+        action.actualDamage = action.rawDamage;
         defender.statusEffects.push({ type: 'poison', power: action.rawDamage, remainingTurns: 3, element: action.element });
         break;
-      case 'buff': attacker.damageMultiplier *= action.rawDamage > 1 ? action.rawDamage : 1.3; break;
-      case 'debuff': defender.damageMultiplier *= action.rawDamage < 1 ? action.rawDamage : 0.7; break;
+      case 'buff':
+        action.actualDamage = action.rawDamage > 1 ? action.rawDamage : 1.3;
+        attacker.damageMultiplier *= action.actualDamage;
+        break;
+      case 'debuff':
+        action.actualDamage = action.rawDamage < 1 ? action.rawDamage : 0.7;
+        defender.damageMultiplier *= action.actualDamage;
+        break;
       case 'shield':
+        action.actualDamage = action.rawDamage;
         attacker.statusEffects.push({ type: 'shield', power: action.rawDamage, remainingTurns: 2, element: action.element });
         break;
     }
