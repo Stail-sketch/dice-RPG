@@ -1,5 +1,5 @@
 import { useGameStore } from '../../stores/gameStore';
-import { CHAPTER1_MONSTERS, CHAPTER2_MONSTERS, CHAPTER3_MONSTERS } from '../../data/monsters';
+import { CHAPTER1_MONSTERS, CHAPTER2_MONSTERS, CHAPTER3_MONSTERS, CHAPTER4_MONSTERS, CHAPTER5_MONSTERS, CHAPTER6_MONSTERS, CHAPTER7_MONSTERS } from '../../data/monsters';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
 import { MonsterSprite } from '../common/MonsterSprite';
 import type { MonsterDice } from '../../types';
@@ -8,12 +8,20 @@ const CHAPTER_MONSTERS: Record<number, MonsterDice[]> = {
   1: CHAPTER1_MONSTERS,
   2: CHAPTER2_MONSTERS,
   3: CHAPTER3_MONSTERS,
+  4: CHAPTER4_MONSTERS,
+  5: CHAPTER5_MONSTERS,
+  6: CHAPTER6_MONSTERS,
+  7: CHAPTER7_MONSTERS,
 };
 
 const CHAPTER_NAMES: Record<number, string> = {
   1: '第1章: 炎の洞窟',
   2: '第2章: 氷結の峡谷',
   3: '第3章: 雷鳴の塔',
+  4: '第4章: 毒沼の森',
+  5: '第5章: 鋼鉄の遺跡',
+  6: '第6章: 幻影の神殿',
+  7: '最終章: 運命の回廊',
 };
 
 // 敵パーティ生成: メインモンスター + ランダムな取り巻き
@@ -34,7 +42,7 @@ export function DungeonScreen() {
   const chapterMonsters = CHAPTER_MONSTERS[currentChapter] || CHAPTER1_MONSTERS;
   const normalMonsters = chapterMonsters.filter(m => m.rarity <= 2);
   const rareMonsters = chapterMonsters.filter(m => m.rarity === 3);
-  const bossMonster = chapterMonsters.find(m => m.rarity === 4);
+  const bossMonster = chapterMonsters.find(m => m.rarity >= 4);
 
   // ボス捕獲済みかチェック（章進行条件）
   const bossCaptured = bossMonster ? capturedMonsters.includes(bossMonster.id) : false;
@@ -118,7 +126,7 @@ export function DungeonScreen() {
               前の章へ
             </button>
           )}
-          {bossCaptured && currentChapter < 3 && (
+          {bossCaptured && currentChapter < 7 && (
             <button
               className="rpg-btn"
               style={{ flex: 1 }}

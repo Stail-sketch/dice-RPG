@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter } = useGameStore();
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
@@ -115,7 +115,8 @@ export function BattleScreen() {
   const startBattle = useCallback(() => {
     if (playerDice.length < 3 || enemyDiceList.length < 3) return;
     sfx.click();
-    const enemyMaxHp = 40 + Math.max(...enemyDiceList.map(d => d.rarity)) * 10;
+    const chapterBonus = (currentChapter - 1) * 15;
+    const enemyMaxHp = 40 + Math.max(...enemyDiceList.map(d => d.rarity)) * 10 + chapterBonus;
     const state = createBattleState(playerDice, enemyDiceList, 60, enemyMaxHp);
     setBattle(state);
     setPhase('rolling');

@@ -405,11 +405,583 @@ export const CHAPTER3_MONSTERS: MonsterDice[] = [
   },
 ];
 
+// ==============================
+// 第4章: 毒沼の森 (venom focus)
+// ==============================
+export const CHAPTER4_MONSTERS: MonsterDice[] = [
+  // ★1 マッシュスポア (毒)
+  {
+    id: 'mush-spore', name: 'マッシュスポア', element: 'venom', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'spore-shot', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '毒沼に生える巨大キノコ。胞子で攻撃する。',
+  },
+  // ★1 ポイズントード (毒)
+  {
+    id: 'poison-toad', name: 'ポイズントード', element: 'venom', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'venom-tongue', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '毒沼に棲む巨大ガエル。長い毒舌が武器。',
+  },
+  // ★1 スワンプリーチ (毒)
+  {
+    id: 'swamp-leech', name: 'スワンプリーチ', element: 'venom', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'leech-bite', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '沼地に潜む巨大ヒル。吸着して体力を奪う。',
+  },
+  // ★1 プラントワーム (毒)
+  {
+    id: 'plant-worm', name: 'プラントワーム', element: 'venom', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'acid-spit', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '植物に寄生する芋虫。強酸を吐く。',
+  },
+  // ★2 マンティコア (毒)
+  {
+    id: 'manticore', name: 'マンティコア', element: 'venom', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'scorpion-sting', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'venom-spray', element: 'venom' }, { skillId: 'weaken', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '蠍の尾を持つ獅子。毒針と毒噴射で敵を弱らせる。',
+  },
+  // ★2 バジリスク (毒)
+  {
+    id: 'basilisk', name: 'バジリスク', element: 'venom', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'petrify-gaze', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'fang-strike', element: 'venom' }, { skillId: 'toxic-scale', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '石化の瞳を持つ大蛇。見つめられると動けなくなる。',
+  },
+  // ★2 ヴェノムキメラ (毒)
+  {
+    id: 'venom-chimera', name: 'ヴェノムキメラ', element: 'venom', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'chimera-bite', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'poison-breath', element: 'venom' }, { skillId: 'acid-armor', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '3つの頭を持つ合成獣。毒息と酸の外殻で攻防一体。',
+  },
+  // ★3 デスブルーム (毒)
+  {
+    id: 'death-bloom', name: 'デスブルーム', element: 'venom', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'bloom-burst', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'pollen-cloud', element: 'venom' }, { skillId: 'root-bind', element: 'venom' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'nectar-heal', element: 'venom' }, { skillId: 'thorn-whip', element: 'venom' }, { skillId: 'decay-aura', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: '死を撒く巨大な毒花。美しくも恐ろしい。',
+  },
+  // ★3 ヒドラ (毒)
+  {
+    id: 'hydra', name: 'ヒドラ', element: 'venom', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'hydra-bite', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'regen-head', element: 'venom' }, { skillId: 'multi-poison', element: 'venom' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'acid-blood', element: 'venom' }, { skillId: 'hydra-roar', element: 'venom' }, { skillId: 'serpent-coil', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: '首を切っても再生する多頭蛇。毒と回復を兼ね備える。',
+  },
+  // ★5 毒龍ニーズヘッグ (毒) - 第4章ボス
+  {
+    id: 'nidhogg', name: '毒龍ニーズヘッグ', element: 'venom', rarity: 5,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'venom-breath', element: 'venom' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'nidhogg-fang', element: 'venom' }, { skillId: 'world-poison', element: 'venom' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'venom-domain', element: 'venom' }, { skillId: 'nidhogg-roar', element: 'venom' }, { skillId: 'decay-breath', element: 'venom' }] },
+      { faceNumber: 4, sockets: [{ skillId: 'yggdrasil-rot', element: 'venom' }, { skillId: 'corpse-devour', element: 'venom' }, { skillId: 'world-poison', element: 'venom' }, { skillId: 'venom-breath', element: 'venom' }] },
+      { faceNumber: 5, sockets: [{ skillId: 'nidhogg-fang', element: 'venom' }, { skillId: 'decay-breath', element: 'venom' }, { skillId: 'yggdrasil-rot', element: 'venom' }, { skillId: 'corpse-devour', element: 'venom' }, { skillId: 'nidhogg-roar', element: 'venom' }] },
+    ],
+    customFaces: [
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
+    ],
+    baseStats: { captureRate: 5 },
+    description: '世界樹を蝕む毒の古龍。その毒は大地すら腐らせる。第4章ボス。',
+  },
+];
+
+// ==============================
+// 第5章: 鋼鉄の遺跡 (alloy focus)
+// ==============================
+export const CHAPTER5_MONSTERS: MonsterDice[] = [
+  // ★1 メタルスライム (鋼)
+  {
+    id: 'metal-slime', name: 'メタルスライム', element: 'alloy', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'metal-tackle', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '金属質のスライム。硬い体でぶつかってくる。',
+  },
+  // ★1 ギアパペット (鋼)
+  {
+    id: 'gear-puppet', name: 'ギアパペット', element: 'alloy', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'gear-strike', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '歯車で動く人形。単純だが力強い。',
+  },
+  // ★1 ルストバグ (鋼)
+  {
+    id: 'rust-bug', name: 'ルストバグ', element: 'alloy', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'rust-bite', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '鉄を喰らう甲虫。錆びた顎は意外と強力。',
+  },
+  // ★1 アイアンバット (鋼)
+  {
+    id: 'iron-bat', name: 'アイアンバット', element: 'alloy', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'steel-wing', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '鋼鉄の翼を持つ蝙蝠。遺跡の番人。',
+  },
+  // ★2 シールドナイト (鋼)
+  {
+    id: 'shield-knight', name: 'シールドナイト', element: 'alloy', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'heavy-slash', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'tower-shield', element: 'alloy' }, { skillId: 'armor-up', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '重装の騎士。大盾で味方を守りつつ重い一撃を放つ。',
+  },
+  // ★2 スチームゴーレム (鋼)
+  {
+    id: 'steam-golem', name: 'スチームゴーレム', element: 'alloy', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'steam-punch', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'boiler-guard', element: 'alloy' }, { skillId: 'overheat', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '蒸気で動くゴーレム。オーバーヒートで瞬間火力を出す。',
+  },
+  // ★2 ミスリルセンチネル (鋼)
+  {
+    id: 'mithril-sentinel', name: 'ミスリルセンチネル', element: 'alloy', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'mithril-slash', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'mithril-guard', element: 'alloy' }, { skillId: 'sentinel-stance', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: 'ミスリル製の衛兵。攻守のバランスに優れる。',
+  },
+  // ★3 アダマンタイタン (鋼)
+  {
+    id: 'adamant-titan', name: 'アダマンタイタン', element: 'alloy', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'titan-crush', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'adamant-wall', element: 'alloy' }, { skillId: 'quake-stomp', element: 'alloy' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'titan-roar', element: 'alloy' }, { skillId: 'fortress', element: 'alloy' }, { skillId: 'iron-maiden', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: 'アダマンタイト製の巨人。圧倒的な防御力を誇る。',
+  },
+  // ★3 オリハルコンドラゴン (鋼)
+  {
+    id: 'orichalcum-dragon', name: 'オリハルコンドラゴン', element: 'alloy', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'orichalcum-fang', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'metal-breath', element: 'alloy' }, { skillId: 'chrome-shield', element: 'alloy' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'alloy-roar', element: 'alloy' }, { skillId: 'magnetize', element: 'alloy' }, { skillId: 'heavy-tail', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: 'オリハルコンの鱗を持つ龍。金属のブレスが強力。',
+  },
+  // ★5 鋼龍ファフニール (鋼) - 第5章ボス
+  {
+    id: 'fafnir', name: '鋼龍ファフニール', element: 'alloy', rarity: 5,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'fafnir-breath', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'fafnir-claw', element: 'alloy' }, { skillId: 'absolute-defense', element: 'alloy' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'fafnir-roar', element: 'alloy' }, { skillId: 'meteor-strike', element: 'alloy' }, { skillId: 'alloy-domain', element: 'alloy' }] },
+      { faceNumber: 4, sockets: [{ skillId: 'rust-curse', element: 'alloy' }, { skillId: 'juggernaut', element: 'alloy' }, { skillId: 'fafnir-breath', element: 'alloy' }, { skillId: 'absolute-defense', element: 'alloy' }] },
+      { faceNumber: 5, sockets: [{ skillId: 'meteor-strike', element: 'alloy' }, { skillId: 'fafnir-claw', element: 'alloy' }, { skillId: 'juggernaut', element: 'alloy' }, { skillId: 'fafnir-roar', element: 'alloy' }, { skillId: 'alloy-domain', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
+    ],
+    baseStats: { captureRate: 5 },
+    description: '伝説の鋼龍。絶対防御と隕鉄の一撃で全てを砕く。第5章ボス。',
+  },
+];
+
+// ==============================
+// 第6章: 幻影の神殿 (mirage focus)
+// ==============================
+export const CHAPTER6_MONSTERS: MonsterDice[] = [
+  // ★1 シェイドウィスプ (幻)
+  {
+    id: 'shade-wisp', name: 'シェイドウィスプ', element: 'mirage', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'shadow-touch', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '影から生まれた小さな精霊。触れると冷たい。',
+  },
+  // ★1 ミラーフォックス (幻)
+  {
+    id: 'mirror-fox', name: 'ミラーフォックス', element: 'mirage', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'mirror-claw', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '鏡のような毛皮を持つ狐。幻術で敵を惑わす。',
+  },
+  // ★1 ファントムマウス (幻)
+  {
+    id: 'phantom-mouse', name: 'ファントムマウス', element: 'mirage', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'phantom-bite', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '実体を持たないネズミ。壁をすり抜ける。',
+  },
+  // ★1 ドッペルゲンガー (幻)
+  {
+    id: 'doppelganger', name: 'ドッペルゲンガー', element: 'mirage', rarity: 1,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'doppel-strike', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 2, sockets: Array.from({length: 2}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 80 },
+    description: '自分の分身を生み出す謎の存在。',
+  },
+  // ★2 イリュージョニスト (幻)
+  {
+    id: 'illusionist', name: 'イリュージョニスト', element: 'mirage', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'mind-blast', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'confusion', element: 'mirage' }, { skillId: 'mirror-image', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '幻術を操る魔術師。混乱と回避を駆使する。',
+  },
+  // ★2 ナイトメア (幻)
+  {
+    id: 'nightmare', name: 'ナイトメア', element: 'mirage', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'nightmare-scream', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'sleep-curse', element: 'mirage' }, { skillId: 'dream-drain', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '悪夢を具現化した存在。眠りの呪いが恐ろしい。',
+  },
+  // ★2 ファントムナイト (幻)
+  {
+    id: 'phantom-knight', name: 'ファントムナイト', element: 'mirage', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'ghost-blade', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'phase-guard', element: 'mirage' }, { skillId: 'specter-strike', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '幽霊の騎士。位相をずらして攻撃を避ける。',
+  },
+  // ★3 バンシー (幻)
+  {
+    id: 'banshee', name: 'バンシー', element: 'mirage', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'wail', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'soul-rend', element: 'mirage' }, { skillId: 'death-wail', element: 'mirage' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'spirit-shield', element: 'mirage' }, { skillId: 'banshee-cry', element: 'mirage' }, { skillId: 'life-drain', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: '嘆きの亡霊。慟哭は生者の魂を震わせる。',
+  },
+  // ★3 ヴォイドスフィンクス (幻)
+  {
+    id: 'void-sphinx', name: 'ヴォイドスフィンクス', element: 'mirage', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'void-claw', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'riddle-curse', element: 'mirage' }, { skillId: 'sphinx-wisdom', element: 'mirage' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'void-shield', element: 'mirage' }, { skillId: 'dimension-rift', element: 'mirage' }, { skillId: 'enigma-heal', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: '虚空に座すスフィンクス。謎かけに答えられぬ者は滅ぶ。',
+  },
+  // ★5 幻龍ティアマト (幻) - 第6章ボス
+  {
+    id: 'tiamat', name: '幻龍ティアマト', element: 'mirage', rarity: 5,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'tiamat-breath', element: 'mirage' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'tiamat-claw', element: 'mirage' }, { skillId: 'reality-warp', element: 'mirage' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'mirage-domain', element: 'mirage' }, { skillId: 'tiamat-roar', element: 'mirage' }, { skillId: 'chaos-breath', element: 'mirage' }] },
+      { faceNumber: 4, sockets: [{ skillId: 'soul-devour', element: 'mirage' }, { skillId: 'oblivion', element: 'mirage' }, { skillId: 'tiamat-breath', element: 'mirage' }, { skillId: 'reality-warp', element: 'mirage' }] },
+      { faceNumber: 5, sockets: [{ skillId: 'chaos-breath', element: 'mirage' }, { skillId: 'tiamat-claw', element: 'mirage' }, { skillId: 'oblivion', element: 'mirage' }, { skillId: 'tiamat-roar', element: 'mirage' }, { skillId: 'soul-devour', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
+    ],
+    baseStats: { captureRate: 5 },
+    description: '幻影の神殿に眠る原初の龍。現実そのものを歪める。第6章ボス。',
+  },
+];
+
+// ==============================
+// 第7章: 運命の回廊 (mixed elements - final chapter)
+// ==============================
+export const CHAPTER7_MONSTERS: MonsterDice[] = [
+  // ★2 エレメンタルキメラ (炎/氷/雷 mixed)
+  {
+    id: 'elemental-chimera', name: 'エレメンタルキメラ', element: 'blaze', rarity: 2,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'chaos-fang', element: 'blaze' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'chaos-ice', element: 'frost' }, { skillId: 'chaos-bolt', element: 'volt' }] },
+    ],
+    customFaces: [
+      { faceNumber: 3, sockets: Array.from({length: 3}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 50 },
+    description: '3属性の力を持つ合成獣。炎・氷・雷を自在に操る。',
+  },
+  // ★3 エンシェントガーディアン (鋼/幻 mixed)
+  {
+    id: 'ancient-guardian', name: 'エンシェントガーディアン', element: 'alloy', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'ancient-slash', element: 'alloy' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'ancient-shield', element: 'alloy' }, { skillId: 'ancient-roar', element: 'alloy' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'time-slash', element: 'mirage' }, { skillId: 'fate-guard', element: 'mirage' }, { skillId: 'epoch-strike', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'bronze' as const })) },
+    ],
+    baseStats: { captureRate: 25 },
+    description: '太古の守護者。時を超えて回廊を守り続ける。',
+  },
+  // ★3 カオスドラゴン (全属性 mixed)
+  {
+    id: 'chaos-dragon', name: 'カオスドラゴン', element: 'blaze', rarity: 3,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'primal-fire', element: 'blaze' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'primal-ice', element: 'frost' }, { skillId: 'primal-thunder', element: 'volt' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'primal-venom', element: 'venom' }, { skillId: 'primal-shield', element: 'alloy' }, { skillId: 'primal-illusion', element: 'mirage' }] },
+    ],
+    customFaces: [
+      { faceNumber: 4, sockets: Array.from({length: 4}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
+      { faceNumber: 5, sockets: Array.from({length: 5}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+      { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'silver' as const })) },
+    ],
+    baseStats: { captureRate: 15 },
+    description: '6属性全ての力を持つ原初の龍。カオスの具現。',
+  },
+  // ★5 運命龍ウロボロス (全属性) - 最終ボス
+  {
+    id: 'ouroboros', name: '運命龍ウロボロス', element: 'mirage', rarity: 5,
+    fixedFaces: [
+      { faceNumber: 1, sockets: [{ skillId: 'ouroboros-breath', element: 'blaze' }] },
+      { faceNumber: 2, sockets: [{ skillId: 'infinity-claw', element: 'alloy' }, { skillId: 'fate-warp', element: 'mirage' }] },
+      { faceNumber: 3, sockets: [{ skillId: 'genesis-shield', element: 'alloy' }, { skillId: 'ouroboros-roar', element: 'mirage' }, { skillId: 'apocalypse', element: 'blaze' }] },
+      { faceNumber: 4, sockets: [{ skillId: 'eternal-heal', element: 'mirage' }, { skillId: 'omega-bolt', element: 'volt' }, { skillId: 'entropy', element: 'venom' }, { skillId: 'absolute-zero-final', element: 'frost' }] },
+      { faceNumber: 5, sockets: [{ skillId: 'apocalypse', element: 'blaze' }, { skillId: 'omega-bolt', element: 'volt' }, { skillId: 'absolute-zero-final', element: 'frost' }, { skillId: 'ouroboros-roar', element: 'mirage' }, { skillId: 'infinity-claw', element: 'alloy' }] },
+    ],
+    customFaces: [
+      { faceNumber: 6, sockets: [{ skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'gold' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }, { skillRuneId: null, socketTier: 'silver' }] },
+    ],
+    baseStats: { captureRate: 3 },
+    description: '始まりと終わりを司る究極の龍。全属性を操り世界を巡る。最終ボス。',
+  },
+];
+
 // 全モンスター統合
 export const ALL_MONSTERS: MonsterDice[] = [
   ...CHAPTER1_MONSTERS,
   ...CHAPTER2_MONSTERS,
   ...CHAPTER3_MONSTERS,
+  ...CHAPTER4_MONSTERS,
+  ...CHAPTER5_MONSTERS,
+  ...CHAPTER6_MONSTERS,
+  ...CHAPTER7_MONSTERS,
 ];
 
 export function getMonster(id: string): MonsterDice | undefined {

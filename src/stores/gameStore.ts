@@ -373,7 +373,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // 章進行
   advanceChapter: () => set((s) => ({
-    currentChapter: Math.min(3, s.currentChapter + 1),
+    currentChapter: Math.min(7, s.currentChapter + 1),
   })),
 
   // セーブ

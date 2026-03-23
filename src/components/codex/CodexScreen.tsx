@@ -15,14 +15,26 @@ const CHAPTER_LABELS: Record<number, string> = {
   1: '第1章: 始まりの洞窟',
   2: '第2章: 氷結の峡谷',
   3: '第3章: 雷鳴の塔',
+  4: '第4章: 毒沼の森',
+  5: '第5章: 鋼鉄の遺跡',
+  6: '第6章: 幻影の神殿',
+  7: '最終章: 運命の回廊',
 };
 
 function getMonsterChapter(id: string): number {
-  const ch1Ids = ['slime', 'bat', 'goblin', 'salamander', 'skeleton', 'harpy', 'mimic-monster', 'cave-dragon'];
+  const ch1Ids = ['pyrachnid', 'frost-jelly', 'volt-wisp', 'rot-beetle', 'hollow', 'goblin-knight', 'salamander-v2', 'iron-golem', 'shadow-serpent', 'inferno-drake'];
   const ch2Ids = ['frost-wolf', 'penguin', 'ice-golem', 'yuki-onna', 'blizzard-drake', 'ice-dragon'];
+  const ch3Ids = ['spark-elemental', 'electric-mouse', 'thunderbird', 'lightning-elemental', 'storm-wizard', 'thunder-dragon'];
+  const ch4Ids = ['mush-spore', 'poison-toad', 'swamp-leech', 'plant-worm', 'manticore', 'basilisk', 'venom-chimera', 'death-bloom', 'hydra', 'nidhogg'];
+  const ch5Ids = ['metal-slime', 'gear-puppet', 'rust-bug', 'iron-bat', 'shield-knight', 'steam-golem', 'mithril-sentinel', 'adamant-titan', 'orichalcum-dragon', 'fafnir'];
+  const ch6Ids = ['shade-wisp', 'mirror-fox', 'phantom-mouse', 'doppelganger', 'illusionist', 'nightmare', 'phantom-knight', 'banshee', 'void-sphinx', 'tiamat'];
   if (ch1Ids.includes(id)) return 1;
   if (ch2Ids.includes(id)) return 2;
-  return 3;
+  if (ch3Ids.includes(id)) return 3;
+  if (ch4Ids.includes(id)) return 4;
+  if (ch5Ids.includes(id)) return 5;
+  if (ch6Ids.includes(id)) return 6;
+  return 7;
 }
 
 const EFFECT_TYPE_NAMES: Record<string, string> = {
@@ -129,7 +141,7 @@ function MonsterCodex({
   const isCaptured = (id: string) => capturedMonsters.includes(id);
 
   // Group by chapter
-  const chapters = [1, 2, 3];
+  const chapters = [1, 2, 3, 4, 5, 6, 7];
 
   if (selectedMonster && isCaptured(selectedMonster.id)) {
     return (
