@@ -158,6 +158,75 @@ class SFXEngine {
     this.osc('triangle', 600, 900, 0.06, 0.08);
   }
 
+  /** Gacha: 召喚開始の荘厳なチャイム */
+  gachaStart() {
+    this.osc('sine', 300, 300, 0.3, 0.1);
+    this.osc('sine', 400, 400, 0.3, 0.08, 0.15);
+    this.osc('sine', 500, 500, 0.4, 0.06, 0.3);
+    this.noise(0.3, 0.03, 0.1);
+  }
+
+  /** Gacha: ダイス回転のカラカラ音 */
+  gachaSpin() {
+    for (let i = 0; i < 8; i++) {
+      this.osc('square', 400 + i * 30, 300 + i * 20, 0.03, 0.06, i * 0.05);
+    }
+    this.noise(0.4, 0.04);
+  }
+
+  /** Gacha: 昇格時の「ジャキーン！」 */
+  gachaUpgrade() {
+    this.osc('sawtooth', 400, 1200, 0.2, 0.2);
+    this.osc('square', 600, 1400, 0.15, 0.15, 0.05);
+    this.osc('triangle', 800, 1600, 0.15, 0.1, 0.1);
+    this.noise(0.1, 0.15);
+  }
+
+  /** Gacha: Epic確定の重い昇格音 */
+  gachaEpic() {
+    this.osc('sawtooth', 200, 800, 0.3, 0.25);
+    this.osc('square', 400, 1200, 0.25, 0.2, 0.05);
+    this.osc('triangle', 600, 1400, 0.2, 0.15, 0.1);
+    this.osc('sine', 800, 1600, 0.2, 0.1, 0.15);
+    this.noise(0.15, 0.2);
+  }
+
+  /** Gacha: Legendary確定の超派手ファンファーレ */
+  gachaLegendary() {
+    // 低音ドーン
+    this.osc('sine', 80, 40, 0.5, 0.3);
+    this.osc('sawtooth', 150, 600, 0.3, 0.2, 0.05);
+    // 上昇音
+    this.osc('square', 300, 1200, 0.3, 0.2, 0.1);
+    this.osc('triangle', 500, 1500, 0.25, 0.15, 0.15);
+    this.osc('sine', 700, 1800, 0.3, 0.12, 0.2);
+    // キラキラ
+    this.osc('triangle', 1000, 2000, 0.15, 0.08, 0.3);
+    this.osc('triangle', 1200, 2200, 0.15, 0.06, 0.35);
+    this.osc('triangle', 1500, 2500, 0.15, 0.05, 0.4);
+    // ノイズバースト
+    this.noise(0.2, 0.2, 0.1);
+  }
+
+  /** Gacha: バースト時のドーン！ */
+  gachaBurst() {
+    this.osc('sine', 150, 40, 0.3, 0.3);
+    this.osc('sawtooth', 300, 80, 0.2, 0.2);
+    this.noise(0.15, 0.25);
+    // 余韻キラキラ
+    this.osc('triangle', 800, 1200, 0.2, 0.06, 0.15);
+    this.osc('triangle', 1000, 1500, 0.2, 0.05, 0.2);
+  }
+
+  /** Gacha: 結果表示のジャラーン */
+  gachaReveal() {
+    const notes = [523, 659, 784, 1047, 1319]; // C5 E5 G5 C6 E6
+    notes.forEach((f, i) => {
+      this.osc('triangle', f, f, 0.12, 0.1, i * 0.06);
+    });
+    this.osc('sine', 1319, 1319, 0.4, 0.06, 0.3);
+  }
+
   /** Synergy: dramatic whoosh with sparkle */
   synergy() {
     this.osc('sawtooth', 200, 800, 0.3, 0.12);

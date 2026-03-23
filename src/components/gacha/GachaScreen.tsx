@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { MonsterSprite } from '../common/MonsterSprite';
 import { ElementBadge, ELEMENT_COLORS } from '../common/ElementBadge';
+import { sfx } from '../../utils/sfx';
 import {
   rollDiceGacha,
   rollRuneGacha,
@@ -93,24 +94,28 @@ export function GachaScreen() {
     setCrystalLevel(0);
     setCrystalMsg('');
     setAnimPhase('darken');
+    sfx.gachaStart();
     const t1 = window.setTimeout(() => {
       // Phase 2: スピン開始
       setAnimPhase('spin');
       setCrystalMsg(CRYSTAL_MSGS[0]);
+      sfx.gachaSpin();
 
       // 昇格タイマー: 溜め→昇格を繰り返す
-      let delay = 1200; // 最初のCommon表示時間（長め）
+      let delay = 1200;
       for (let lvl = 1; lvl <= maxLevel; lvl++) {
-        // 昇格フェーズ: 溜めの後に昇格
         delay += lvl === 1 ? 1000 : lvl === 2 ? 1500 : 2000;
         const targetLvl = lvl;
         const t = window.setTimeout(() => {
           setCrystalLevel(targetLvl);
           setCrystalMsg(CRYSTAL_MSGS[targetLvl]);
+          // 昇格SE
+          if (targetLvl === 3) sfx.gachaLegendary();
+          else if (targetLvl === 2) sfx.gachaEpic();
+          else sfx.gachaUpgrade();
         }, delay);
         skipTimers.push(t);
 
-        // 昇格後の余韻
         delay += lvl === 1 ? 800 : lvl === 2 ? 1000 : 1200;
       }
 
@@ -118,11 +123,13 @@ export function GachaScreen() {
       const spinDuration = delay + (maxLevel === 0 ? 1500 : 800);
       const t2 = window.setTimeout(() => {
         setAnimPhase('burst');
+        sfx.gachaBurst();
         const t3 = window.setTimeout(() => {
           setAnimPhase('idle');
           setCrystalLevel(0);
           setCrystalMsg('');
           setShowResults(true);
+          sfx.gachaReveal();
         }, maxLevel >= 3 ? 2000 : maxLevel >= 2 ? 1500 : 800);
         skipTimers.push(t3);
       }, spinDuration);
