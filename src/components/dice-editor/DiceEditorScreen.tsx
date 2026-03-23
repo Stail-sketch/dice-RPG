@@ -35,6 +35,7 @@ export function DiceEditorScreen() {
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [selectedSocket, setSelectedSocket] = useState<number | null>(null);
   const [filterElement, setFilterElement] = useState<Element | 'all'>('all');
+  const [diceSort, setDiceSort] = useState<'default' | 'rarity' | 'element' | 'name'>('default');
 
   const partyDice = party.map(id => {
     if (id === 'protagonist') return protagonistDice;
@@ -152,11 +153,32 @@ export function DiceEditorScreen() {
 
       {/* 所持ダイス一覧 */}
       <div className="rpg-panel" style={{ padding: 8 }}>
-        <div style={{ fontSize: 10, color: '#998a78', marginBottom: 4 }}>
-          所持ダイス（タップで装備） — {ownedDice.length + 1}個
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <span style={{ fontSize: 10, color: '#998a78' }}>
+            所持ダイス — {ownedDice.length + 1}個
+          </span>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {([['default', '入手順'], ['rarity', '★順'], ['element', '属性'], ['name', '名前']] as const).map(([key, label]) => (
+              <button key={key}
+                style={{
+                  fontSize: 8, padding: '1px 4px', cursor: 'pointer', borderRadius: 3,
+                  background: diceSort === key ? '#d8d0c4' : 'transparent',
+                  border: '1px solid #c0b8a8', color: '#3a2a1a',
+                }}
+                onClick={() => setDiceSort(key)}
+              >{label}</button>
+            ))}
+          </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {[protagonistDice, ...ownedDice].map((d, i) => (
+          {[protagonistDice, ...(() => {
+            const ELEM_ORDER: Record<string, number> = { blaze: 0, frost: 1, volt: 2, venom: 3, alloy: 4, mirage: 5 };
+            const sorted = [...ownedDice];
+            if (diceSort === 'rarity') sorted.sort((a, b) => b.rarity - a.rarity);
+            else if (diceSort === 'element') sorted.sort((a, b) => (ELEM_ORDER[a.element] ?? 9) - (ELEM_ORDER[b.element] ?? 9));
+            else if (diceSort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name));
+            return sorted;
+          })()].map((d, i) => (
             <button
               key={`${d.id}-${i}`}
               className="rpg-btn"
