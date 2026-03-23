@@ -64,6 +64,13 @@ interface GameState {
   addMagicDice: (id: string) => void;
   equipMagicDice: (id: string | null) => void;
 
+  // PVP
+  pvpPoints: number;
+  pvpWins: number;
+  pvpLosses: number;
+  isPvpBattle: boolean;
+  addPvpResult: (won: boolean) => void;
+
   // ダイス
   addDice: (dice: MonsterDice) => void;
   setParty: (party: [string, string, string]) => void;
@@ -127,6 +134,9 @@ function getSaveableState(s: GameState) {
     ownedMagicDice: s.ownedMagicDice,
     equippedMagicDice: s.equippedMagicDice,
     socketExpansions: s.socketExpansions,
+    pvpPoints: s.pvpPoints,
+    pvpWins: s.pvpWins,
+    pvpLosses: s.pvpLosses,
   };
 }
 
@@ -198,6 +208,16 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   ownedMagicDice: [],
   equippedMagicDice: null,
+  pvpPoints: 0,
+  pvpWins: 0,
+  pvpLosses: 0,
+  isPvpBattle: false,
+  addPvpResult: (won) => set((s) => ({
+    pvpPoints: s.pvpPoints + (won ? 3 : 1),
+    pvpWins: s.pvpWins + (won ? 1 : 0),
+    pvpLosses: s.pvpLosses + (won ? 0 : 1),
+    isPvpBattle: false,
+  })),
   addMagicDice: (id) => set((s) => ({
     ownedMagicDice: s.ownedMagicDice.includes(id) ? s.ownedMagicDice : [...s.ownedMagicDice, id],
   })),

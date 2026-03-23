@@ -9,6 +9,7 @@ import { ShopScreen } from './components/shop/ShopScreen';
 import { GachaScreen } from './components/gacha/GachaScreen';
 import { CodexScreen } from './components/codex/CodexScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
+import { PvpScreen } from './components/pvp/PvpScreen';
 
 export default function App() {
   const { currentScreen } = useGameStore();
@@ -23,6 +24,7 @@ export default function App() {
     case 'shop':   return <ShopScreen />;
     case 'gacha':  return <GachaScreen />;
     case 'codex':  return <CodexScreen />;
+    case 'pvp':    return <PvpScreen />;
     case 'tutorial': return <TutorialScreen />;
     default:       return <TitleScreen />;
   }

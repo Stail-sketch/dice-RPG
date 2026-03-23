@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult } = useGameStore();
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
@@ -740,11 +740,21 @@ export function BattleScreen() {
               if (battle.status === 'player-win') {
                 sfx.victory();
                 addLog('══ 勝利！ ══'); flash('WIN!', 1500);
-                const bonus = getPartyBonus();
-                addGold(Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier));
+                if (isPvpBattle) {
+                  addPvpResult(true);
+                  addGold(300);
+                  addLog('  PVP勝利！ +3pt +300G');
+                } else {
+                  const bonus = getPartyBonus();
+                  addGold(Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier));
+                }
               } else {
                 sfx.defeat();
                 addLog('══ 敗北... ══'); flash('LOSE...', 1500);
+                if (isPvpBattle) {
+                  addPvpResult(false);
+                  addLog('  PVP敗北... +1pt');
+                }
               }
             } else {
               setPhase('turn-end');
@@ -1037,7 +1047,7 @@ export function BattleScreen() {
             {isRolling ? '...' : '...'}
           </div>
         )}
-        {phase === 'result' && battle?.status === 'player-win' && (
+        {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && (
           <div>
             <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>+{Math.round((50 + enemyDiceList[0].rarity * 30) * getPartyBonus().goldMultiplier)} GOLD</div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -1046,8 +1056,14 @@ export function BattleScreen() {
             </div>
           </div>
         )}
+        {phase === 'result' && battle?.status === 'player-win' && isPvpBattle && (
+          <div>
+            <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>PVP勝利！ +3pt +300G</div>
+            <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('pvp'); }} style={{ margin: 0, padding: '10px 12px' }}>決闘場に戻る</button>
+          </div>
+        )}
         {phase === 'result' && battle && battle.status !== 'player-win' && (
-          <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
+          <button className="rpg-btn" onClick={() => { sfx.click(); setScreen(isPvpBattle ? 'pvp' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
         )}
         {phase === 'capture' && (<div style={{ textAlign: 'center', fontSize: 11, color: '#6a5a4a' }}>封印中...</div>)}
       </div>

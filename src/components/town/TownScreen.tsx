@@ -172,7 +172,7 @@ function drawEvent(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 const BUILDINGS: Building[] = [
   { id: 'dungeon', label: 'DUNGEON', sub: 'ダンジョン', screen: 'dungeon', x: 16, y: 50, w: 56, h: 48, draw: drawDungeon },
-  { id: 'arena', label: 'ARENA', sub: '決闘場', screen: 'pvp', x: 192, y: 40, w: 64, h: 52, draw: drawArena, disabled: true },
+  { id: 'arena', label: 'ARENA', sub: '決闘場', screen: 'pvp', x: 192, y: 40, w: 64, h: 52, draw: drawArena },
   { id: 'forge', label: 'FORGE', sub: '鍛冶屋', screen: 'forge', x: 36, y: 170, w: 54, h: 44, draw: drawForge },
   { id: 'dice', label: 'DICE', sub: 'ダイス装備', screen: 'dice-editor', x: 200, y: 168, w: 54, h: 44, draw: drawDiceShop },
   { id: 'shop', label: 'SHOP', sub: 'ショップ', screen: 'shop', x: 16, y: 288, w: 56, h: 42, draw: drawShop },
