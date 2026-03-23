@@ -759,7 +759,9 @@ export function BattleScreen() {
                   addLog('  PVP勝利！ +3pt +300G');
                 } else {
                   const bonus = getPartyBonus();
-                  addGold(Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier));
+                  const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier);
+                  addGold(goldReward);
+                  addLog(`  +${goldReward}G`);
                 }
               } else {
                 sfx.defeat();
@@ -806,6 +808,8 @@ export function BattleScreen() {
     const monster = currentEnemy[0];
     if (captureRes.success) { addDice({ ...monster }); captureMonster(monster.id); addLog(`封印成功！ ${monster.name}をGET！`); }
     else addLog(`封印失敗... ${monster.name}は逃げた`);
+    // ── 戦闘報酬 ──
+    addLog('── 報酬 ──');
     const drops: typeof SKILL_RUNES = [];
     const dropCount = 1 + (Math.random() < 0.4 ? 1 : 0);
     const commonR = SKILL_RUNES.filter(r => r.tier === 'common');
@@ -813,11 +817,12 @@ export function BattleScreen() {
     for (let i = 0; i < dropCount; i++) {
       const pool = Math.random() < 0.2 ? rareR : commonR;
       const rune = pool[Math.floor(Math.random() * pool.length)];
-      drops.push({ ...rune }); addLog(`  ルーン獲得: ${rune.name}(${ELEMENT_NAMES[rune.element]})`);
+      drops.push({ ...rune });
+      addLog(`  ルーン: ${rune.name}(${ELEMENT_NAMES[rune.element]}) [${rune.tier}]`);
     }
     addRunes(drops);
-    if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  素材獲得: 鍛冶石 x1'); }
-    if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  素材獲得: レア鉱石 x1'); }
+    if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  鍛冶石 x1'); }
+    if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  レア鉱石 x1'); }
     // ボスからジェムかけらドロップ
     if (monster.rarity >= 4) {
       const fragments = currentChapter <= 3 ? 1 : currentChapter <= 6 ? 3 : 5;
