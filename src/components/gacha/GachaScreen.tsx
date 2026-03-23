@@ -64,14 +64,22 @@ export function GachaScreen() {
   const [results, setResults] = useState<GachaResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
+  const [crystalLevel, setCrystalLevel] = useState(0); // 0=common,1=rare,2=epic,3=legendary
+  const [crystalMsg, setCrystalMsg] = useState('');
   const animating = animPhase !== 'idle';
   const skipTimers = useState<number[]>([])[0];
 
+  const CRYSTAL_COLORS = ['#998a78', '#4070a0', '#9060d0', '#d4a020'];
+  const CRYSTAL_LABELS = ['', '— Rare —', '— ◆ Epic ◆ —', '— ★ LEGENDARY ★ —'];
+  const CRYSTAL_MSGS = ['運命のダイスが回る...', '何かが光る...！', '強い力を感じる...！', '運命が...揺れている...！！'];
+  const currentCrystalColor = CRYSTAL_COLORS[crystalLevel] || CRYSTAL_COLORS[0];
+
   const skipToResults = () => {
-    // 全timerをクリアして即結果表示
     for (const t of skipTimers) clearTimeout(t);
     skipTimers.length = 0;
     setAnimPhase('idle');
+    setCrystalLevel(0);
+    setCrystalMsg('');
     setShowResults(true);
   };
 
@@ -79,24 +87,41 @@ export function GachaScreen() {
     setResults(newResults);
     setShowResults(false);
     const bestRarity = getHighestRarity(newResults);
-    const isLeg = bestRarity === 'legendary';
-    const isEpic = bestRarity === 'epic';
+    const maxLevel = bestRarity === 'legendary' ? 3 : bestRarity === 'epic' ? 2 : bestRarity === 'rare' ? 1 : 0;
 
     // Phase 1: 暗転
+    setCrystalLevel(0);
+    setCrystalMsg('');
     setAnimPhase('darken');
     const t1 = window.setTimeout(() => {
-      // Phase 2: スピン
+      // Phase 2: スピン開始
       setAnimPhase('spin');
+      setCrystalMsg(CRYSTAL_MSGS[0]);
+
+      // 昇格タイマーを順に設定
+      let delay = 0;
+      for (let lvl = 1; lvl <= maxLevel; lvl++) {
+        delay += lvl === 1 ? 800 : lvl === 2 ? 1200 : 1500;
+        const targetLvl = lvl;
+        const t = window.setTimeout(() => {
+          setCrystalLevel(targetLvl);
+          setCrystalMsg(CRYSTAL_MSGS[targetLvl]);
+        }, delay);
+        skipTimers.push(t);
+      }
+
+      // スピン終了→バースト
+      const spinDuration = delay + (maxLevel === 0 ? 600 : 1000);
       const t2 = window.setTimeout(() => {
-        // Phase 3: バースト
         setAnimPhase('burst');
         const t3 = window.setTimeout(() => {
-          // Phase 4: 結果
           setAnimPhase('idle');
+          setCrystalLevel(0);
+          setCrystalMsg('');
           setShowResults(true);
-        }, isLeg ? 1500 : isEpic ? 1000 : 600);
+        }, maxLevel >= 3 ? 1500 : maxLevel >= 2 ? 1000 : 600);
         skipTimers.push(t3);
-      }, isLeg ? 3000 : isEpic ? 2000 : 800);
+      }, spinDuration);
       skipTimers.push(t2);
     }, 500);
     skipTimers.push(t1);
@@ -311,140 +336,102 @@ export function GachaScreen() {
             </div>
           )}
           {animPhase === 'spin' && (() => {
-            const bestRarity = getHighestRarity(results);
-            const isLeg = bestRarity === 'legendary';
-            const isEpic = bestRarity === 'epic';
-            const isRare = bestRarity === 'rare';
-
-            // FFBE風クリスタル昇格: 色が段階的に変わる
-            const crystalPhases: { color: string; label: string; delay: number; size: number }[] = [
-              { color: '#998a78', label: '', delay: 0, size: 60 },
-            ];
-            if (isRare || isEpic || isLeg) {
-              crystalPhases.push({ color: '#4070a0', label: '— Rare —', delay: 0.4, size: 65 });
-            }
-            if (isEpic || isLeg) {
-              crystalPhases.push({ color: '#9060d0', label: '— ◆ Epic ◆ —', delay: 1.0, size: 72 });
-            }
-            if (isLeg) {
-              crystalPhases.push({ color: '#d4a020', label: '— ★ LEGENDARY ★ —', delay: 1.8, size: 80 });
-            }
-            const finalColor = crystalPhases[crystalPhases.length - 1].color;
+            const cc = currentCrystalColor;
+            const spinSpeed = crystalLevel >= 3 ? 0.2 : crystalLevel >= 2 ? 0.3 : crystalLevel >= 1 ? 0.4 : 0.5;
+            const diceSize = 60 + crystalLevel * 7;
+            const particleCount = 4 + crystalLevel * 5;
+            const showRings = crystalLevel >= 2;
 
             return (
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
+                background: `radial-gradient(circle, ${cc}15 0%, transparent 70%)`,
+                transition: 'background 0.5s ease',
               }}>
-                {/* クリスタル昇格エフェクト — 下から上に色が変わる波 */}
-                {crystalPhases.map((phase, idx) => idx > 0 && (
-                  <div key={`crystal-${idx}`} style={{
-                    position: 'absolute', left: 0, right: 0, bottom: 0,
-                    height: '100%',
-                    background: `linear-gradient(to top, ${phase.color}40 0%, transparent 60%)`,
-                    animation: `crystalRise 0.6s ease forwards`,
-                    animationDelay: `${phase.delay}s`,
-                    animationFillMode: 'both',
-                    opacity: 0,
-                    zIndex: idx,
-                  }} />
-                ))}
+                {/* 背景グラデ（下から昇格色） */}
+                <div style={{
+                  position: 'absolute', left: 0, right: 0, bottom: 0,
+                  height: '60%',
+                  background: `linear-gradient(to top, ${cc}30 0%, transparent 100%)`,
+                  transition: 'background 0.5s ease',
+                }} />
 
-                {/* 昇格フラッシュ（色が変わる瞬間の閃光） */}
-                {crystalPhases.map((phase, idx) => idx > 0 && (
-                  <div key={`flash-${idx}`} style={{
-                    position: 'absolute', inset: 0,
-                    background: phase.color,
-                    animation: `crystalFlash 0.3s ease forwards`,
-                    animationDelay: `${phase.delay}s`,
-                    animationFillMode: 'both',
-                    opacity: 0,
-                    zIndex: idx + 10,
-                  }} />
-                ))}
-
-                {/* 回転する背景オーラリング */}
-                {(isLeg || isEpic) && [0, 1, 2].map(i => (
+                {/* オーラリング */}
+                {showRings && [0, 1, 2].map(i => (
                   <div key={`ring${i}`} style={{
                     position: 'absolute',
-                    width: 140 + i * 30, height: 140 + i * 30,
+                    width: 130 + i * 30 + crystalLevel * 10, height: 130 + i * 30 + crystalLevel * 10,
                     borderRadius: '50%',
-                    border: `1px solid ${finalColor}40`,
-                    animation: `gachaOrbitRing ${3 + i}s linear infinite${i % 2 ? ' reverse' : ''}`,
-                    zIndex: 20,
+                    border: `${crystalLevel >= 3 ? 2 : 1}px solid ${cc}50`,
+                    animation: `gachaOrbitRing ${2.5 + i}s linear infinite${i % 2 ? ' reverse' : ''}`,
+                    boxShadow: crystalLevel >= 3 ? `0 0 8px ${cc}40` : 'none',
+                    transition: 'border-color 0.5s, box-shadow 0.5s',
                   }} />
                 ))}
 
-                {/* ダイス本体 — ⚀(1の目)で中心回転、昇格で色が変わる */}
-                <div style={{
-                  width: 80, height: 80,
-                  position: 'relative',
-                  animation: `gachaSpinCenter ${isLeg ? 0.25 : isEpic ? 0.35 : 0.5}s linear infinite`,
-                  zIndex: 30,
-                }}>
-                  {crystalPhases.map((phase, idx) => (
-                    <span key={`dice-${idx}`} style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: phase.size,
-                      color: phase.color,
-                      textShadow: `0 0 20px ${phase.color}, 0 0 40px ${phase.color}60`,
-                      lineHeight: 1,
-                      animation: idx === 0 ? 'none' : `fadeIn 0.3s ease forwards`,
-                      animationDelay: idx === 0 ? '0s' : `${phase.delay}s`,
-                      animationFillMode: 'both',
-                      opacity: idx === 0 ? 1 : 0,
-                      zIndex: idx,
-                    }}>⚀</span>
-                  ))}
-                </div>
-
-                {/* パーティクル（昇格時に増える） */}
-                {Array.from({ length: isLeg ? 20 : isEpic ? 14 : isRare ? 8 : 4 }).map((_, i) => {
-                  const angle = (i / 20) * Math.PI * 2;
-                  const dist = 50 + Math.random() * 60;
+                {/* パーティクル */}
+                {Array.from({ length: particleCount }).map((_, i) => {
+                  const angle = (i / particleCount) * Math.PI * 2;
+                  const dist = 45 + (i % 3) * 25;
                   return (
                     <div key={`p${i}`} style={{
                       position: 'absolute',
-                      width: isLeg ? 5 : 3, height: isLeg ? 5 : 3,
-                      borderRadius: '50%', background: finalColor,
+                      width: 3 + crystalLevel, height: 3 + crystalLevel,
+                      borderRadius: '50%', background: cc,
                       left: `calc(50% + ${Math.cos(angle) * dist}px)`,
                       top: `calc(50% + ${Math.sin(angle) * dist}px)`,
-                      animation: `gachaParticle ${0.6 + Math.random()}s ease infinite`,
-                      animationDelay: `${Math.random() * 0.8}s`,
-                      boxShadow: `0 0 ${isLeg ? 6 : 3}px ${finalColor}`,
-                      zIndex: 25,
+                      animation: `gachaParticle ${0.5 + (i % 4) * 0.3}s ease infinite`,
+                      animationDelay: `${(i % 5) * 0.15}s`,
+                      boxShadow: `0 0 ${3 + crystalLevel * 2}px ${cc}`,
+                      transition: 'background 0.5s, box-shadow 0.5s',
                     }} />
                   );
                 })}
 
-                {/* 昇格テキスト（下から順に出現） */}
-                <div style={{ position: 'absolute', bottom: '15%', textAlign: 'center', zIndex: 30 }}>
-                  {crystalPhases.map((phase, idx) => idx > 0 && (
-                    <div key={`txt-${idx}`} style={{
-                      fontSize: idx === 3 ? 18 : idx === 2 ? 13 : 10,
-                      color: phase.color,
-                      fontWeight: idx >= 2 ? 'bold' : 'normal',
-                      marginBottom: 4,
-                      animation: 'fadeIn 0.4s ease forwards',
-                      animationDelay: `${phase.delay + 0.1}s`,
-                      animationFillMode: 'both',
-                      textShadow: idx >= 2 ? `0 0 10px ${phase.color}, 0 0 20px ${phase.color}` : `0 0 4px ${phase.color}`,
-                      letterSpacing: idx === 3 ? 4 : 2,
-                    }}>{phase.label}</div>
-                  ))}
+                {/* ダイス⚀ — state駆動で色が変わる */}
+                <div style={{
+                  width: 80, height: 80,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: `gachaSpinCenter ${spinSpeed}s linear infinite`,
+                  zIndex: 10,
+                }}>
+                  <span style={{
+                    fontSize: diceSize,
+                    color: cc,
+                    textShadow: `0 0 20px ${cc}, 0 0 40px ${cc}80`,
+                    lineHeight: 1,
+                    transition: 'color 0.4s ease, text-shadow 0.4s ease, font-size 0.4s ease',
+                  }}>⚀</span>
                 </div>
+
+                {/* 昇格テキスト */}
+                {crystalLevel > 0 && (
+                  <div key={crystalLevel} style={{
+                    marginTop: 16, textAlign: 'center',
+                    fontSize: crystalLevel >= 3 ? 18 : crystalLevel >= 2 ? 14 : 11,
+                    color: cc,
+                    fontWeight: crystalLevel >= 2 ? 'bold' : 'normal',
+                    textShadow: crystalLevel >= 2 ? `0 0 12px ${cc}, 0 0 24px ${cc}` : `0 0 6px ${cc}`,
+                    letterSpacing: crystalLevel >= 3 ? 6 : crystalLevel >= 2 ? 3 : 1,
+                    animation: 'crystalLabelIn 0.4s ease',
+                    zIndex: 10,
+                  }}>
+                    {CRYSTAL_LABELS[crystalLevel]}
+                  </div>
+                )}
 
                 {/* メッセージ */}
                 <div style={{
-                  position: 'absolute', bottom: '8%',
-                  fontSize: 11, color: finalColor,
+                  position: 'absolute', bottom: '10%',
+                  fontSize: 11, color: cc,
                   animation: 'gachaPulse 0.5s ease infinite',
-                  textShadow: `0 0 6px ${finalColor}`,
-                  zIndex: 30,
+                  textShadow: `0 0 6px ${cc}`,
+                  transition: 'color 0.4s ease',
+                  zIndex: 10,
                 }}>
-                  {isLeg ? '運命が...揺れている...！！' : isEpic ? '強い力を感じる...！' : isRare ? '何かが光る...' : '運命のダイスが回る...'}
+                  {crystalMsg}
                 </div>
               </div>
             );
