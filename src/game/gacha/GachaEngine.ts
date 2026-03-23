@@ -18,10 +18,12 @@ const RARITY_RATES: { rarity: 1 | 2 | 3 | 4 | 5; rate: number }[] = [
 ];
 
 // ルーンティア排出率
-const RUNE_TIER_RATES: { tier: 'common' | 'rare' | 'epic'; rate: number }[] = [
-  { tier: 'common', rate: 0.50 },
-  { tier: 'rare', rate: 0.35 },
-  { tier: 'epic', rate: 0.15 },
+const RUNE_TIER_RATES: { tier: 'common' | 'rare' | 'epic' | 'legendary'; rate: number }[] = [
+  { tier: 'common', rate: 0.45 },
+  { tier: 'rare', rate: 0.30 },
+  { tier: 'epic', rate: 0.045 },
+  { tier: 'legendary', rate: 0.005 },
+  // 残り20%はrare扱い（端数調整）
 ];
 
 function pickRarity(pityCount: number): 1 | 2 | 3 | 4 | 5 {
@@ -70,14 +72,14 @@ export function rollDiceGacha(pityCount: number): DiceGachaResult {
   return { monster, newPity };
 }
 
-function pickRuneTier(): 'common' | 'rare' | 'epic' {
+function pickRuneTier(): 'common' | 'rare' | 'epic' | 'legendary' {
   const roll = Math.random();
   let cumulative = 0;
   for (const { tier, rate } of RUNE_TIER_RATES) {
     cumulative += rate;
     if (roll < cumulative) return tier;
   }
-  return 'common';
+  return 'rare'; // 残り確率はrare
 }
 
 export function rollRuneGacha(): SkillRune {

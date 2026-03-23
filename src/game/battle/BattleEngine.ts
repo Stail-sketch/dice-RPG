@@ -290,6 +290,63 @@ export function consumeChargeCost(gauge: ChargeGauge, cost: number): ChargeGauge
 }
 
 // ==============================
+// パッシブルーン効果を適用
+// ==============================
+function applyPassiveEffects(combatant: Combatant, opponent: Combatant): void {
+  // 全ダイスの全カスタム面からパッシブルーンを収集
+  const passiveIds = new Set<string>();
+  const setCount = new Map<string, number>();
+
+  for (const dice of combatant.dice) {
+    for (const face of dice.customFaces) {
+      for (const sock of face.sockets) {
+        if (sock.skillRuneId) {
+          const rune = getSkillRune(sock.skillRuneId);
+          if (rune && rune.effect.type === 'passive') {
+            passiveIds.add(rune.id);
+            if (rune.setId) {
+              setCount.set(rune.setId, (setCount.get(rune.setId) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // パッシブ効果: description内のキーワードで判定
+  for (const id of passiveIds) {
+    const rune = getSkillRune(id);
+    if (!rune) continue;
+    const desc = rune.effect.description;
+    if (desc.includes('DoT')) {
+      // 敵にDoT
+      opponent.statusEffects.push({ type: 'poison', power: rune.effect.power, remainingTurns: 99, element: rune.element });
+    } else if (desc.includes('防御')) {
+      // defenseMultiplier UP
+      combatant.defenseMultiplier *= 1 + rune.effect.power / 100;
+    } else if (desc.includes('攻撃')) {
+      // damageMultiplier UP
+      combatant.damageMultiplier *= 1 + rune.effect.power / 100;
+    } else if (desc.includes('HP回復')) {
+      // 毎ターン回復（statusEffectとして）
+      combatant.statusEffects.push({ type: 'shield', power: rune.effect.power, remainingTurns: 99, element: rune.element });
+    }
+  }
+
+  // セットボーナス: 同じsetIdが2個以上でボーナス
+  for (const [setId, count] of setCount) {
+    if (count >= 2) {
+      // 2セット: damageMultiplier +20%
+      combatant.damageMultiplier *= 1.2;
+    }
+    if (count >= 3) {
+      // 3セット: さらにdefenseMultiplier +20%
+      combatant.defenseMultiplier *= 1.2;
+    }
+  }
+}
+
+// ==============================
 // レシピコンボからSkillAction生成
 // ==============================
 function createRecipeAction(recipe: RecipeSynergy, targetIsPlayer: boolean): SkillAction {
@@ -367,6 +424,13 @@ export function executeTurnFull(
   enemySelection: TurnSelection,
 ): TurnResult {
   state.turn++;
+
+  // パッシブルーン効果（初回ターンのみ）
+  if (state.turn === 1) {
+    applyPassiveEffects(state.player, state.enemy);
+    applyPassiveEffects(state.enemy, state.player);
+  }
+
   const prePlayerHp = state.player.hp;
   const preEnemyHp = state.enemy.hp;
 

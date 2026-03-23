@@ -779,13 +779,17 @@ export function BattleScreen() {
                   const expReward = 20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10;
                   addExp(expReward);
                   addLog(`  ${goldReward}G / ${expReward}EXP`);
-                  // ルーンドロップ
+                  // ルーンドロップ（章属性に70%偏り）
+                  const chapterElements: Record<number, string> = { 1: 'blaze', 2: 'frost', 3: 'volt', 4: 'venom', 5: 'alloy', 6: 'mirage', 7: 'blaze' };
+                  const chapterEl = chapterElements[currentChapter] || 'blaze';
                   const dropCount = 1 + (Math.random() < 0.4 ? 1 : 0);
-                  const commonR = SKILL_RUNES.filter(r => r.tier === 'common');
-                  const rareR = SKILL_RUNES.filter(r => r.tier === 'rare');
                   const drops: typeof SKILL_RUNES = [];
                   for (let i = 0; i < dropCount; i++) {
-                    const pool = Math.random() < 0.2 ? rareR : commonR;
+                    const tierRoll = Math.random();
+                    const tier = tierRoll < 0.6 ? 'common' : 'rare';
+                    const useChapterEl = Math.random() < 0.7; // 70%で章属性
+                    let pool = SKILL_RUNES.filter(r => r.tier === tier && (!useChapterEl || r.element === chapterEl));
+                    if (pool.length === 0) pool = SKILL_RUNES.filter(r => r.tier === tier);
                     const rune = pool[Math.floor(Math.random() * pool.length)];
                     drops.push({ ...rune });
                     addLog(`  ルーン: ${rune.name}(${ELEMENT_NAMES[rune.element]}) [${rune.tier}]`);
