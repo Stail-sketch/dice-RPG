@@ -72,6 +72,7 @@ export function GachaScreen() {
   const CRYSTAL_COLORS = ['#998a78', '#4070a0', '#9060d0', '#d4a020'];
   const CRYSTAL_LABELS = ['', '— Rare —', '— ◆ Epic ◆ —', '— ★ LEGENDARY ★ —'];
   const CRYSTAL_MSGS = ['運命のダイスが回る...', '何かが光る...！', '強い力を感じる...！', '運命が...揺れている...！！'];
+  const CRYSTAL_TEASE = ['...', '...まだ何か...', '...まさか...！？', '...来る...！！！'];
   const currentCrystalColor = CRYSTAL_COLORS[crystalLevel] || CRYSTAL_COLORS[0];
 
   const skipToResults = () => {
@@ -98,20 +99,31 @@ export function GachaScreen() {
       setAnimPhase('spin');
       setCrystalMsg(CRYSTAL_MSGS[0]);
 
-      // 昇格タイマーを順に設定
-      let delay = 0;
+      // 昇格タイマー: 溜め→昇格を繰り返す
+      let delay = 1200; // 最初のCommon表示時間（長め）
       for (let lvl = 1; lvl <= maxLevel; lvl++) {
-        delay += lvl === 1 ? 800 : lvl === 2 ? 1200 : 1500;
+        // 溜めフェーズ: 「来るか...？」のテキスト
+        const teaseDelay = delay;
+        const tTease = window.setTimeout(() => {
+          setCrystalMsg(CRYSTAL_TEASE[lvl]);
+        }, teaseDelay);
+        skipTimers.push(tTease);
+
+        // 昇格フェーズ: 溜めの後に昇格
+        delay += lvl === 1 ? 1000 : lvl === 2 ? 1500 : 2000;
         const targetLvl = lvl;
         const t = window.setTimeout(() => {
           setCrystalLevel(targetLvl);
           setCrystalMsg(CRYSTAL_MSGS[targetLvl]);
         }, delay);
         skipTimers.push(t);
+
+        // 昇格後の余韻
+        delay += lvl === 1 ? 800 : lvl === 2 ? 1000 : 1200;
       }
 
       // スピン終了→バースト
-      const spinDuration = delay + (maxLevel === 0 ? 600 : 1000);
+      const spinDuration = delay + (maxLevel === 0 ? 1500 : 800);
       const t2 = window.setTimeout(() => {
         setAnimPhase('burst');
         const t3 = window.setTimeout(() => {
@@ -119,11 +131,11 @@ export function GachaScreen() {
           setCrystalLevel(0);
           setCrystalMsg('');
           setShowResults(true);
-        }, maxLevel >= 3 ? 1500 : maxLevel >= 2 ? 1000 : 600);
+        }, maxLevel >= 3 ? 2000 : maxLevel >= 2 ? 1500 : 800);
         skipTimers.push(t3);
       }, spinDuration);
       skipTimers.push(t2);
-    }, 500);
+    }, 800);
     skipTimers.push(t1);
   };
 
