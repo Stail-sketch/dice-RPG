@@ -25,12 +25,16 @@ interface GameState {
   setScreen: (screen: Screen) => void;
 
   playerName: string;
+  playerLevel: number;
+  playerExp: number;
   playerMaxHp: number;
   gold: number;
   gems: number;
   gemFragments: number; // 100個で1ジェム
   materials: Materials;
   addGemFragments: (amount: number) => void;
+  addExp: (amount: number) => void;
+  getExpToNext: () => number;
 
   protagonistDice: MonsterDice;
   ownedDice: MonsterDice[];
@@ -126,6 +130,8 @@ const UPGRADE_COST: Record<SocketTier, { next: SocketTier; stones: number; gold:
 function getSaveableState(s: GameState) {
   return {
     playerName: s.playerName,
+    playerLevel: s.playerLevel,
+    playerExp: s.playerExp,
     playerMaxHp: s.playerMaxHp,
     gold: s.gold,
     gems: s.gems,
@@ -155,6 +161,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setScreen: (screen) => set({ currentScreen: screen }),
 
   playerName: 'ダイスマスター',
+  playerLevel: 1,
+  playerExp: 0,
   playerMaxHp: 50,
   gold: 500,
   gems: 10,
@@ -348,6 +356,23 @@ export const useGameStore = create<GameState>((set, get) => ({
       gemFragments: total % 100,
       gems: s.gems + gemsEarned,
     };
+  }),
+  getExpToNext: () => {
+    const s = get();
+    return s.playerLevel * 100; // Lv1=100, Lv2=200, ...
+  },
+  addExp: (amount) => set((s) => {
+    let exp = s.playerExp + amount;
+    let level = s.playerLevel;
+    let hp = s.playerMaxHp;
+    let needed = level * 100;
+    while (exp >= needed) {
+      exp -= needed;
+      level++;
+      hp += 50; // レベルアップでHP+50
+      needed = level * 100;
+    }
+    return { playerExp: exp, playerLevel: level, playerMaxHp: hp };
   }),
   addMaterial: (id, amount) => set((s) => ({
     materials: { ...s.materials, [id]: Math.max(0, (s.materials[id] || 0) + amount) },
@@ -620,6 +645,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedDice: starterDice,
       party: ['protagonist', 'pyrachnid_001', 'frost-jelly_001'],
       ownedRunes: starterRunes,
+      playerLevel: 1,
+      playerExp: 0,
       gold: 500,
       gems: 30,
       gemFragments: 0,

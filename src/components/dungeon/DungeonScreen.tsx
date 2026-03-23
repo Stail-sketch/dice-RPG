@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { CHAPTER1_MONSTERS, CHAPTER2_MONSTERS, CHAPTER3_MONSTERS, CHAPTER4_MONSTERS, CHAPTER5_MONSTERS, CHAPTER6_MONSTERS, CHAPTER7_MONSTERS } from '../../data/monsters';
 import { SKILL_RUNES } from '../../data/skill-runes';
@@ -57,17 +58,34 @@ function buildEnemyParty(mainMonster: MonsterDice, chapterMonsters: MonsterDice[
 
 export function DungeonScreen() {
   const { setScreen, setCurrentEnemy, capturedMonsters, currentChapter, advanceChapter } = useGameStore();
+  const [hardMode, setHardMode] = useState(false);
 
-  const chapterMonsters = CHAPTER_MONSTERS[currentChapter] || CHAPTER1_MONSTERS;
+  const displayChapter = currentChapter;
+  const chapterMonsters = CHAPTER_MONSTERS[displayChapter] || CHAPTER1_MONSTERS;
   const normalMonsters = chapterMonsters.filter(m => m.rarity <= 2);
   const rareMonsters = chapterMonsters.filter(m => m.rarity === 3);
   const bossMonster = chapterMonsters.find(m => m.rarity >= 4);
+
+  // 全章クリアで高難度解禁
+  const allCleared = currentChapter >= 7 && bossMonster && capturedMonsters.includes(bossMonster.id);
 
   // ボス捕獲済みかチェック（章進行条件）
   const bossCaptured = bossMonster ? capturedMonsters.includes(bossMonster.id) : false;
 
   const startBattle = (monster: MonsterDice) => {
-    setCurrentEnemy(buildEnemyParty(monster, chapterMonsters, currentChapter));
+    // 高難度モード: 敵のルーン装着率100%＋全ソケットsilver化
+    const party = buildEnemyParty(monster, chapterMonsters, hardMode ? 10 : displayChapter);
+    if (hardMode) {
+      for (const d of party) {
+        for (const face of d.customFaces) {
+          for (const sock of face.sockets) {
+            if (sock.socketTier === 'bronze') sock.socketTier = 'silver';
+          }
+        }
+      }
+    }
+    useGameStore.setState({ isHardMode: hardMode } as any);
+    setCurrentEnemy(party);
     setScreen('battle');
   };
 
@@ -106,10 +124,27 @@ export function DungeonScreen() {
   return (
     <div style={{ padding: 8 }}>
       <div className="rpg-panel">
-        <div className="rpg-panel-title">{CHAPTER_NAMES[currentChapter] || `第${currentChapter}章`}</div>
-        <div style={{ fontSize: 10, color: '#998a78', textAlign: 'center' }}>
-          モンスターを倒してダイスに封印せよ
+        <div className="rpg-panel-title">
+          {hardMode ? '【高難度】' : ''}{CHAPTER_NAMES[currentChapter] || `第${currentChapter}章`}
         </div>
+        <div style={{ fontSize: 10, color: '#998a78', textAlign: 'center' }}>
+          {hardMode ? '敵が大幅に強化されています' : 'モンスターを倒してダイスに封印せよ'}
+        </div>
+        {allCleared && (
+          <div style={{ textAlign: 'center', marginTop: 4 }}>
+            <button
+              style={{
+                fontSize: 9, padding: '2px 10px', cursor: 'pointer', borderRadius: 4,
+                background: hardMode ? '#b04030' : '#ece5d8',
+                color: hardMode ? '#f5f0e8' : '#b04030',
+                border: '1px solid #b04030',
+              }}
+              onClick={() => setHardMode(!hardMode)}
+            >
+              {hardMode ? '通常モードに戻す' : '高難度モード'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>

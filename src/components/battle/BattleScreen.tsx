@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp } = useGameStore();
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
@@ -115,8 +115,9 @@ export function BattleScreen() {
   const startBattle = useCallback(() => {
     if (playerDice.length < 3 || enemyDiceList.length < 3) return;
     sfx.click();
-    // プレイヤーHP: 15倍
-    const playerHp = 900;
+    // プレイヤーHP: playerMaxHpを使用（レベルで成長）
+    const { playerMaxHp } = useGameStore.getState();
+    const playerHp = playerMaxHp;
     // 敵HP: 章1-3は従来通り、章4+は15~30倍スケーリング
     const maxRarity = Math.max(...enemyDiceList.map(d => d.rarity));
     let enemyMaxHp: number;
@@ -763,7 +764,9 @@ export function BattleScreen() {
                   const bonus = getPartyBonus();
                   const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier);
                   addGold(goldReward);
-                  addLog(`  ${goldReward}G`);
+                  const expReward = 20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10;
+                  addExp(expReward);
+                  addLog(`  ${goldReward}G / ${expReward}EXP`);
                   // ルーンドロップ
                   const dropCount = 1 + (Math.random() < 0.4 ? 1 : 0);
                   const commonR = SKILL_RUNES.filter(r => r.tier === 'common');

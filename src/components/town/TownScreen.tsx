@@ -272,7 +272,7 @@ function drawGrass(ctx: CanvasRenderingContext2D) {
 // メインコンポーネント
 // ==============================
 export function TownScreen() {
-  const { setScreen, playerMaxHp, gold, gems, gemFragments, currentChapter, save } = useGameStore();
+  const { setScreen, playerMaxHp, playerLevel, gold, gems, gemFragments, currentChapter, save } = useGameStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
 
@@ -407,6 +407,7 @@ export function TownScreen() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontSize: 11, color: '#3a3018', fontFamily: "'DotGothic16', monospace",
       }}>
+        <span>Lv{playerLevel}</span>
         <span>HP {playerMaxHp}</span>
         <span style={{ color: '#705828', fontWeight: 'bold' }}>{gold}G</span>
         <span style={{ color: '#4070a0' }}>{gems}Gem({gemFragments})</span>

@@ -135,10 +135,20 @@ function applyActions(
     action.crossDiceMultiplier = crossDiceMult;
     action.buffMultiplier = attacker.damageMultiplier / defender.defenseMultiplier;
     switch (action.effectType) {
-      case 'damage':
-        action.actualDamage = damage;
-        defender.hp = Math.max(0, defender.hp - damage);
+      case 'damage': {
+        // シールドでダメージ軽減
+        let remaining = damage;
+        for (const eff of defender.statusEffects) {
+          if (eff.type === 'shield' && eff.power > 0 && remaining > 0) {
+            const absorbed = Math.min(eff.power, remaining);
+            eff.power -= absorbed;
+            remaining -= absorbed;
+          }
+        }
+        action.actualDamage = remaining;
+        defender.hp = Math.max(0, defender.hp - remaining);
         break;
+      }
       case 'heal':
         action.actualDamage = Math.min(action.rawDamage, attacker.maxHp - attacker.hp);
         attacker.hp = Math.min(attacker.maxHp, attacker.hp + action.rawDamage);
@@ -147,14 +157,20 @@ function applyActions(
         action.actualDamage = action.rawDamage;
         defender.statusEffects.push({ type: 'poison', power: action.rawDamage, remainingTurns: 3, element: action.element });
         break;
-      case 'buff':
-        action.actualDamage = action.rawDamage > 1 ? action.rawDamage : 1.3;
-        attacker.damageMultiplier *= action.actualDamage;
+      case 'buff': {
+        const buffVal = action.rawDamage > 1 ? action.rawDamage : 1.3;
+        action.actualDamage = buffVal;
+        attacker.statusEffects.push({ type: 'buff', power: buffVal, remainingTurns: 3, element: action.element });
+        attacker.damageMultiplier *= buffVal;
         break;
-      case 'debuff':
-        action.actualDamage = action.rawDamage < 1 ? action.rawDamage : 0.7;
-        defender.damageMultiplier *= action.actualDamage;
+      }
+      case 'debuff': {
+        const debuffVal = action.rawDamage < 1 ? action.rawDamage : 0.7;
+        action.actualDamage = debuffVal;
+        defender.statusEffects.push({ type: 'debuff', power: debuffVal, remainingTurns: 3, element: action.element });
+        defender.damageMultiplier *= debuffVal;
         break;
+      }
       case 'shield':
         action.actualDamage = action.rawDamage;
         attacker.statusEffects.push({ type: 'shield', power: action.rawDamage, remainingTurns: 2, element: action.element });
@@ -176,7 +192,17 @@ function processStatusEffects(combatant: Combatant): number {
       totalDotDmg += dmg;
     }
     effect.remainingTurns--;
-    if (effect.remainingTurns > 0) remaining.push(effect);
+    if (effect.remainingTurns > 0) {
+      remaining.push(effect);
+    } else {
+      // バフ/デバフ期限切れ → 倍率を戻す
+      if (effect.type === 'buff') {
+        combatant.damageMultiplier /= effect.power;
+      } else if (effect.type === 'debuff') {
+        combatant.damageMultiplier /= effect.power;
+      }
+      // シールドのpower=0は自然消滅（吸収済み）
+    }
   }
   combatant.statusEffects = remaining;
   combatant.damageMultiplier = Math.min(2.0, Math.max(0.3, combatant.damageMultiplier));

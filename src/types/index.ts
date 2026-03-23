@@ -150,7 +150,7 @@ export function getAllFaces(dice: MonsterDice): DiceFace[] {
 // バトルステート
 // ==============================
 export interface StatusEffect {
-  type: 'burn' | 'poison' | 'freeze' | 'slow' | 'atkUp' | 'defUp' | 'atkDown' | 'defDown' | 'shield' | 'confusion';
+  type: 'burn' | 'poison' | 'freeze' | 'slow' | 'atkUp' | 'defUp' | 'atkDown' | 'defDown' | 'shield' | 'confusion' | 'buff' | 'debuff';
   power: number;
   remainingTurns: number;
   element: Element;

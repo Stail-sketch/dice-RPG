@@ -35,6 +35,7 @@ export function DiceEditorScreen() {
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [selectedSocket, setSelectedSocket] = useState<number | null>(null);
   const [filterElement, setFilterElement] = useState<Element | 'all'>('all');
+  const [runeSort, setRuneSort] = useState<'default' | 'power' | 'tier' | 'type'>('default');
   const [diceSort, setDiceSort] = useState<'default' | 'rarity' | 'element' | 'name'>('default');
 
   const partyDice = party.map(id => {
@@ -97,10 +98,15 @@ export function DiceEditorScreen() {
     setSelectedSocket(null);
   };
 
-  // フィルタ済みルーン
-  const filteredRunes = filterElement === 'all'
-    ? ownedRunes
-    : ownedRunes.filter(r => r.element === filterElement);
+  // フィルタ + ソート済みルーン
+  const TIER_ORDER: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  const filteredRunes = (() => {
+    let runes = filterElement === 'all' ? [...ownedRunes] : ownedRunes.filter(r => r.element === filterElement);
+    if (runeSort === 'power') runes.sort((a, b) => b.effect.power - a.effect.power);
+    else if (runeSort === 'tier') runes.sort((a, b) => (TIER_ORDER[b.tier] ?? 0) - (TIER_ORDER[a.tier] ?? 0));
+    else if (runeSort === 'type') runes.sort((a, b) => a.effect.type.localeCompare(b.effect.type));
+    return runes;
+  })();
 
   // 装備可能かチェック
   const canEquipToSocket = (runeTier: SkillTier) => {
@@ -435,6 +441,20 @@ export function DiceEditorScreen() {
                 </button>
               ))}
             </div>
+          </div>
+          {/* ソートボタン */}
+          <div style={{ display: 'flex', gap: 2, marginBottom: 4 }}>
+            <span style={{ fontSize: 8, color: '#998a78', lineHeight: '18px' }}>並び:</span>
+            {([['default', '標準'], ['power', '威力'], ['tier', 'レア度'], ['type', '効果']] as const).map(([key, label]) => (
+              <button key={key}
+                style={{
+                  fontSize: 8, padding: '1px 4px', cursor: 'pointer', borderRadius: 3,
+                  background: runeSort === key ? '#d8d0c4' : 'transparent',
+                  border: '1px solid #c0b8a8', color: '#3a2a1a',
+                }}
+                onClick={() => setRuneSort(key)}
+              >{label}</button>
+            ))}
           </div>
 
           <div style={{ maxHeight: 200, overflowY: 'auto' }}>
