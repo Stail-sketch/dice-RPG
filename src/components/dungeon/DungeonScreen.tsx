@@ -156,7 +156,9 @@ export function DungeonScreen() {
   const { setScreen, setCurrentEnemy, capturedMonsters, bossesDefeated, currentChapter, advanceChapter } = useGameStore();
   const [hardMode, setHardMode] = useState(false);
   const [bossDialogueTarget, setBossDialogueTarget] = useState<MonsterDice | null>(null);
-  const [displayChapter, setDisplayChapter] = useState(() => Math.min(currentChapter, 7));
+  // battleChapterが設定されていればそれを使う（戦闘後に元の章に戻るため）
+  const battleChapter = useGameStore((s) => s.battleChapter);
+  const [displayChapter, setDisplayChapter] = useState(() => Math.min(battleChapter || currentChapter, 7));
 
   const chapterMonsters = CHAPTER_MONSTERS[displayChapter] || CHAPTER1_MONSTERS;
   const normalMonsters = chapterMonsters.filter(m => m.rarity <= 2);
