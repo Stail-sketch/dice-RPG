@@ -12,7 +12,7 @@ import { DiceFaceView } from '../common/DiceFaceView';
 import { ELEMENT_COLORS } from '../common/ElementBadge';
 import { getPipColorsForDiceFace } from '../../utils/pipColors';
 import { MonsterSprite } from '../common/MonsterSprite';
-import { ElementEffect, SynergyCutIn, Particles } from './BattleEffects';
+import { ElementEffect, SynergyCutIn, Particles, StatusIndicator, HitFlash } from './BattleEffects';
 import { CaptureScene } from './CaptureScene';
 import { sfx } from '../../utils/sfx';
 
@@ -26,7 +26,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss } = useGameStore();
   const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
     save().then(() => setScreen(screen));
   }, [save, setScreen]);
@@ -45,7 +45,9 @@ export function BattleScreen() {
   const logRef = useRef<HTMLDivElement>(null);
   const [effectElement, setEffectElement] = useState<Element | null>(null);
   const [effectSide, setEffectSide] = useState<'top' | 'bottom'>('top');
-  const [particles, setParticles] = useState<{ color: string; y: number } | null>(null);
+  const [particles, setParticles] = useState<{ color: string; y: number; element?: Element } | null>(null);
+  const [hitFlashSide, setHitFlashSide] = useState<'top' | 'bottom' | null>(null);
+  const [statusIndicator, setStatusIndicator] = useState<{ effects: Array<{type: string; element: string}>; side: 'top' | 'bottom' } | null>(null);
   const [synergyCutIn, setSynergyCutIn] = useState<string | null>(null);
   const [hurtEnemy, setHurtEnemy] = useState(false);
   const [hurtPlayer, setHurtPlayer] = useState(false);
@@ -76,14 +78,15 @@ export function BattleScreen() {
     setPopups(prev => [...prev, { id: ++popupId, text, color, side, idx, big }]);
   }, []);
   const doShake = useCallback((side: 'enemy' | 'player') => {
-    if (side === 'enemy') { setShakeEnemy(true); setHurtEnemy(true); setTimeout(() => { setShakeEnemy(false); setHurtEnemy(false); }, 500); }
-    else { setShakePlayer(true); setHurtPlayer(true); setTimeout(() => { setShakePlayer(false); setHurtPlayer(false); }, 500); }
+    if (side === 'enemy') { setShakeEnemy(true); setHurtEnemy(true); setHitFlashSide('top'); setTimeout(() => { setShakeEnemy(false); setHurtEnemy(false); setHitFlashSide(null); }, 500); }
+    else { setShakePlayer(true); setHurtPlayer(true); setHitFlashSide('bottom'); setTimeout(() => { setShakePlayer(false); setHurtPlayer(false); setHitFlashSide(null); }, 500); }
   }, []);
   const [flashDuration, setFlashDuration] = useState(800);
   const flash = useCallback((msg: string, duration = 800) => { setFlashDuration(duration); setCenterMessage(msg); setTimeout(() => setCenterMessage(null), duration); }, []);
   const showElementEffect = useCallback((el: Element, side: 'top' | 'bottom') => { setEffectElement(el); setEffectSide(side); setTimeout(() => setEffectElement(null), 600); }, []);
-  const showParticles = useCallback((color: string, y: number) => { setParticles({ color, y }); setTimeout(() => setParticles(null), 800); }, []);
-  const doScreenFlash = useCallback((color: string) => { setScreenFlash(color); setTimeout(() => setScreenFlash(null), 180); }, []);
+  const showParticles = useCallback((color: string, y: number, element?: Element) => { setParticles({ color, y, element }); setTimeout(() => setParticles(null), 800); }, []);
+  const [screenFlashMs, setScreenFlashMs] = useState(180);
+  const doScreenFlash = useCallback((color: string, durationMs = 180) => { setScreenFlashMs(durationMs); setScreenFlash(color); setTimeout(() => setScreenFlash(null), durationMs); }, []);
   const showFilmBars = useCallback(() => { setFilmBars(true); setTimeout(() => setFilmBars(false), 400); }, []);
 
   const logActions = useCallback((actions: SkillAction[], isPlayerAttacking: boolean) => {
@@ -673,12 +676,13 @@ export function BattleScreen() {
       logActions(result.firstActions, firstIsPlayer);
 
       let dmg = 0;
+      let hasCrit = false;
       for (const a of result.firstActions) {
         const hitEnemy = !a.targetIsPlayer;
         if (a.effectType === 'damage' && a.finalDamage > 0) {
           dmg += a.finalDamage;
           const isBig = a.finalDamage >= 20;
-          if (isBig) { sfx.bigHit(); } else { sfx.hit(a.element); }
+          if (isBig) { sfx.bigHit(); hasCrit = true; } else { sfx.hit(a.element); }
           addPopup(`-${a.finalDamage}`, ELEMENT_COLORS[a.element], hitEnemy ? 'enemy' : 'player', Math.floor(Math.random() * 3), isBig);
         } else if (a.effectType === 'heal') {
           sfx.heal();
@@ -691,9 +695,9 @@ export function BattleScreen() {
       }
       if (dmg > 0) {
         doShake(firstIsPlayer ? 'enemy' : 'player');
-        doScreenFlash(ELEMENT_COLORS[result.firstActions.find(a => a.effectType === 'damage')?.element ?? 'alloy']);
+        doScreenFlash(ELEMENT_COLORS[result.firstActions.find(a => a.effectType === 'damage')?.element ?? 'alloy'], hasCrit ? 250 : 180);
         const mainEl = result.firstActions.find(a => a.effectType === 'damage')?.element;
-        if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'top' : 'bottom'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 22 : 65); }
+        if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'top' : 'bottom'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 22 : 65, mainEl); }
       }
 
       setTimeout(() => {
@@ -708,12 +712,13 @@ export function BattleScreen() {
           logActions(result.secondActions, !firstIsPlayer);
 
           let dmg2 = 0;
+          let hasCrit2 = false;
           for (const a of result.secondActions) {
             const hitEnemy = !a.targetIsPlayer;
             if (a.effectType === 'damage' && a.finalDamage > 0) {
               dmg2 += a.finalDamage;
               const isBig2 = a.finalDamage >= 20;
-              if (isBig2) { sfx.bigHit(); } else { sfx.hit(a.element); }
+              if (isBig2) { sfx.bigHit(); hasCrit2 = true; } else { sfx.hit(a.element); }
               addPopup(`-${a.finalDamage}`, ELEMENT_COLORS[a.element], hitEnemy ? 'enemy' : 'player', Math.floor(Math.random() * 3), isBig2);
             } else if (a.effectType === 'heal') {
               sfx.heal();
@@ -727,8 +732,9 @@ export function BattleScreen() {
           if (dmg2 > 0) {
             doShake(firstIsPlayer ? 'player' : 'enemy');
             doScreenFlash(ELEMENT_COLORS[result.secondActions.find(a => a.effectType === 'damage')?.element ?? 'alloy']);
+            if (hasCrit2) { setFlashDuration(250); setTimeout(() => setFlashDuration(800), 300); }
             const mainEl = result.secondActions.find(a => a.effectType === 'damage')?.element;
-            if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'bottom' : 'top'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 65 : 22); }
+            if (mainEl) { showElementEffect(mainEl, firstIsPlayer ? 'bottom' : 'top'); showParticles(ELEMENT_COLORS[mainEl], firstIsPlayer ? 65 : 22, mainEl); }
           }
           for (const s of result.synergies) addLog(`  ★ ${s.name}: ${s.description}`);
           if (result.synergies.length > 0) {
@@ -757,6 +763,14 @@ export function BattleScreen() {
             const eEffects = result.enemyEffects.filter(e => e.remainingTurns > 0);
             if (pEffects.length > 0) addLog(`  自分: ${pEffects.map(e => `${e.type}(${e.remainingTurns}T)`).join(' ')}`);
             if (eEffects.length > 0) addLog(`  敵: ${eEffects.map(e => `${e.type}(${e.remainingTurns}T)`).join(' ')}`);
+            // ステータスインジケータ表示
+            if (pEffects.length > 0) {
+              setStatusIndicator({ effects: pEffects as Array<{type: string; element: string}>, side: 'bottom' });
+              setTimeout(() => setStatusIndicator(null), 2100);
+            } else if (eEffects.length > 0) {
+              setStatusIndicator({ effects: eEffects as Array<{type: string; element: string}>, side: 'top' });
+              setTimeout(() => setStatusIndicator(null), 2100);
+            }
             // 倍率
             if (result.playerDmgMult !== 1.0 || result.enemyDmgMult !== 1.0) {
               addLog(`  攻撃倍率 自分x${result.playerDmgMult.toFixed(1)} / 敵x${result.enemyDmgMult.toFixed(1)}`);
@@ -802,11 +816,13 @@ export function BattleScreen() {
                   // 素材ドロップ
                   if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  鍛冶石 x1'); }
                   if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  レア鉱石 x1'); }
-                  // ボスからかけら
+                  // ボスからかけら + ボス撃破記録
                   if (enemyDiceList[0].rarity >= 4) {
                     const fragments = currentChapter <= 3 ? 1 : currentChapter <= 6 ? 3 : 5;
                     addGemFragments(fragments);
                     addLog(`  ジェムのかけら x${fragments}`);
+                    defeatBoss(enemyDiceList[0].id);
+                    addLog('  ボス撃破！');
                   }
                 }
               } else {
@@ -883,7 +899,7 @@ export function BattleScreen() {
           position: 'absolute', inset: 0,
           background: screenFlash, opacity: 0.15,
           pointerEvents: 'none', zIndex: 300,
-          animation: 'screenFlash 0.18s ease forwards',
+          animation: `screenFlash ${screenFlashMs / 1000}s ease forwards`,
         }} />
       )}
 
@@ -914,7 +930,7 @@ export function BattleScreen() {
         const xBase = p.idx === 0 ? 18 : p.idx === 1 ? 50 : 82;
         const yBase = p.side === 'enemy' ? 18 : 58;
         const isDmg = p.text.startsWith('-');
-        const fontSize = p.big ? 34 : isDmg ? 28 : 18;
+        const fontSize = p.big ? 38 : isDmg ? 28 : 18;
         return (
           <div key={p.id} style={{
             position: 'absolute',
@@ -925,14 +941,16 @@ export function BattleScreen() {
             fontWeight: 'bold',
             zIndex: 150,
             pointerEvents: 'none',
-            animation: 'damagePop 1.2s ease-out forwards',
-            textShadow: isDmg ? `0 1px 0 ${p.color}40` : 'none',
+            animation: p.big ? 'criticalPop 1.2s ease-out forwards' : 'damagePop 1.2s ease-out forwards',
+            textShadow: p.big ? `0 0 8px ${p.color}80, 0 0 16px ${p.color}40` : isDmg ? `0 1px 0 ${p.color}40` : 'none',
           }}>{p.text}</div>
         );
       })}
       {effectElement && <ElementEffect element={effectElement} side={effectSide} />}
-      {particles && <Particles color={particles.color} originY={particles.y} />}
+      {particles && <Particles color={particles.color} originY={particles.y} element={particles.element} />}
       {synergyCutIn && <SynergyCutIn name={synergyCutIn} onDone={() => setSynergyCutIn(null)} />}
+      {hitFlashSide && <HitFlash side={hitFlashSide} />}
+      {statusIndicator && <StatusIndicator effects={statusIndicator.effects as any} side={statusIndicator.side} />}
 
       {/* 敵エリア */}
       <div style={{ padding: '6px 12px 0', flex: '0 0 auto' }}>

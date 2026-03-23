@@ -4,6 +4,7 @@ import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
 import type { DecomposeResult, PartyBonus } from '../types';
 import { CHAPTER1_MONSTERS, PROTAGONIST_DICE, ALL_MONSTERS } from '../data/monsters';
 import { SKILL_RUNES } from '../data/skill-runes';
+import { ACHIEVEMENTS } from '../data/achievements';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
@@ -47,6 +48,12 @@ interface GameState {
   currentChapter: number;
   clearedDungeons: string[]; // クリア済みダンジョンID
   capturedMonsters: string[];
+  bossesDefeated: string[]; // 撃破済みボスID
+
+  // 実績
+  achievements: string[];
+  unlockAchievement: (id: string) => void;
+  checkAchievements: () => string[];
 
   // チュートリアル
   tutorial: TutorialState;
@@ -98,6 +105,7 @@ interface GameState {
   setCurrentEnemy: (enemy: MonsterDice[] | null) => void;
   captureMonster: (monsterId: string) => void;
   clearDungeon: (dungeonId: string) => void;
+  defeatBoss: (bossId: string) => void;
 
   // 売却
   sellDice: (diceInstanceId: string) => boolean;
@@ -144,6 +152,8 @@ function getSaveableState(s: GameState) {
     currentChapter: s.currentChapter,
     clearedDungeons: s.clearedDungeons,
     capturedMonsters: s.capturedMonsters,
+    bossesDefeated: s.bossesDefeated,
+    achievements: s.achievements,
     gachaPityDice: s.gachaPityDice,
     gachaPityRune: s.gachaPityRune,
     tutorial: s.tutorial,
@@ -210,6 +220,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentChapter: 1,
       clearedDungeons: [],
       capturedMonsters: [],
+      bossesDefeated: [],
+      achievements: [],
       gachaPityDice: 0,
       gachaPityRune: 0,
       tutorial: { completed: false, currentStep: 1 },
@@ -220,6 +232,26 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentChapter: 1,
   clearedDungeons: [],
   capturedMonsters: [],
+  bossesDefeated: [],
+  achievements: [],
+
+  unlockAchievement: (id) => set((s) => ({
+    achievements: s.achievements.includes(id) ? s.achievements : [...s.achievements, id],
+  })),
+
+  checkAchievements: () => {
+    const s = get();
+    const newlyUnlocked: string[] = [];
+    for (const a of ACHIEVEMENTS) {
+      if (!s.achievements.includes(a.id) && a.check(s)) {
+        newlyUnlocked.push(a.id);
+      }
+    }
+    if (newlyUnlocked.length > 0) {
+      set({ achievements: [...s.achievements, ...newlyUnlocked] });
+    }
+    return newlyUnlocked;
+  },
 
   gachaPityDice: 0,
   gachaPityRune: 0,
@@ -233,12 +265,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   isPvpBattle: false,
   isHardMode: false,
-  addPvpResult: (won) => set((s) => ({
-    pvpPoints: s.pvpPoints + (won ? 3 : 1),
-    pvpWins: s.pvpWins + (won ? 1 : 0),
-    pvpLosses: s.pvpLosses + (won ? 0 : 1),
-    isPvpBattle: false,
-  })),
+  addPvpResult: (won) => {
+    set((s) => ({
+      pvpPoints: s.pvpPoints + (won ? 3 : 1),
+      pvpWins: s.pvpWins + (won ? 1 : 0),
+      pvpLosses: s.pvpLosses + (won ? 0 : 1),
+      isPvpBattle: false,
+    }));
+    get().checkAchievements();
+  },
   addMagicDice: (id) => set((s) => ({
     ownedMagicDice: s.ownedMagicDice.includes(id) ? s.ownedMagicDice : [...s.ownedMagicDice, id],
   })),
@@ -347,7 +382,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     return { ownedDice: dice, ownedRunes: newRunes };
   }),
 
-  addGold: (amount) => set((s) => ({ gold: Math.max(0, s.gold + amount) })),
+  addGold: (amount) => {
+    set((s) => ({ gold: Math.max(0, s.gold + amount) }));
+    get().checkAchievements();
+  },
   addGems: (amount) => set((s) => ({ gems: Math.max(0, s.gems + amount) })),
   addGemFragments: (amount) => set((s) => {
     return {
@@ -358,19 +396,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     return s.playerLevel * 100; // Lv1=100, Lv2=200, ...
   },
-  addExp: (amount) => set((s) => {
-    let exp = s.playerExp + amount;
-    let level = s.playerLevel;
-    let hp = s.playerMaxHp;
-    let needed = level * 100;
-    while (exp >= needed) {
-      exp -= needed;
-      level++;
-      hp += 50; // レベルアップでHP+50
-      needed = level * 100;
-    }
-    return { playerExp: exp, playerLevel: level, playerMaxHp: hp };
-  }),
+  addExp: (amount) => {
+    set((s) => {
+      let exp = s.playerExp + amount;
+      let level = s.playerLevel;
+      let hp = s.playerMaxHp;
+      let needed = level * 100;
+      while (exp >= needed) {
+        exp -= needed;
+        level++;
+        hp += 50; // レベルアップでHP+50
+        needed = level * 100;
+      }
+      return { playerExp: exp, playerLevel: level, playerMaxHp: hp };
+    });
+    get().checkAchievements();
+  },
   addMaterial: (id, amount) => set((s) => ({
     materials: { ...s.materials, [id]: Math.max(0, (s.materials[id] || 0) + amount) },
   })),
@@ -429,12 +470,24 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setCurrentEnemy: (enemy) => set({ currentEnemy: enemy }),
-  captureMonster: (monsterId) => set((s) => ({
-    capturedMonsters: s.capturedMonsters.includes(monsterId) ? s.capturedMonsters : [...s.capturedMonsters, monsterId],
-  })),
-  clearDungeon: (dungeonId) => set((s) => ({
-    clearedDungeons: s.clearedDungeons.includes(dungeonId) ? s.clearedDungeons : [...s.clearedDungeons, dungeonId],
-  })),
+  captureMonster: (monsterId) => {
+    set((s) => ({
+      capturedMonsters: s.capturedMonsters.includes(monsterId) ? s.capturedMonsters : [...s.capturedMonsters, monsterId],
+    }));
+    get().checkAchievements();
+  },
+  clearDungeon: (dungeonId) => {
+    set((s) => ({
+      clearedDungeons: s.clearedDungeons.includes(dungeonId) ? s.clearedDungeons : [...s.clearedDungeons, dungeonId],
+    }));
+    get().checkAchievements();
+  },
+  defeatBoss: (bossId) => {
+    set((s) => ({
+      bossesDefeated: s.bossesDefeated.includes(bossId) ? s.bossesDefeated : [...s.bossesDefeated, bossId],
+    }));
+    get().checkAchievements();
+  },
 
   // 鍛冶: ソケット強化
   upgradeSocket: (diceId, faceNumber, socketIndex) => {
@@ -488,6 +541,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...costUpdate,
       };
     });
+    get().checkAchievements();
     return true;
   },
 
@@ -543,9 +597,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   // 章進行
-  advanceChapter: () => set((s) => ({
-    currentChapter: Math.min(7, s.currentChapter + 1),
-  })),
+  advanceChapter: () => {
+    set((s) => ({
+      currentChapter: Math.min(7, s.currentChapter + 1),
+      gold: s.gold + 500,
+      gems: s.gems + 5,
+      materials: {
+        ...s.materials,
+        'rare-ore': s.materials['rare-ore'] + 1,
+      },
+    }));
+    get().checkAchievements();
+  },
 
   // セーブ
   save: async () => {
@@ -621,6 +684,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpPoints: pvpPts,
       pvpWins: pvpW,
       pvpLosses: pvpL,
+      bossesDefeated: (d as any).bossesDefeated || [],
+      achievements: (d as any).achievements || [],
       protagonistDice: migratedProtagonist,
       ownedDice: migratedOwnedDice,
       currentScreen: 'town',
@@ -670,6 +735,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentChapter: 1,
       clearedDungeons: [],
       capturedMonsters: ['pyrachnid', 'frost-jelly', 'salamander-v2'],
+      bossesDefeated: [],
+      achievements: [],
       gachaPityDice: 0,
       gachaPityRune: 0,
       tutorial: { completed: true, currentStep: 0 },
