@@ -80,7 +80,12 @@ export function DiceEditorScreen() {
 
     equipRune(currentDice.id, selectedFace, selectedSocket, runeId);
     removeRune(runeId);
-    setSelectedSocket(null);
+    // 次の空きソケットに自動移動（なければそのまま維持）
+    const nextEmpty = currentCustomFace.sockets.findIndex((s, i) => i > selectedSocket && !s.skillRuneId);
+    if (nextEmpty !== -1) {
+      setSelectedSocket(nextEmpty);
+    }
+    // ソケット選択は維持（ルーン一覧が消えないように）
   };
 
   const handleUnequip = () => {
