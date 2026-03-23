@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
-import { MAX_SAME_MONSTER } from '../types';
+// MAX_SAME_MONSTER制限を撤廃（無制限取得可能）
 import type { DecomposeResult, PartyBonus } from '../types';
 import { CHAPTER1_MONSTERS, PROTAGONIST_DICE, ALL_MONSTERS } from '../data/monsters';
 import { SKILL_RUNES } from '../data/skill-runes';
@@ -250,12 +250,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addDice: (dice) => {
     const s = get();
-    // Count existing instances of this base monster
     const baseId = dice.id;
+    // ユニークなインスタンスID生成
     const existing = s.ownedDice.filter(d => (d.baseId || d.id) === baseId);
-    if (existing.length >= MAX_SAME_MONSTER) return; // can't add more
-
-    const instanceId = `${baseId}_${String(existing.length + 1).padStart(3, '0')}`;
+    const instanceId = `${baseId}_${String(existing.length + 1).padStart(3, '0')}_${Date.now() % 10000}`;
     const newDice = applyDefaultSocketTiers({ ...dice, id: instanceId, baseId: baseId });
     set({ ownedDice: [...s.ownedDice, newDice] });
   },
