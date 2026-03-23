@@ -296,6 +296,11 @@ body {
   50% { opacity: 1; }
 }
 
+@keyframes legendaryPulse {
+  0%, 100% { box-shadow: 0 0 12px #d4a020, 0 0 24px rgba(212,160,32,0.4); }
+  50% { box-shadow: 0 0 20px #e8c040, 0 0 40px rgba(232,192,64,0.6); }
+}
+
 @keyframes centerFlash {
   0% { opacity: 0; transform: scale(0.7); }
   15% { opacity: 1; transform: scale(1.05); }

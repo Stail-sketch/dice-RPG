@@ -350,37 +350,49 @@ function DiceResultCard({ monster }: { monster: MonsterDice }) {
 function RuneResultCard({ rune }: { rune: SkillRune }) {
   const tierColor = RUNE_TIER_COLORS[rune.tier] || '#6a5a4a';
   const isEpic = rune.tier === 'epic';
+  const isLegendary = rune.tier === 'legendary';
 
   return (
     <div style={{
       width: 72,
       padding: 6,
-      border: `2px solid ${isEpic ? '#7050a0' : '#c0b8a8'}`,
+      border: isLegendary ? '3px solid #d4a020' : `2px solid ${isEpic ? '#7050a0' : '#c0b8a8'}`,
       borderRadius: 6,
-      background: isEpic ? '#ece0f0' : '#ece5d8',
+      background: isLegendary ? 'linear-gradient(135deg, #fff8e0, #f0d870, #fff8e0)' : isEpic ? '#ece0f0' : '#ece5d8',
       textAlign: 'center',
+      boxShadow: isLegendary ? '0 0 12px #d4a020, 0 0 24px rgba(212,160,32,0.4)' : isEpic ? '0 0 6px rgba(112,80,160,0.3)' : 'none',
+      animation: isLegendary ? 'legendaryPulse 1.5s ease infinite' : undefined,
+      position: 'relative' as const,
     }}>
+      {isLegendary && (
+        <div style={{
+          position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 10, color: '#d4a020', fontWeight: 'bold',
+          textShadow: '0 0 4px rgba(212,160,32,0.6)',
+        }}>★</div>
+      )}
       <div style={{
         width: 28, height: 28,
         margin: '0 auto 3px',
-        border: `2px solid ${ELEMENT_COLORS[rune.element]}`,
+        border: isLegendary ? '2px solid #d4a020' : `2px solid ${ELEMENT_COLORS[rune.element]}`,
         borderRadius: '50%',
-        background: '#f5f0e8',
+        background: isLegendary ? '#fffae0' : '#f5f0e8',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 12,
+        boxShadow: isLegendary ? '0 0 8px #d4a020' : 'none',
       }}>
-        <span style={{ color: ELEMENT_COLORS[rune.element] }}>◆</span>
+        <span style={{ color: isLegendary ? '#d4a020' : ELEMENT_COLORS[rune.element] }}>{isLegendary ? '★' : '◆'}</span>
       </div>
       <div style={{ fontSize: 8, color: tierColor, fontWeight: 'bold' }}>
         {RUNE_TIER_LABELS[rune.tier]}
       </div>
-      <div style={{ fontSize: 9, color: '#3a2a1a', fontWeight: 'bold', marginTop: 1 }}>
+      <div style={{ fontSize: 9, color: isLegendary ? '#8a6010' : '#3a2a1a', fontWeight: 'bold', marginTop: 1 }}>
         {rune.name}
       </div>
       <div style={{ marginTop: 2 }}>
         <ElementBadge element={rune.element} />
       </div>
-      <div style={{ fontSize: 7, color: '#998a78', marginTop: 2 }}>
+      <div style={{ fontSize: 7, color: isLegendary ? '#8a6010' : '#998a78', marginTop: 2 }}>
         {rune.effect.description}
       </div>
     </div>
