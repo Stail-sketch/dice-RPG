@@ -357,12 +357,19 @@ export function GachaScreen() {
                 })}
                 {/* ダイス本体 - 中央固定 */}
                 <div style={{
-                  fontSize: isLeg ? 80 : isEpic ? 72 : 60,
+                  width: isLeg ? 90 : isEpic ? 80 : 68,
+                  height: isLeg ? 90 : isEpic ? 80 : 68,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   animation: `gachaSpinCenter ${isLeg ? 0.25 : isEpic ? 0.35 : 0.5}s linear infinite`,
-                  color: spinColor,
-                  textShadow: `0 0 20px ${spinColor}, 0 0 40px ${spinColor}60`,
-                  lineHeight: 1,
-                }}>⚅</div>
+                }}>
+                  <span style={{
+                    fontSize: isLeg ? 80 : isEpic ? 72 : 60,
+                    color: spinColor,
+                    textShadow: `0 0 20px ${spinColor}, 0 0 40px ${spinColor}60`,
+                    lineHeight: 1,
+                    display: 'block',
+                  }}>⚅</span>
+                </div>
                 {/* 昇格テキスト演出 */}
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   {phases.length >= 2 && (
