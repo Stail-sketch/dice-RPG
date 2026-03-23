@@ -188,14 +188,20 @@ export function DiceEditorScreen() {
       {/* ダイス操作ボタン */}
       {currentDice && (
         <div style={{ display: 'flex', gap: 4, margin: '4px 0' }}>
-          <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
-            onClick={() => {
-              unequipAllRunes(currentDice.id);
-              setMessage(`${currentDice.name}のルーンを全て外しました`);
-              setSelectedFace(null); setSelectedSocket(null);
-              setTimeout(() => setMessage(null), 1200);
-            }}
-          >{currentDice.name}のルーン全外し</button>
+          {selectedFace && currentCustomFace && currentCustomFace.sockets.some(s => s.skillRuneId) && (
+            <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
+              onClick={() => {
+                for (let i = 0; i < currentCustomFace.sockets.length; i++) {
+                  if (currentCustomFace.sockets[i].skillRuneId) {
+                    unequipRune(currentDice.id, selectedFace, i);
+                  }
+                }
+                setSelectedSocket(null);
+                setMessage(`${selectedFace}の面のルーンを全て外しました`);
+                setTimeout(() => setMessage(null), 1200);
+              }}
+            >{selectedFace}面ルーン全外し</button>
+          )}
           {currentDice.id !== 'protagonist' && !party.includes(currentDice.id) && (
             <button className="rpg-btn rpg-btn-danger" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
               onClick={() => {
