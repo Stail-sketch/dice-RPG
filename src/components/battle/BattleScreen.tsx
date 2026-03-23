@@ -166,8 +166,11 @@ export function BattleScreen() {
     const bossDelay = isBoss ? 1500 : 0;
     if (isBoss) {
       setBossEntrance(true);
-      const bossMap: Record<number, string> = { 1: 'boss-blaze', 2: 'boss-frost', 3: 'boss-volt', 4: 'boss-venom', 5: 'boss-alloy', 6: 'boss-mirage', 7: 'boss-final' };
-      bgm.play((bossMap[currentChapter] ?? 'boss') as any);
+      // ボスBGMはダイアログ開始時に既に再生中。未再生の場合のみ開始
+      if (!bgm.currentTrackName?.startsWith('boss')) {
+        const bossMap: Record<number, string> = { 1: 'boss-blaze', 2: 'boss-frost', 3: 'boss-volt', 4: 'boss-venom', 5: 'boss-alloy', 6: 'boss-mirage', 7: 'boss-final' };
+        bgm.play((bossMap[currentChapter] ?? 'boss') as any);
+      }
       setTimeout(() => setBossEntrance(false), 1500);
     }
 

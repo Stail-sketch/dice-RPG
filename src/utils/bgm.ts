@@ -790,6 +790,7 @@ class BGMEngine {
   private _volume = 0.3;
   private _muted = false;
 
+  get currentTrackName(): string | null { return this.currentTrack; }
   get volume() { return this._volume; }
   set volume(v: number) {
     this._volume = Math.max(0, Math.min(1, v));

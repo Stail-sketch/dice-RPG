@@ -30,6 +30,8 @@ export function BGMController() {
 
   useEffect(() => {
     if (currentScreen === 'battle') {
+      // ボスBGMが既に流れている場合は上書きしない
+      if (bgm.currentTrackName?.startsWith('boss')) return;
       const chapterBattleMap: Record<number, BGMTrack> = {
         1: 'battle',
         2: 'battle-frost',
