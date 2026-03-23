@@ -2308,11 +2308,22 @@ function renderSpriteToDataURL(spriteDef: SpriteDef): string {
   return canvas.toDataURL();
 }
 
+function resolveBaseId(monsterId: string): string {
+  // SPRITESに直接あればそのまま
+  if (SPRITES[monsterId]) return monsterId;
+  // インスタンスID（例: pyrachnid_001_1234）→ baseId部分を抽出
+  // パターン: baseId_NNN_NNNN or baseId_NNN
+  const match = monsterId.match(/^(.+?)_\d{3}/);
+  if (match && SPRITES[match[1]]) return match[1];
+  return monsterId;
+}
+
 function getSpriteDataURL(monsterId: string): string {
-  if (spriteCache.has(monsterId)) return spriteCache.get(monsterId)!;
-  const def = SPRITES[monsterId] || DEFAULT_SPRITE;
+  const baseId = resolveBaseId(monsterId);
+  if (spriteCache.has(baseId)) return spriteCache.get(baseId)!;
+  const def = SPRITES[baseId] || DEFAULT_SPRITE;
   const url = renderSpriteToDataURL(def);
-  spriteCache.set(monsterId, url);
+  spriteCache.set(baseId, url);
   return url;
 }
 

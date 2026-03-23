@@ -149,18 +149,20 @@ export function DungeonScreen() {
   const { setScreen, setCurrentEnemy, capturedMonsters, bossesDefeated, currentChapter, advanceChapter } = useGameStore();
   const [hardMode, setHardMode] = useState(false);
   const [bossDialogueTarget, setBossDialogueTarget] = useState<MonsterDice | null>(null);
+  const [displayChapter, setDisplayChapter] = useState(currentChapter);
 
-  const displayChapter = currentChapter;
   const chapterMonsters = CHAPTER_MONSTERS[displayChapter] || CHAPTER1_MONSTERS;
   const normalMonsters = chapterMonsters.filter(m => m.rarity <= 2);
   const rareMonsters = chapterMonsters.filter(m => m.rarity === 3);
   const bossMonster = chapterMonsters.find(m => m.rarity >= 4);
 
-  // 全章クリアで高難度解禁
+  // 全章クリアで高難度解禁（最大進行度で判定）
   const allCleared = currentChapter >= 7 && bossMonster && bossesDefeated.includes(bossMonster.id);
 
-  // ボス撃破済みかチェック（章進行条件）
+  // この表示中の章のボスが撃破済みか
   const bossDefeated = bossMonster ? bossesDefeated.includes(bossMonster.id) : false;
+  // ゲーム進行度として次の章に進めるか（現在の最大到達章で判定）
+  const canAdvanceToNext = displayChapter < currentChapter || (bossDefeated && displayChapter === currentChapter && currentChapter < 7);
 
   const doStartBattle = (monster: MonsterDice) => {
     // 高難度モード: 敵のルーン装着率100%＋全ソケットsilver化
@@ -293,20 +295,25 @@ export function DungeonScreen() {
 
       <div style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={{ display: 'flex', gap: 4 }}>
-          {currentChapter > 1 && (
+          {displayChapter > 1 && (
             <button
               className="rpg-btn"
               style={{ flex: 1 }}
-              onClick={() => useGameStore.setState({ currentChapter: currentChapter - 1 })}
+              onClick={() => setDisplayChapter(displayChapter - 1)}
             >
               前の章へ
             </button>
           )}
-          {bossDefeated && currentChapter < 7 && (
+          {canAdvanceToNext && (
             <button
               className="rpg-btn"
               style={{ flex: 1 }}
-              onClick={() => advanceChapter()}
+              onClick={() => {
+                if (displayChapter === currentChapter && bossDefeated) {
+                  advanceChapter(); // ゲーム進行度を更新
+                }
+                setDisplayChapter(Math.min(7, displayChapter + 1));
+              }}
             >
               次の章へ
             </button>
