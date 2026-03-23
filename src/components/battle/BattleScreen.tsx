@@ -710,6 +710,11 @@ export function BattleScreen() {
 
           setTimeout(() => {
             setCurrentActions([]); setAttackLabel('');
+            // 合計ダメージ
+            const allActions = [...result.firstActions, ...result.secondActions];
+            const playerTotalDmg = allActions.filter(a => !a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+            const enemyTotalDmg = allActions.filter(a => a.targetIsPlayer && a.effectType === 'damage').reduce((s, a) => s + a.finalDamage, 0);
+            addLog(`  合計 → 自分${playerTotalDmg}dmg / 敵${enemyTotalDmg}dmg`);
             // HP変動詳細
             const pDelta = result.playerHp - result.prePlayerHp;
             const eDelta = result.enemyHp - result.preEnemyHp;
@@ -939,6 +944,7 @@ export function BattleScreen() {
               : line.startsWith('  ★') ? '#705828'
               : line.includes('ルーン獲得') ? '#4070a0'
               : line.includes('封印') ? (line.includes('成功') ? '#308050' : '#b04030')
+              : line.startsWith('  合計') ? '#3a2a1a'
               : line.includes('状態異常で') ? '#906020'
               : line.startsWith('  自分:') || line.startsWith('  敵:') ? '#7050a0'
               : line.startsWith('  攻撃倍率') ? '#3070a0'
