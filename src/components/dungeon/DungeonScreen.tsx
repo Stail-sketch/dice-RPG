@@ -84,7 +84,7 @@ export function DungeonScreen() {
         }
       }
     }
-    useGameStore.setState({ isHardMode: hardMode } as any);
+    useGameStore.setState({ isHardMode: hardMode });
     setCurrentEnemy(party);
     setScreen('battle');
   };

@@ -1,5 +1,5 @@
 import type { MonsterDice, SkillRune } from '../../types';
-import { CHAPTER1_MONSTERS } from '../../data/monsters';
+import { ALL_MONSTERS } from '../../data/monsters';
 import { SKILL_RUNES } from '../../data/skill-runes';
 
 // ガチャコスト
@@ -44,13 +44,12 @@ function pickRarity(pityCount: number): 1 | 2 | 3 | 4 | 5 {
 }
 
 function pickMonsterByRarity(rarity: 1 | 2 | 3 | 4 | 5): MonsterDice {
-  const pool = CHAPTER1_MONSTERS.filter(m => m.rarity === rarity);
-  // ★5はプールにないので★4のボスを返す（最高レア扱い）
+  const pool = ALL_MONSTERS.filter(m => m.rarity === rarity);
   if (pool.length === 0) {
-    // ★5の場合は洞窟竜（★4ボス）を特別扱いで返す
-    const boss = CHAPTER1_MONSTERS.find(m => m.rarity === 4);
-    if (boss) return { ...boss };
-    return { ...CHAPTER1_MONSTERS[0] };
+    // フォールバック: 1つ下のレアリティから
+    const fallback = ALL_MONSTERS.filter(m => m.rarity === (rarity - 1 as any));
+    if (fallback.length > 0) return { ...fallback[Math.floor(Math.random() * fallback.length)] };
+    return { ...ALL_MONSTERS[0] };
   }
   const picked = pool[Math.floor(Math.random() * pool.length)];
   return { ...picked };

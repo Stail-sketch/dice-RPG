@@ -75,6 +75,7 @@ interface GameState {
   pvpWins: number;
   pvpLosses: number;
   isPvpBattle: boolean;
+  isHardMode: boolean;
   addPvpResult: (won: boolean) => void;
 
   // ダイス
@@ -231,6 +232,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpWins: 0,
   pvpLosses: 0,
   isPvpBattle: false,
+  isHardMode: false,
   addPvpResult: (won) => set((s) => ({
     pvpPoints: s.pvpPoints + (won ? 3 : 1),
     pvpWins: s.pvpWins + (won ? 1 : 0),
@@ -603,8 +605,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     const migratedOwnedDice = (d.ownedDice || []).map(migrateDice);
     const migratedProtagonist = d.protagonistDice || PROTAGONIST_DICE;
 
+    // 旧セーブからの不足フィールドをデフォルト値で補完
+    const level = (d as any).playerLevel || 1;
+    const exp = (d as any).playerExp || 0;
+    const frags = (d as any).gemFragments || 0;
+    const expansions = (d as any).socketExpansions || {};
+    const pvpPts = (d as any).pvpPoints || 0;
+    const pvpW = (d as any).pvpWins || 0;
+    const pvpL = (d as any).pvpLosses || 0;
+    // HPがレベルに対して低すぎる場合（旧セーブ）→ レベル基準で再計算
+    const expectedHp = 50 + (level - 1) * 50;
+    const hp = d.playerMaxHp < expectedHp ? expectedHp : d.playerMaxHp;
+    // materialsのexpansion-crystal補完
+    const mats = d.materials || { 'forge-stone': 0, 'rare-ore': 0, 'expansion-crystal': 0 };
+    if (!('expansion-crystal' in mats)) (mats as any)['expansion-crystal'] = 0;
+
     set({
       ...d,
+      playerLevel: level,
+      playerExp: exp,
+      playerMaxHp: hp,
+      gemFragments: frags,
+      materials: mats,
+      socketExpansions: expansions,
+      pvpPoints: pvpPts,
+      pvpWins: pvpW,
+      pvpLosses: pvpL,
       protagonistDice: migratedProtagonist,
       ownedDice: migratedOwnedDice,
       currentScreen: 'town',

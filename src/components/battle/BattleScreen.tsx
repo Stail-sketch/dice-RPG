@@ -26,7 +26,10 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save } = useGameStore();
+  const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
+    save().then(() => setScreen(screen));
+  }, [save, setScreen]);
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [lastTurn, setLastTurn] = useState<TurnResult | null>(null);
@@ -834,8 +837,8 @@ export function BattleScreen() {
     if (!currentEnemy || !currentEnemy[0]) return;
     const monster = currentEnemy[0];
     if (captureRes.success) { addDice({ ...monster }); captureMonster(monster.id); }
-    setScreen('dungeon');
-  }, [currentEnemy, addDice, captureMonster, setScreen]);
+    autoSaveAndGo('dungeon');
+  }, [currentEnemy, addDice, captureMonster, autoSaveAndGo]);
 
   const isRolling = phase === 'rolling';
   const isAnimating = ['first-label', 'first-attack', 'second-label', 'second-attack'].includes(phase);
@@ -1079,23 +1082,23 @@ export function BattleScreen() {
         {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
-            <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
+            <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
           </div>
         )}
         {phase === 'result' && battle?.status === 'player-win' && isPvpBattle && (
           <div>
             <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>PVP勝利！ +3pt +300G</div>
-            <button className="rpg-btn" onClick={() => { sfx.click(); setScreen('pvp'); }} style={{ margin: 0, padding: '10px 12px' }}>決闘場に戻る</button>
+            <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('pvp'); }} style={{ margin: 0, padding: '10px 12px' }}>決闘場に戻る</button>
           </div>
         )}
         {phase === 'result' && battle && battle.status !== 'player-win' && (
-          <button className="rpg-btn" onClick={() => { sfx.click(); setScreen(isPvpBattle ? 'pvp' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
+          <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo(isPvpBattle ? 'pvp' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
         )}
         {phase === 'capture' && (<div style={{ textAlign: 'center', fontSize: 11, color: '#6a5a4a' }}>封印中...</div>)}
       </div>
 
       {phase === 'capture' && currentEnemy && currentEnemy[0] && (
-        <CaptureScene monster={currentEnemy[0]} onComplete={onCaptureComplete} onSkip={() => setScreen('dungeon')} />
+        <CaptureScene monster={currentEnemy[0]} onComplete={onCaptureComplete} onSkip={() => autoSaveAndGo('dungeon')} />
       )}
     </div>
   );
