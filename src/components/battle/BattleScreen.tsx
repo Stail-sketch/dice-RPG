@@ -162,10 +162,11 @@ export function BattleScreen() {
     setPhase('rolling'); // すぐにphaseを変更してボタンを非表示に
     setLog([]);
 
-    // ボス演出: カットイン → 通常開始
+    // ボス演出: カットイン → 通常開始 + ボスBGM
     const bossDelay = isBoss ? 1500 : 0;
     if (isBoss) {
       setBossEntrance(true);
+      bgm.play('boss');
       setTimeout(() => setBossEntrance(false), 1500);
     }
 
