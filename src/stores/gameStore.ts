@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
 import { MAX_SAME_MONSTER } from '../types';
 import type { DecomposeResult, PartyBonus } from '../types';
-import { CHAPTER1_MONSTERS, PROTAGONIST_DICE } from '../data/monsters';
+import { CHAPTER1_MONSTERS, PROTAGONIST_DICE, ALL_MONSTERS } from '../data/monsters';
 import { SKILL_RUNES } from '../data/skill-runes';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
@@ -541,8 +541,47 @@ export const useGameStore = create<GameState>((set, get) => ({
     const data = await loadGame();
     if (!data) return false;
     const d = data as ReturnType<typeof getSaveableState>;
+
+    // マイグレーション: カスタム面のlockedルーンを復元
+    const migrateDice = (dice: MonsterDice): MonsterDice => {
+      if (dice.id === 'protagonist') return dice;
+      // baseIdまたはidからテンプレートを探す
+      const baseId = (dice as any).baseId || dice.id;
+      const template = ALL_MONSTERS.find(m => m.id === baseId);
+      if (!template) return dice;
+
+      const newCustom = dice.customFaces.map((face, fi) => {
+        const tmplFace = template.customFaces[fi];
+        if (!tmplFace) return face;
+
+        const newSockets = face.sockets.map((sock, si) => {
+          const tmplSock = tmplFace.sockets[si];
+          if (tmplSock && tmplSock.locked && !sock.locked) {
+            // テンプレにlockedがあるのにセーブデータにない → 復元
+            return { ...sock, skillRuneId: tmplSock.skillRuneId, locked: true };
+          }
+          return sock;
+        });
+
+        // テンプレのほうがソケット数が多い場合（通常ないが安全策）
+        if (tmplFace.sockets.length > face.sockets.length) {
+          for (let si = face.sockets.length; si < tmplFace.sockets.length; si++) {
+            newSockets.push({ ...tmplFace.sockets[si] });
+          }
+        }
+
+        return { ...face, sockets: newSockets };
+      });
+      return { ...dice, customFaces: newCustom };
+    };
+
+    const migratedOwnedDice = (d.ownedDice || []).map(migrateDice);
+    const migratedProtagonist = d.protagonistDice || PROTAGONIST_DICE;
+
     set({
       ...d,
+      protagonistDice: migratedProtagonist,
+      ownedDice: migratedOwnedDice,
       currentScreen: 'town',
       battleState: null,
       currentEnemy: null,
