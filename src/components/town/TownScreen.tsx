@@ -7,11 +7,33 @@ import { useGameStore, type Screen } from '../../stores/gameStore';
 const W = 320;
 const H = 520;
 
-const GRASS = '#88a848';
-const GRASS2 = '#80a040';
-const GRASS3 = '#90b050';
-const PATH = '#c8b890';
-const PATH_EDGE = '#b8a880';
+// ==============================
+// チャプター別テーマ
+// ==============================
+interface ChapterTheme {
+  grass: string; grass2: string; grass3: string;
+  path: string; pathEdge: string;
+  treeLeaf: string; treeLeaf2: string; treeLeaf3: string;
+  skyTint?: string;
+}
+
+const CHAPTER_THEMES: Record<number, ChapterTheme> = {
+  1: { grass: '#88a848', grass2: '#80a040', grass3: '#90b050', path: '#c8b890', pathEdge: '#b8a880', treeLeaf: '#407028', treeLeaf2: '#508830', treeLeaf3: '#609838' }, // default
+  2: { grass: '#78a0a8', grass2: '#709898', grass3: '#80a8b0', path: '#c0c8d0', pathEdge: '#b0b8c0', treeLeaf: '#285870', treeLeaf2: '#308880', treeLeaf3: '#389890' }, // frost
+  3: { grass: '#88a048', grass2: '#80a040', grass3: '#98b050', path: '#c8c090', pathEdge: '#b8b080', treeLeaf: '#507028', treeLeaf2: '#608830', treeLeaf3: '#6a9838' }, // volt
+  4: { grass: '#607848', grass2: '#587040', grass3: '#688050', path: '#a0a870', pathEdge: '#909868', treeLeaf: '#306028', treeLeaf2: '#387030', treeLeaf3: '#408038' }, // venom
+  5: { grass: '#808878', grass2: '#788070', grass3: '#889080', path: '#b0b0a8', pathEdge: '#a0a098', treeLeaf: '#506850', treeLeaf2: '#607060', treeLeaf3: '#687868' }, // alloy
+  6: { grass: '#7878a0', grass2: '#707098', grass3: '#8080a8', path: '#b8b0c8', pathEdge: '#a8a0b8', treeLeaf: '#405080', treeLeaf2: '#485888', treeLeaf3: '#506090' }, // mirage
+  7: { grass: '#906050', grass2: '#885848', grass3: '#986858', path: '#c0a898', pathEdge: '#b09888', treeLeaf: '#604028', treeLeaf2: '#684830', treeLeaf3: '#705038' }, // final
+};
+
+const CHAPTER_DISPLAY: Record<number, string> = {
+  1: '炎の洞窟', 2: '氷結の峡谷', 3: '雷鳴の塔', 4: '毒沼の森', 5: '鋼鉄の遺跡', 6: '幻影の神殿', 7: '運命の回廊',
+};
+
+function getTheme(chapter: number): ChapterTheme {
+  return CHAPTER_THEMES[chapter] || CHAPTER_THEMES[1];
+}
 
 // ==============================
 // 建物
@@ -184,8 +206,8 @@ const BUILDINGS: Building[] = [
 // ==============================
 // 描画ヘルパー
 // ==============================
-function drawPaths(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = PATH;
+function drawPaths(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
+  ctx.fillStyle = theme.path;
   // 水平
   ctx.fillRect(72, 78, 120, 6);
   ctx.fillRect(90, 194, 110, 6);
@@ -201,19 +223,19 @@ function drawPaths(ctx: CanvasRenderingContext2D) {
   // 中央縦
   ctx.fillRect(155, 194, 6, 116);
   // エッジ
-  ctx.fillStyle = PATH_EDGE;
+  ctx.fillStyle = theme.pathEdge;
   ctx.fillRect(72, 77, 120, 1);
   ctx.fillRect(72, 84, 120, 1);
 }
 
-function drawDecorations(ctx: CanvasRenderingContext2D) {
+function drawDecorations(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
   // 木
   const trees: [number, number][] = [[110, 55], [280, 80], [8, 140], [155, 145], [280, 240], [140, 340], [10, 360], [270, 370], [95, 460]];
   for (const [tx, ty] of trees) {
     rect(ctx, tx + 5, ty + 14, 4, 10, '#604828');
-    rect(ctx, tx, ty, 14, 15, '#407028');
-    rect(ctx, tx + 2, ty + 2, 10, 11, '#508830');
-    rect(ctx, tx + 4, ty + 4, 6, 7, '#609838');
+    rect(ctx, tx, ty, 14, 15, theme.treeLeaf);
+    rect(ctx, tx + 2, ty + 2, 10, 11, theme.treeLeaf2);
+    rect(ctx, tx + 4, ty + 4, 6, 7, theme.treeLeaf3);
   }
 
   // 花
@@ -256,12 +278,12 @@ function drawDecorations(ctx: CanvasRenderingContext2D) {
   rect(ctx, 178, 242, 5, 2, '#d0a040');
 }
 
-function drawGrass(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = GRASS;
+function drawGrass(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
+  ctx.fillStyle = theme.grass;
   ctx.fillRect(0, 0, W, H);
   // テクスチャ
   for (let i = 0; i < 200; i++) {
-    ctx.fillStyle = i % 3 === 0 ? GRASS2 : GRASS3;
+    ctx.fillStyle = i % 3 === 0 ? theme.grass2 : theme.grass3;
     const gx = (i * 37 + 13) % W;
     const gy = (i * 53 + 7) % H;
     ctx.fillRect(gx, gy, 2, 1);
@@ -274,8 +296,12 @@ function drawGrass(ctx: CanvasRenderingContext2D) {
 export function TownScreen() {
   const { setScreen, playerMaxHp, playerLevel, gold, gems, gemFragments, currentChapter, save } = useGameStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
 
+  const theme = getTheme(currentChapter);
+
+  // ベースCanvas描画
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -283,17 +309,131 @@ export function TownScreen() {
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
 
-    drawGrass(ctx);
-    drawPaths(ctx);
-    drawDecorations(ctx);
+    drawGrass(ctx, theme);
+    drawPaths(ctx, theme);
+    drawDecorations(ctx, theme);
 
     for (const b of BUILDINGS) {
       if (b.disabled) ctx.globalAlpha = 0.5;
       b.draw(ctx, b.x, b.y, b.w, b.h);
       ctx.globalAlpha = 1;
     }
-    // テキストはCanvas外のHTML overlayで描画
-  }, []);
+  }, [currentChapter, theme]);
+
+  // アンビエントアニメーション（オーバーレイCanvas）
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+    const ctx = overlay.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    let frame = 0;
+
+    // 煙パーティクル状態
+    const smokeParticles = [
+      { x: 0, y: 0, life: 0 },
+      { x: 0, y: 0, life: 0 },
+      { x: 0, y: 0, life: 0 },
+    ];
+    // 鍛冶屋の煙突位置 (forge: x=36, y=170, w=54)
+    const chimneyX = 36 + 54 - 12; // x + w - 12
+    const chimneyY = 170 - 18;     // y - 18
+
+    // チャプター別パーティクル
+    const chapterParticles: { x: number; y: number; vy: number; vx: number; life: number; maxLife: number }[] = [];
+    const MAX_PARTICLES = 12;
+
+    function spawnChapterParticle() {
+      if (chapterParticles.length >= MAX_PARTICLES) return;
+      const ch = currentChapter;
+      let p = { x: 0, y: 0, vy: 0, vx: 0, life: 0, maxLife: 16 };
+      if (ch === 2) { // snow
+        p = { x: Math.floor(Math.random() * W), y: -2, vy: 1.5, vx: (Math.random() - 0.5) * 0.5, life: 0, maxLife: Math.floor(H / 1.5) };
+      } else if (ch === 3) { // lightning flicker (on dungeon building)
+        p = { x: 16 + Math.floor(Math.random() * 56), y: 50 + Math.floor(Math.random() * 48), vy: 0, vx: 0, life: 0, maxLife: 2 };
+      } else if (ch === 4) { // green fog
+        p = { x: Math.floor(Math.random() * W), y: H - 20 + Math.floor(Math.random() * 20), vy: -0.5, vx: (Math.random() - 0.5) * 1, life: 0, maxLife: 20 };
+      } else if (ch === 5) { // metallic sparks near forge (forge: x=36, y=170)
+        p = { x: 36 + Math.floor(Math.random() * 54), y: 170 + Math.floor(Math.random() * 30), vy: -1, vx: (Math.random() - 0.5) * 2, life: 0, maxLife: 6 };
+      } else if (ch === 6) { // purple wisps near gacha shrine (gacha: x=200, y=286)
+        p = { x: 200 + Math.floor(Math.random() * 52), y: 286 + Math.floor(Math.random() * 44), vy: -0.8, vx: (Math.random() - 0.5) * 1.5, life: 0, maxLife: 12 };
+      } else if (ch === 7) { // red embers
+        p = { x: Math.floor(Math.random() * W), y: H, vy: -1.2, vx: (Math.random() - 0.5) * 0.8, life: 0, maxLife: 18 };
+      }
+      if (ch >= 2) chapterParticles.push(p);
+    }
+
+    const interval = setInterval(() => {
+      ctx.clearRect(0, 0, W, H);
+      frame++;
+
+      // 井戸の水キラキラ (井戸: x=146, y=234, w=12, h=6)
+      const wellColors = ['#4080a0', '#50a0c0', '#3878a0', '#60b0d0'];
+      for (let wy = 0; wy < 3; wy++) {
+        for (let wx = 0; wx < 4; wx++) {
+          const ci = (frame + wx + wy * 3) % wellColors.length;
+          rect(ctx, 146 + wx * 3, 234 + wy * 2, 2, 2, wellColors[ci]);
+        }
+      }
+
+      // 鍛冶屋の煙
+      for (const sp of smokeParticles) {
+        sp.life--;
+        if (sp.life <= 0) {
+          sp.x = chimneyX + Math.floor(Math.random() * 3);
+          sp.y = chimneyY;
+          sp.life = 8 + Math.floor(Math.random() * 6);
+        }
+        sp.y -= 1;
+        sp.x += Math.random() > 0.5 ? 1 : -1;
+        const alpha = Math.max(0.2, sp.life / 14);
+        const gray = 140 + Math.floor((1 - alpha) * 60);
+        ctx.fillStyle = `rgba(${gray},${gray},${gray},${alpha.toFixed(2)})`;
+        ctx.fillRect(Math.floor(sp.x), Math.floor(sp.y), 3, 2);
+      }
+
+      // チャプター別エフェクト
+      if (frame % 3 === 0) spawnChapterParticle();
+
+      for (let i = chapterParticles.length - 1; i >= 0; i--) {
+        const p = chapterParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+        if (p.life >= p.maxLife) {
+          chapterParticles.splice(i, 1);
+          continue;
+        }
+
+        const ch = currentChapter;
+        if (ch === 2) { // snow - white dots
+          ctx.fillStyle = '#e8e8f0';
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 2, 2);
+        } else if (ch === 3) { // lightning - yellow flash
+          ctx.fillStyle = '#e0d040';
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 3, 2);
+        } else if (ch === 4) { // green fog
+          const fogAlpha = Math.max(0.1, 1 - p.life / p.maxLife);
+          ctx.fillStyle = `rgba(80,140,60,${fogAlpha.toFixed(2)})`;
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 4, 2);
+        } else if (ch === 5) { // metallic sparks
+          ctx.fillStyle = p.life % 2 === 0 ? '#d0d0d0' : '#f0e880';
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 2, 2);
+        } else if (ch === 6) { // purple wisps
+          const wispAlpha = Math.max(0.15, 1 - p.life / p.maxLife);
+          ctx.fillStyle = `rgba(160,100,220,${wispAlpha.toFixed(2)})`;
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 3, 3);
+        } else if (ch === 7) { // red embers
+          const emberAlpha = Math.max(0.2, 1 - p.life / p.maxLife);
+          ctx.fillStyle = `rgba(200,80,40,${emberAlpha.toFixed(2)})`;
+          ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 2, 2);
+        }
+      }
+    }, 250); // ~4fps for pixel art feel
+
+    return () => clearInterval(interval);
+  }, [currentChapter]);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -323,7 +463,7 @@ export function TownScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100vh',
-      background: GRASS, alignItems: 'center',
+      background: theme.grass, alignItems: 'center',
     }}>
       {/* マップコンテナ（Canvas + HTMLオーバーレイ） */}
       <div style={{ position: 'relative', width: '100%', maxWidth: 400, flex: 1 }}>
@@ -337,6 +477,22 @@ export function TownScreen() {
             height: '100%',
             imageRendering: 'pixelated',
             cursor: 'pointer',
+            display: 'block',
+          }}
+        />
+
+        {/* アンビエントアニメーション用オーバーレイCanvas */}
+        <canvas
+          ref={overlayRef}
+          width={W}
+          height={H}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            imageRendering: 'pixelated',
+            pointerEvents: 'none',
             display: 'block',
           }}
         />
@@ -356,6 +512,9 @@ export function TownScreen() {
             </div>
             <div style={{ fontSize: 9, color: '#606050', marginTop: 1 }}>
               Chapter {currentChapter}
+            </div>
+            <div style={{ fontSize: 8, color: '#706858', marginTop: 1 }}>
+              {CHAPTER_DISPLAY[currentChapter] || ''}
             </div>
           </div>
 
