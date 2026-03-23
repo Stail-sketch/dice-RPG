@@ -83,6 +83,7 @@ interface GameState {
   pvpLosses: number;
   isPvpBattle: boolean;
   isHardMode: boolean;
+  battleChapter: number; // 実際に戦っている章（表示用チャプター）
   addPvpResult: (won: boolean) => void;
 
   // イベントダンジョン
@@ -275,6 +276,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   isPvpBattle: false,
   isHardMode: false,
+  battleChapter: 1,
   addPvpResult: (won) => {
     set((s) => ({
       pvpPoints: s.pvpPoints + (won ? 3 : 1),

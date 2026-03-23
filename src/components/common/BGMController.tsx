@@ -11,7 +11,7 @@ import type { BGMTrack } from '../../utils/bgm';
  */
 export function BGMController() {
   const currentScreen = useGameStore((s) => s.currentScreen);
-  const currentChapter = useGameStore((s) => s.currentChapter);
+  const battleChapter = useGameStore((s) => s.battleChapter);
   const [muted, setMuted] = useState(bgm.muted);
 
   // Load saved audio settings on mount
@@ -41,7 +41,7 @@ export function BGMController() {
         6: 'battle-mirage',
         7: 'battle-final',
       };
-      bgm.play(chapterBattleMap[currentChapter] ?? 'battle');
+      bgm.play(chapterBattleMap[battleChapter] ?? 'battle');
     } else {
       const trackMap: Record<string, BGMTrack> = {
         title: 'title',
@@ -60,7 +60,7 @@ export function BGMController() {
       const track = trackMap[currentScreen] ?? 'town';
       bgm.play(track);
     }
-  }, [currentScreen, currentChapter]);
+  }, [currentScreen, battleChapter]);
 
   const handleToggle = () => {
     const nowMuted = bgm.toggleMute();

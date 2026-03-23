@@ -66,11 +66,10 @@ const BOSS_DIALOGUE: Record<number, string[]> = {
 };
 
 // ボス戦前ダイアログコンポーネント
-function BossDialogue({ monster, lines, onComplete }: { monster: MonsterDice; lines: string[]; onComplete: () => void }) {
+function BossDialogue({ monster, lines, chapter, onComplete }: { monster: MonsterDice; lines: string[]; chapter: number; onComplete: () => void }) {
   const [lineIndex, setLineIndex] = useState(0);
 
-  // ダイアログ表示と同時に章別ボスBGM開始
-  const chapter = useGameStore((s) => s.currentChapter);
+  // ダイアログ表示と同時に章別ボスBGM開始（表示中の章を使う）
   useEffect(() => {
     const bossMap: Record<number, string> = { 1: 'boss-blaze', 2: 'boss-frost', 3: 'boss-volt', 4: 'boss-venom', 5: 'boss-alloy', 6: 'boss-mirage', 7: 'boss-final' };
     bgm.play((bossMap[chapter] ?? 'boss') as any);
@@ -184,7 +183,7 @@ export function DungeonScreen() {
         }
       }
     }
-    useGameStore.setState({ isHardMode: hardMode });
+    useGameStore.setState({ isHardMode: hardMode, battleChapter: displayChapter });
     setCurrentEnemy(party);
     setScreen('battle');
   };
@@ -237,6 +236,7 @@ export function DungeonScreen() {
         <BossDialogue
           monster={bossDialogueTarget}
           lines={BOSS_DIALOGUE[displayChapter]}
+          chapter={displayChapter}
           onComplete={() => {
             const target = bossDialogueTarget;
             setBossDialogueTarget(null);
