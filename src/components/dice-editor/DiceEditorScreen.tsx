@@ -66,7 +66,7 @@ export function DiceEditorScreen() {
   const handleEquip = (runeId: string) => {
     if (!currentDice || selectedFace === null || selectedSocket === null || !currentCustomFace) return;
     const socket = currentCustomFace.sockets[selectedSocket];
-    if (!socket) return;
+    if (!socket || socket.locked) return;
 
     // ソケットTierチェック
     const rune = ownedRunes.find(r => r.id === runeId);
@@ -89,7 +89,9 @@ export function DiceEditorScreen() {
   };
 
   const handleUnequip = () => {
-    if (!currentDice || selectedFace === null || selectedSocket === null) return;
+    if (!currentDice || selectedFace === null || selectedSocket === null || !currentCustomFace) return;
+    const socket = currentCustomFace.sockets[selectedSocket];
+    if (socket?.locked) return;
     unequipRune(currentDice.id, selectedFace, selectedSocket);
     setSelectedSocket(null);
   };
@@ -188,11 +190,11 @@ export function DiceEditorScreen() {
       {/* ダイス操作ボタン */}
       {currentDice && (
         <div style={{ display: 'flex', gap: 4, margin: '4px 0' }}>
-          {selectedFace && currentCustomFace && currentCustomFace.sockets.some(s => s.skillRuneId) && (
+          {selectedFace && currentCustomFace && currentCustomFace.sockets.some(s => s.skillRuneId && !s.locked) && (
             <button className="rpg-btn" style={{ flex: 1, padding: '4px 0', margin: 0, fontSize: 9 }}
               onClick={() => {
                 for (let i = 0; i < currentCustomFace.sockets.length; i++) {
-                  if (currentCustomFace.sockets[i].skillRuneId) {
+                  if (currentCustomFace.sockets[i].skillRuneId && !currentCustomFace.sockets[i].locked) {
                     unequipRune(currentDice.id, selectedFace, i);
                   }
                 }
@@ -314,6 +316,7 @@ export function DiceEditorScreen() {
                   {(currentFace as CustomFace).sockets.map((s, i) => {
                     const rune = s.skillRuneId ? getSkillRune(s.skillRuneId) : null;
                     const isSelected = selectedSocket === i;
+                    const isLocked = !!s.locked;
 
                     return (
                       <div
@@ -321,16 +324,18 @@ export function DiceEditorScreen() {
                         style={{
                           display: 'flex', gap: 6, alignItems: 'center',
                           padding: '5px 6px',
-                          background: isSelected ? '#e8e0d4' : '#e0d8cc',
-                          border: isSelected ? '1px solid #8a7050' : '1px solid transparent',
+                          background: isLocked ? '#d8d0c8' : isSelected ? '#e8e0d4' : '#e0d8cc',
+                          border: isSelected && !isLocked ? '1px solid #8a7050' : '1px solid transparent',
                           borderRadius: 4, marginBottom: 3,
-                          cursor: 'pointer',
+                          cursor: isLocked ? 'default' : 'pointer',
+                          opacity: isLocked ? 0.8 : 1,
                         }}
-                        onClick={() => setSelectedSocket(isSelected ? null : i)}
+                        onClick={() => !isLocked && setSelectedSocket(isSelected ? null : i)}
                       >
+                        {isLocked && <span style={{ fontSize: 9, color: '#705828' }}>🔒</span>}
                         <span style={{
                           fontSize: 9, color: TIER_COLORS[s.socketTier],
-                          fontWeight: 'bold', minWidth: 40,
+                          fontWeight: 'bold', minWidth: isLocked ? 20 : 40,
                         }}>
                           [{s.socketTier}]
                         </span>

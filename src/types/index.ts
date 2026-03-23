@@ -102,6 +102,7 @@ export interface FixedFace {
 export interface CustomSocket {
   skillRuneId: string | null;
   socketTier: SocketTier;
+  locked?: boolean; // trueならルーン変更不可（モンスター固有プリセット）
 }
 
 export interface CustomFace {
