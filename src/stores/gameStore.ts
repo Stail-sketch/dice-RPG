@@ -305,7 +305,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpPoints: s.pvpPoints + (won ? 3 : 1),
       pvpWins: s.pvpWins + (won ? 1 : 0),
       pvpLosses: s.pvpLosses + (won ? 0 : 1),
-      isPvpBattle: false,
+      // isPvpBattleのリセットは画面遷移時に行う（結果画面のUI判定に必要）
     }));
     get().checkAchievements();
   },
@@ -326,8 +326,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({
         eventCompletedToday: [...completedToday, difficulty],
         eventLastDate: today,
-        isEventBattle: false,
-        eventRewardMult: {},
+        // isEventBattleのリセットは画面遷移時に行う（結果画面のUI判定に必要）
       });
     }
   },
