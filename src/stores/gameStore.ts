@@ -8,7 +8,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { saveGame, loadGame } from './saveSystem';
 import { applyDefaultSocketTiers } from '../utils/applyDefaultTiers';
 
-export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial' | 'event' | 'settings';
+export type Screen = 'title' | 'town' | 'dungeon' | 'battle' | 'dice-editor' | 'forge' | 'shop' | 'gacha' | 'codex' | 'pvp' | 'capture' | 'tutorial' | 'event' | 'settings' | 'ending';
 
 interface TutorialState {
   completed: boolean;
@@ -133,6 +133,10 @@ interface GameState {
   // 章進行
   advanceChapter: () => void;
 
+  // エンディング
+  endingShown: boolean;
+  setEndingShown: (v: boolean) => void;
+
   // セーブ/ロード
   save: () => Promise<void>;
   load: () => Promise<boolean>;
@@ -175,6 +179,7 @@ function getSaveableState(s: GameState) {
     pvpLosses: s.pvpLosses,
     eventCompletedToday: s.eventCompletedToday,
     eventLastDate: s.eventLastDate,
+    endingShown: s.endingShown,
   };
 }
 
@@ -308,6 +313,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
     }
   },
+
+  endingShown: false,
+  setEndingShown: (v) => set({ endingShown: v }),
 
   addMagicDice: (id) => set((s) => ({
     ownedMagicDice: s.ownedMagicDice.includes(id) ? s.ownedMagicDice : [...s.ownedMagicDice, id],
@@ -706,6 +714,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const pvpL = (d as any).pvpLosses || 0;
     const eventCompletedToday = (d as any).eventCompletedToday || [];
     const eventLastDate = (d as any).eventLastDate || '';
+    const endingShown = (d as any).endingShown || false;
     // HPがレベルに対して低すぎる場合（旧セーブ）→ レベル基準で再計算
     const expectedHp = 50 + (level - 1) * 50;
     const hp = d.playerMaxHp < expectedHp ? expectedHp : d.playerMaxHp;
@@ -726,6 +735,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpLosses: pvpL,
       eventCompletedToday,
       eventLastDate,
+      endingShown,
       isEventBattle: false,
       eventRewardMult: {},
       bossesDefeated: (d as any).bossesDefeated || [],

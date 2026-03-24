@@ -659,6 +659,84 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+/* ===== タイトル画面 ===== */
+@keyframes titleLetterIn {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes titlePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes titleSparkle {
+  0% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0); }
+}
+@keyframes titleDiceRoll {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== ボス入場カットイン ===== */
+@keyframes bossEntranceOverlay {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes bossEntranceSprite {
+  0% { opacity: 0; transform: scale(3) rotate(10deg); }
+  30% { opacity: 1; transform: scale(1.2) rotate(-3deg); }
+  50% { transform: scale(1) rotate(0); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ===== エンディング演出 ===== */
+@keyframes endingCongrats {
+  0% { opacity: 0; transform: scale(0.6) translateY(20px); }
+  50% { opacity: 1; transform: scale(1.1) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes endingLineIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== ガチャレアリティリビール演出 ===== */
+@keyframes gachaRarityRevealFlash {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.2); }
+  60% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+@keyframes gachaRarityRevealPulse {
+  0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+  25% { transform: scale(1.08); filter: hue-rotate(30deg); }
+  50% { transform: scale(1); filter: hue-rotate(60deg); }
+  75% { transform: scale(1.05); filter: hue-rotate(90deg); }
+}
+
+@keyframes gachaGoldenFlash {
+  0% { opacity: 0; }
+  20% { opacity: 0.4; }
+  50% { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+
+@keyframes gachaSparkleReveal {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
+@keyframes gachaResultBorderPulse {
+  0%, 100% { border-color: #d0a030; box-shadow: 0 0 4px rgba(208,160,48,0.3); }
+  50% { border-color: #e8c040; box-shadow: 0 0 12px rgba(232,192,64,0.5); }
+}
+
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px; }

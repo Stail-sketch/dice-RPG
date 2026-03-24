@@ -16,6 +16,7 @@ import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { PvpScreen } from './components/pvp/PvpScreen';
 import { EventScreen } from './components/event/EventScreen';
 import { SettingsScreen } from './components/settings/SettingsScreen';
+import { EndingScreen } from './components/EndingScreen';
 import { BGMController } from './components/common/BGMController';
 
 function ScreenRouter() {
@@ -36,6 +37,7 @@ function ScreenRouter() {
       case 'event':  return <EventScreen />;
       case 'settings': return <SettingsScreen />;
       case 'tutorial': return <TutorialScreen />;
+      case 'ending':  return <EndingScreen />;
       default:       return <TitleScreen />;
     }
   })();

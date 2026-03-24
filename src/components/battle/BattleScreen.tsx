@@ -57,8 +57,7 @@ export function BattleScreen() {
   const [filmBars, setFilmBars] = useState(false);
 
   // ボス演出用
-  const [_bossEntrance, setBossEntrance] = useState(false);
-  void _bossEntrance;
+  const [bossEntrance, setBossEntrance] = useState(false);
 
   // マジックダイス用
   const [magicUsedThisTurn, setMagicUsedThisTurn] = useState(false);
@@ -176,8 +175,8 @@ export function BattleScreen() {
     }
 
     setTimeout(() => {
-      addLog('BATTLE START!');
-      flash('BATTLE START!', 800);
+      addLog('戦闘開始！');
+      flash('戦闘開始！', 800);
 
       // ダイスロール
       setTimeout(() => {
@@ -695,7 +694,7 @@ export function BattleScreen() {
     const firstIsPlayer = result.playerFirst;
     showFilmBars();
     setPhase('first-label');
-    setAttackLabel(firstIsPlayer ? 'PLAYER ATTACK' : 'ENEMY ATTACK');
+    setAttackLabel(firstIsPlayer ? 'プレイヤー攻撃' : 'エネミー攻撃');
 
     setTimeout(() => {
       setCurrentActions(result.firstActions);
@@ -730,7 +729,7 @@ export function BattleScreen() {
       setTimeout(() => {
         setCurrentActions([]);
         showFilmBars();
-        setAttackLabel(firstIsPlayer ? 'ENEMY ATTACK' : 'PLAYER ATTACK');
+        setAttackLabel(firstIsPlayer ? 'エネミー攻撃' : 'プレイヤー攻撃');
         setPhase('second-label');
 
         setTimeout(() => {
@@ -808,7 +807,7 @@ export function BattleScreen() {
               if (battle.status === 'player-win') {
                 sfx.victory();
                 bgm.playOnce('victory');
-                addLog('══ 勝利！ ══'); flash('WIN!', 1500);
+                addLog('══ 勝利！ ══'); flash('勝利！', 1500);
                 if (isPvpBattle) {
                   addPvpResult(true);
                   addGold(300);
@@ -849,6 +848,21 @@ export function BattleScreen() {
                   // 素材ドロップ
                   if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  鍛冶石 x1'); }
                   if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  レア鉱石 x1'); }
+                  // 初回ウロボロス撃破 → エンディング
+                  if (enemyDiceList[0].id === 'ouroboros' || (enemyDiceList[0] as any).baseId === 'ouroboros') {
+                    const { bossesDefeated: prevBosses, endingShown: alreadyShown } = useGameStore.getState();
+                    if (!prevBosses.includes('ouroboros') && !alreadyShown) {
+                      defeatBoss(enemyDiceList[0].id);
+                      addLog('  ボス撃破！');
+                      const fragEnding = currentChapter <= 3 ? 1 : currentChapter <= 6 ? 3 : 5;
+                      addGemFragments(fragEnding);
+                      addLog(`  ジェムのかけら x${fragEnding}`);
+                      setTimeout(() => {
+                        save().then(() => setScreen('ending'));
+                      }, 3000);
+                      return; // エンディングへ（封印フェーズスキップ）
+                    }
+                  }
                   // ボスからかけら + ボス撃破記録
                   if (enemyDiceList[0].rarity >= 4) {
                     const fragments = currentChapter <= 3 ? 1 : currentChapter <= 6 ? 3 : 5;
@@ -861,7 +875,7 @@ export function BattleScreen() {
               } else {
                 sfx.defeat();
                 bgm.playOnce('defeat');
-                addLog('══ 敗北... ══'); flash('LOSE...', 1500);
+                addLog('══ 敗北... ══'); flash('敗北...', 1500);
                 if (isPvpBattle) {
                   addPvpResult(false);
                   addLog('  PVP敗北... +1pt');
@@ -986,10 +1000,50 @@ export function BattleScreen() {
       {hitFlashSide && <HitFlash side={hitFlashSide} />}
       {statusIndicator && <StatusIndicator effects={statusIndicator.effects as any} side={statusIndicator.side} />}
 
+      {/* ボス入場カットイン */}
+      {bossEntrance && isBoss && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 500,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          animation: 'bossEntranceOverlay 1.5s ease forwards',
+        }}>
+          {/* WARNING text */}
+          <div style={{
+            fontSize: 14, color: '#b04030', letterSpacing: 6,
+            fontWeight: 'bold', marginBottom: 16,
+            animation: 'bossWarning 0.5s ease infinite',
+          }}>
+            WARNING
+          </div>
+          {/* Boss sprite */}
+          <div style={{ animation: 'bossEntranceSprite 1s ease both' }}>
+            <MonsterSprite monsterId={enemyDiceList[0]?.id} element={enemyDiceList[0]?.element} size={80} animate />
+          </div>
+          {/* Boss name */}
+          <div style={{
+            fontSize: 20, fontWeight: 'bold', marginTop: 16,
+            color: ELEMENT_COLORS[enemyDiceList[0]?.element],
+            letterSpacing: 4,
+            animation: 'bossEntranceText 1.2s ease both',
+          }}>
+            {enemyDiceList[0]?.name}
+          </div>
+          {/* Rarity stars */}
+          <div style={{
+            fontSize: 16, color: '#d0a030', marginTop: 8,
+            animation: 'bossEntranceText 1.2s ease 0.2s both',
+          }}>
+            {'★'.repeat(enemyDiceList[0]?.rarity || 0)}
+          </div>
+        </div>
+      )}
+
       {/* 敵エリア */}
       <div style={{ padding: '6px 12px 0', flex: '0 0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: 10, color: '#b04030', minWidth: 42 }}>ENEMY</span>
+          <span style={{ fontSize: 10, color: '#b04030', minWidth: 42 }}>敵</span>
           <div style={{ flex: 1 }}>
             {battle ? <HpBar current={displayEnemyHp} max={battle.enemy.maxHp} color="enemy" /> : <div style={{ height: 16 }} />}
             {battle && <ChargeBar gauge={battle.enemy.charge} />}
@@ -1017,7 +1071,7 @@ export function BattleScreen() {
           {attackLabel && (
             <div style={{
               fontSize: 16, fontWeight: 'bold', letterSpacing: 3, marginBottom: 4,
-              color: attackLabel.includes('PLAYER') ? '#4070a0' : '#b04030',
+              color: attackLabel.includes('プレイヤー') ? '#4070a0' : '#b04030',
               animation: 'attackLabelIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
             }}>{attackLabel}</div>
           )}
@@ -1095,7 +1149,7 @@ export function BattleScreen() {
                     color: isCharge ? '#998a78' : isActive ? '#705828' : '#c0b8a8',
                     letterSpacing: isActive ? 1 : 0,
                   }}>
-                    {isCharge ? `CHG +${fn}` : isActive ? 'ACT' : '---'}
+                    {isCharge ? `充填 +${fn}` : isActive ? '発動' : '---'}
                   </div>
                 )}
               </div>
@@ -1103,7 +1157,7 @@ export function BattleScreen() {
           })}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-          <span style={{ fontSize: 10, color: '#4070a0', minWidth: 42 }}>PLAYER</span>
+          <span style={{ fontSize: 10, color: '#4070a0', minWidth: 42 }}>味方</span>
           <div style={{ flex: 1 }}>
             {battle ? <HpBar current={displayPlayerHp} max={battle.player.maxHp} /> : <div style={{ height: 16 }} />}
             {battle && <ChargeBar gauge={battle.player.charge} magicCost={magicData?.cost} magicName={magicData?.name} />}
@@ -1114,14 +1168,14 @@ export function BattleScreen() {
       {/* アクションバー */}
       <div style={{ padding: '6px 12px 10px', flex: '0 0 auto', minHeight: 56, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {phase === 'ready' && (
-          <button className="rpg-btn rpg-btn-primary" onClick={startBattle} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>BATTLE START</button>
+          <button className="rpg-btn rpg-btn-primary" onClick={startBattle} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>戦闘開始</button>
         )}
         {phase === 'selecting' && (
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="rpg-btn rpg-btn-primary" onClick={confirmSelection}
               style={{ flex: 2, fontSize: 15, padding: '10px 8px', margin: 0, opacity: (magicEffect === 'unleash' ? selectedDice.size === 3 : selectedDice.size === 2) ? 1 : 0.4 }}
               disabled={magicEffect === 'unleash' ? selectedDice.size !== 3 : selectedDice.size !== 2}>
-              GO
+              実行
             </button>
             {equippedMagicDice && battle && !magicUsedThisTurn && (() => {
               const md = getMagicDice(equippedMagicDice);
@@ -1140,7 +1194,7 @@ export function BattleScreen() {
           </div>
         )}
         {phase === 'turn-end' && (
-          <button className="rpg-btn rpg-btn-primary" onClick={doNextTurn} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>ROLL DICE</button>
+          <button className="rpg-btn rpg-btn-primary" onClick={doNextTurn} style={{ fontSize: 15, padding: '12px 20px', margin: 0 }}>ダイスロール</button>
         )}
         {(isAnimating || isRolling) && (
           <div style={{ textAlign: 'center', padding: '12px 20px', fontSize: 12, color: '#6a5a4a', letterSpacing: 2 }}>
