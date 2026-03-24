@@ -2,6 +2,59 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { useGameStore, type Screen } from '../../stores/gameStore';
 import { AchievementPanel } from './AchievementPanel';
 
+const GAME_TIPS: string[] = [
+  'ダイスの目が小さいほど出やすい。面1は23%、面6は10%の確率。',
+  '★が高いモンスターほど固有スキルにレアリティ倍率がかかる！',
+  '同じ属性のスキルを1面に集めるとシナジー倍率がアップ！',
+  'カスタム面のソケットは鍛冶屋でbronze→silver→goldに強化できる。',
+  '3体のダイスが同じ属性の面を出すとクロスダイスシナジーが発動！',
+  'ヒーローダイスは全ソケットgold。属性も自由に変更できる。',
+  '毒や燃焼は毎ターンダメージを与え続ける。長期戦で有利！',
+  'シールドスキルは一定ターン攻撃を軽減する。ボス戦で重宝する。',
+  'マジックダイスはチャージゲージで使える特殊能力。装備を忘れずに！',
+  'ガチャの天井は★4が50回、★5が100回で確定。',
+  '章が進むほど敵が強くなるが、報酬も増える。',
+  'ボスを撃破すると次の章が解放される。',
+  '高難度モードは全章クリア後に解放。敵HP2倍！',
+  'セットボーナス：同じセットIDのルーンを複数装備すると攻撃力UP。',
+  '属性相性は◎1.5倍、✕0.5倍。有利属性で戦おう！',
+  '炎は氷と鋼に強く、雷と毒に弱い。',
+  '氷は雷と毒に強く、炎と幻に弱い。',
+  '雷は炎と幻に強く、氷と鋼に弱い。',
+  '毒は炎と幻に強く、氷と鋼に弱い。',
+  '鋼は氷と毒に強く、炎と雷に弱い。',
+  '幻は氷と鋼に強く、炎と毒に弱い。',
+  'バフとデバフはターン制限あり。タイミングを見計らって使おう。',
+  '充填に回したダイスの出目がそのままチャージゲージに加算される。',
+  '面6は出にくいが、6個のソケットにスキルを詰め込める！',
+  'パッシブスキルは装備するだけで常に効果が発動する。',
+  '呪いルーンは威力が高いが自分にもデバフがかかる。',
+  'イベントダンジョンは毎日内容が変わる。報酬倍率を活用しよう！',
+  'PvP闘技場ではポイントを貯めて報酬をゲット！',
+  '素材が足りないときはショップで購入できる。',
+  'ルーンは売却すると鍛冶石に変換される。',
+  'ダイスは分解するとレアリティに応じた素材がもらえる。',
+  'ソケット拡張で面のソケット数を増やせる。1ダイス3回まで。',
+  'ボス戦ではマジックダイスが特に有効。チャージを溜めておこう。',
+  '図鑑で全モンスターとスキルの情報を確認できる。',
+  'レシピコンボ：異なる属性の組み合わせで特殊効果が発動！',
+  '炎+氷=蒸気爆発！ 範囲ダメージ+命中率ダウン。',
+  '氷+雷=氷雷！ 凍結した敵にクリティカル確定。',
+  '反撃スキルは敵のダメージの一部を返す。防御型の強い味方。',
+  '吸収スキルはダメージを与えつつHPを回復する。',
+  '封印スキルは敵のスキルを1ターン無効化する。',
+  'レベルが上がるとHPが50ずつ増加する。',
+  '主人公ダイスをパーティに入れるとゴールド報酬が1.2倍に！',
+  '実績を確認して目標を決めてプレイしよう。',
+  '同じモンスターは何体でも捕獲できる。厳選も可能！',
+  '鍛冶でソケットを強化すると、そのソケットのスキル威力が上がる。',
+  '設定画面でBGMとSEの音量を個別に調整できる。',
+  '全章クリア後の高難度モードでは敵のルーン装着率が100%！',
+  'ウロボロスを初めて倒すとエンディングが見られる。',
+  '赤い芋虫くんに話しかけると...何かいいことがあるかも？',
+  'ダイスは運。でも構築は戦略。それがピップソケットの醍醐味！',
+];
+
 // ==============================
 // Canvas設定
 // ==============================
@@ -277,6 +330,30 @@ function drawDecorations(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
   rect(ctx, 167, 239, 1, 1, '#302018');
   rect(ctx, 170, 239, 1, 1, '#302018');
   rect(ctx, 178, 242, 5, 2, '#d0a040');
+
+  // テレビ掲示板
+  rect(ctx, 128, 250, 24, 18, '#404040');  // frame
+  rect(ctx, 130, 252, 20, 12, '#60a0d0');  // screen (blue glow)
+  rect(ctx, 131, 253, 18, 10, '#80c0e0');  // screen inner
+  rect(ctx, 138, 264, 4, 4, '#505050');    // stand
+  rect(ctx, 134, 268, 12, 2, '#404040');   // base
+  // antenna
+  rect(ctx, 136, 247, 2, 4, '#505050');
+  rect(ctx, 142, 247, 2, 4, '#505050');
+  rect(ctx, 134, 246, 2, 2, '#606060');
+  rect(ctx, 144, 246, 2, 2, '#606060');
+
+  // 赤い芋虫くん
+  rect(ctx, 158, 260, 5, 5, '#c04030');  // head
+  rect(ctx, 157, 261, 1, 1, '#201010');  // eye
+  rect(ctx, 162, 261, 1, 1, '#201010');  // eye
+  rect(ctx, 163, 258, 5, 5, '#b03828');  // body1
+  rect(ctx, 168, 260, 5, 5, '#c04030');  // body2
+  rect(ctx, 173, 258, 4, 5, '#b03828');  // body3 (tail)
+  rect(ctx, 159, 257, 1, 3, '#c04030');  // antenna left
+  rect(ctx, 161, 257, 1, 3, '#c04030');  // antenna right
+  rect(ctx, 159, 256, 1, 1, '#e06050');  // antenna tip
+  rect(ctx, 161, 256, 1, 1, '#e06050');  // antenna tip
 }
 
 function drawGrass(ctx: CanvasRenderingContext2D, theme: ChapterTheme) {
@@ -302,8 +379,16 @@ export function TownScreen() {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [saveMsg, setSaveMsg] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showTip, setShowTip] = useState(false);
+  const [currentTip, setCurrentTip] = useState('');
 
   const theme = getTheme(themeChapter);
+
+  useEffect(() => {
+    if (showTip) {
+      setCurrentTip(GAME_TIPS[Math.floor(Math.random() * GAME_TIPS.length)]);
+    }
+  }, [showTip]);
 
   // ベースCanvas描画
   useEffect(() => {
@@ -447,6 +532,12 @@ export function TownScreen() {
     const scaleY = H / r.height;
     const x = (e.clientX - r.left) * scaleX;
     const y = (e.clientY - r.top) * scaleY;
+
+    // テレビ掲示板のヒット判定
+    if (x >= 125 && x <= 155 && y >= 245 && y <= 275) {
+      setShowTip(true);
+      return;
+    }
 
     for (const b of BUILDINGS) {
       // ヒットエリアを少し広げる（ラベル含む）
@@ -617,6 +708,46 @@ export function TownScreen() {
           設定
         </span>
       </div>
+
+      {showTip && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9998, cursor: 'pointer',
+          }}
+          onClick={() => setShowTip(false)}
+        >
+          <div className="rpg-panel" style={{
+            maxWidth: 320, width: '85%', padding: '16px 20px',
+            textAlign: 'center',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 12, fontWeight: 'bold', color: '#705828', marginBottom: 8 }}>
+              豆知識テレビ
+            </div>
+            <div style={{
+              fontSize: 12, lineHeight: 1.6, color: '#3a2a1a',
+              padding: '8px 4px',
+              background: '#e8e0d4', borderRadius: 4,
+              border: '1px solid #d0c8b8',
+            }}>
+              {currentTip}
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <button className="rpg-btn" style={{ margin: 0, padding: '6px 16px', fontSize: 11 }}
+                onClick={() => {
+                  setCurrentTip(GAME_TIPS[Math.floor(Math.random() * GAME_TIPS.length)]);
+                }}>
+                もう1つ
+              </button>
+              <button className="rpg-btn" style={{ margin: 0, padding: '6px 16px', fontSize: 11 }}
+                onClick={() => setShowTip(false)}>
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAchievements && (
         <AchievementPanel onClose={() => setShowAchievements(false)} />
