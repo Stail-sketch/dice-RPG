@@ -74,7 +74,7 @@ function getEquippedSetCount(dice: MonsterDice, setId: string): number {
 }
 
 export function DiceEditorScreen() {
-  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, sellDice, sellRune } = useGameStore();
+  const { setScreen, ownedDice, party, setParty, ownedRunes, equipRune, unequipRune, removeRune, protagonistDice, ownedMagicDice, equippedMagicDice, equipMagicDice, sellDice, sellRune, changeHeroElement } = useGameStore();
   const [message, setMessage] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
@@ -206,6 +206,34 @@ export function DiceEditorScreen() {
           );
         })}
       </div>
+
+      {/* ヒーロー属性セレクター */}
+      {currentDice?.id === 'protagonist' && (
+        <div className="rpg-panel" style={{ marginBottom: 8 }}>
+          <div className="rpg-panel-title">ヒーロー属性</div>
+          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(['blaze', 'frost', 'volt', 'venom', 'alloy', 'mirage'] as Element[]).map(el => (
+              <button
+                key={el}
+                onClick={() => changeHeroElement(el)}
+                style={{
+                  padding: '4px 10px', fontSize: 11, cursor: 'pointer',
+                  background: protagonistDice.element === el ? ELEMENT_COLORS[el] + '30' : 'transparent',
+                  border: `2px solid ${protagonistDice.element === el ? ELEMENT_COLORS[el] : '#c0b8a8'}`,
+                  borderRadius: 4,
+                  color: ELEMENT_COLORS[el],
+                  fontWeight: protagonistDice.element === el ? 'bold' : 'normal',
+                }}
+              >
+                {ELEMENT_NAMES[el]}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 9, color: '#998a78', textAlign: 'center', marginTop: 4 }}>
+            属性を変更するとシナジーや相性が変わります
+          </div>
+        </div>
+      )}
 
       {/* 所持ダイス一覧 */}
       <div className="rpg-panel" style={{ padding: 8 }}>

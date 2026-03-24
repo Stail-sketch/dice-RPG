@@ -13,8 +13,8 @@ const TIER_LABEL: Record<SocketTier, string> = {
   bronze: 'Bronze', silver: 'Silver', gold: 'Gold',
 };
 const UPGRADE_INFO: Record<SocketTier, { next: string; stones: number; gold: number; ore: number } | null> = {
-  bronze: { next: 'Silver', stones: 3, gold: 200, ore: 0 },
-  silver: { next: 'Gold', stones: 5, gold: 500, ore: 2 },
+  bronze: { next: 'Silver', stones: 5, gold: 400, ore: 0 },
+  silver: { next: 'Gold', stones: 8, gold: 1000, ore: 3 },
   gold: null,
 };
 
@@ -187,9 +187,9 @@ export function ForgeScreen() {
         const totalExpansions = existing.length;
         const faceExpanded = existing.includes(selectedFace);
         const canExpand = totalExpansions < 3 && !faceExpanded
-          && gold >= 1000
-          && materials['rare-ore'] >= 3
-          && materials['expansion-crystal'] >= 1;
+          && gold >= 2000
+          && materials['rare-ore'] >= 5
+          && materials['expansion-crystal'] >= 2;
 
         return (
           <div className="rpg-panel" style={{ padding: 8 }}>
@@ -224,9 +224,9 @@ export function ForgeScreen() {
               >
                 拡張する
               </button>
-              <span style={{ fontSize: 8, color: '#705828' }}>1000G</span>
-              <span style={{ fontSize: 8, color: '#7050a0' }}>鉱石×3</span>
-              <span style={{ fontSize: 8, color: '#3070a0' }}>結晶×1</span>
+              <span style={{ fontSize: 8, color: '#705828' }}>2000G</span>
+              <span style={{ fontSize: 8, color: '#7050a0' }}>鉱石×5</span>
+              <span style={{ fontSize: 8, color: '#3070a0' }}>結晶×2</span>
             </div>
           </div>
         );

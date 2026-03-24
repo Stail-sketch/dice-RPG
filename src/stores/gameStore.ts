@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { MonsterDice, SkillRune, BattleState, SocketTier } from '../types';
+import type { MonsterDice, SkillRune, BattleState, SocketTier, Element } from '../types';
 // MAX_SAME_MONSTER制限を撤廃（無制限取得可能）
 import type { DecomposeResult, PartyBonus } from '../types';
 import { CHAPTER1_MONSTERS, PROTAGONIST_DICE, ALL_MONSTERS } from '../data/monsters';
@@ -130,6 +130,9 @@ interface GameState {
   socketExpansions: Record<string, number[]>; // diceId → 拡張済みface番号の配列
   expandSocket: (diceId: string, faceNumber: number) => boolean;
 
+  // ヒーロー属性変更
+  changeHeroElement: (element: Element) => void;
+
   // 章進行
   advanceChapter: () => void;
 
@@ -144,8 +147,8 @@ interface GameState {
 }
 
 const UPGRADE_COST: Record<SocketTier, { next: SocketTier; stones: number; gold: number; ore: number }> = {
-  bronze: { next: 'silver', stones: 3, gold: 200, ore: 0 },
-  silver: { next: 'gold', stones: 5, gold: 500, ore: 2 },
+  bronze: { next: 'silver', stones: 5, gold: 400, ore: 0 },
+  silver: { next: 'gold', stones: 8, gold: 1000, ore: 3 },
   gold: { next: 'gold', stones: 0, gold: 0, ore: 0 }, // can't upgrade further
 };
 
@@ -608,9 +611,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (existing.includes(faceNumber)) return false; // 同面は1回
 
     // コストチェック
-    if (s.gold < 1000) return false;
-    if (s.materials['rare-ore'] < 3) return false;
-    if (s.materials['expansion-crystal'] < 1) return false;
+    if (s.gold < 2000) return false;
+    if (s.materials['rare-ore'] < 5) return false;
+    if (s.materials['expansion-crystal'] < 2) return false;
 
     // ソケット追加 + コスト消費
     set((s) => {
@@ -625,11 +628,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       const newExpansions = { ...s.socketExpansions, [diceId]: [...(s.socketExpansions[diceId] || []), faceNumber] };
 
       const costUpdate = {
-        gold: s.gold - 1000,
+        gold: s.gold - 2000,
         materials: {
           ...s.materials,
-          'rare-ore': s.materials['rare-ore'] - 3,
-          'expansion-crystal': s.materials['expansion-crystal'] - 1,
+          'rare-ore': s.materials['rare-ore'] - 5,
+          'expansion-crystal': s.materials['expansion-crystal'] - 2,
         },
         socketExpansions: newExpansions,
       };
@@ -641,6 +644,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
     return true;
   },
+
+  // ヒーロー属性変更
+  changeHeroElement: (element) => set((s) => ({
+    protagonistDice: { ...s.protagonistDice, element },
+  })),
 
   // 章進行
   advanceChapter: () => {

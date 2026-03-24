@@ -818,7 +818,7 @@ export function BattleScreen() {
                   const hardMult = hardMode ? 1.5 : 1;
                   addLog(hardMode ? '── 報酬【高難度】 ──' : '── 報酬 ──');
                   const bonus = getPartyBonus();
-                  const goldReward = Math.round((50 + enemyDiceList[0].rarity * 30) * bonus.goldMultiplier * hardMult);
+                  const goldReward = Math.round((80 + enemyDiceList[0].rarity * 50) * bonus.goldMultiplier * hardMult);
                   addGold(goldReward);
                   const expReward = Math.round((20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10) * hardMult);
                   const expResult = addExp(expReward);

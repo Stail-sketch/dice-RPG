@@ -59,7 +59,7 @@ function makeBossCustomFaces(element: Element, startFace: number): CustomFace[] 
 
 export const PROTAGONIST_DICE: MonsterDice = {
   id: 'protagonist',
-  name: 'Hero Dice',
+  name: 'ヒーローダイス',
   element: 'alloy' as Element, // neutral, use alloy as placeholder
   rarity: 0,
   fixedFaces: [],
@@ -72,7 +72,7 @@ export const PROTAGONIST_DICE: MonsterDice = {
     { faceNumber: 6, sockets: Array.from({length: 6}, () => ({ skillRuneId: null, socketTier: 'gold' as const })) },
   ],
   baseStats: { captureRate: 0 },
-  description: 'あなた自身のダイス。全ソケットがgold。自由にカスタマイズせよ。',
+  description: 'あなた自身のダイス。全ソケットがgold。属性を自由に選べる。',
 };
 
 // 第1章モンスター10体（★1x4, ★2x3, ★3x2, ★4ボスx1）
