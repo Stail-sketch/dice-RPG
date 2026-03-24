@@ -73,6 +73,7 @@ export function EventScreen() {
     useGameStore.setState({
       isEventBattle: true,
       isHardMode: false,
+      battleChapter: useGameStore.getState().currentChapter,
       eventRewardMult: Object.fromEntries(
         Object.entries({ ...event.rewardMult, _rewardScale: diff.rewardScale })
           .filter(([, v]) => v !== undefined)

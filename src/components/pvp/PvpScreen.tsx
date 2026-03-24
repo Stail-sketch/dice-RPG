@@ -24,7 +24,7 @@ export function PvpScreen() {
   const opponents = PVP_OPPONENTS.filter(o => o.tier === selectedTier);
 
   const startPvp = (opponent: PvpOpponent) => {
-    useGameStore.setState({ isPvpBattle: true });
+    useGameStore.setState({ isPvpBattle: true, battleChapter: useGameStore.getState().currentChapter });
     setCurrentEnemy(opponent.party);
     setScreen('battle');
   };

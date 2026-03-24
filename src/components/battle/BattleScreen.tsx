@@ -27,7 +27,7 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, eventRewardMult, completeEvent } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, completeEvent } = useGameStore();
   const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
     save().then(() => setScreen(screen));
   }, [save, setScreen]);
@@ -74,7 +74,7 @@ export function BattleScreen() {
   }).filter(Boolean) as MonsterDice[];
   const enemyDiceList = currentEnemy || [];
   const isBoss = enemyDiceList.length > 0 && enemyDiceList[0].rarity >= 4;
-  void isEventBattle; void eventRewardMult; void completeEvent; // event battle hooks (used in reward section)
+  // isEventBattle, eventRewardMult, completeEvent are used in reward section below
 
   useEffect(() => { if (popups.length > 0) { const t = setTimeout(() => setPopups([]), 1500); return () => clearTimeout(t); } }, [popups]);
   useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [log]);
@@ -814,13 +814,19 @@ export function BattleScreen() {
                   addLog('  PVP勝利！ +3pt +300G');
                 } else {
                   // 報酬まとめ
-                  const { isHardMode: hardMode } = useGameStore.getState();
+                  const { isHardMode: hardMode, isEventBattle: isEvent, eventRewardMult: evMult } = useGameStore.getState();
                   const hardMult = hardMode ? 1.5 : 1;
-                  addLog(hardMode ? '── 報酬【高難度】 ──' : '── 報酬 ──');
+                  const eventGoldMult = isEvent && evMult?.gold ? evMult.gold : 1;
+                  const eventExpMult = isEvent && evMult?.exp ? evMult.exp : 1;
+                  const eventMatMult = isEvent && evMult?.materials ? evMult.materials : 1;
+                  const eventRuneMult = isEvent && evMult?.runeDrops ? evMult.runeDrops : 1;
+                  const eventGemMult = isEvent && evMult?.gems ? evMult.gems : 1;
+                  if (isEvent) addLog('── 報酬【イベント】 ──');
+                  else addLog(hardMode ? '── 報酬【高難度】 ──' : '── 報酬 ──');
                   const bonus = getPartyBonus();
-                  const goldReward = Math.round((80 + enemyDiceList[0].rarity * 50) * bonus.goldMultiplier * hardMult);
+                  const goldReward = Math.round((80 + enemyDiceList[0].rarity * 50) * bonus.goldMultiplier * hardMult * eventGoldMult);
                   addGold(goldReward);
-                  const expReward = Math.round((20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10) * hardMult);
+                  const expReward = Math.round((20 + enemyDiceList[0].rarity * 15 + (currentChapter - 1) * 10) * hardMult * eventExpMult);
                   const expResult = addExp(expReward);
                   addLog(`  ${goldReward}G / ${expReward}EXP`);
                   addLog(`  EXP ${expResult.currentExp}/${expResult.expToNext} (Lv${expResult.newLevel})`);
@@ -832,7 +838,7 @@ export function BattleScreen() {
                   // ルーンドロップ（章属性に70%偏り）
                   const chapterElements: Record<number, string> = { 1: 'blaze', 2: 'frost', 3: 'volt', 4: 'venom', 5: 'alloy', 6: 'mirage', 7: 'blaze' };
                   const chapterEl = chapterElements[currentChapter] || 'blaze';
-                  const dropCount = 1 + (Math.random() < 0.4 ? 1 : 0);
+                  const dropCount = Math.round((1 + (Math.random() < 0.4 ? 1 : 0)) * eventRuneMult);
                   const drops: typeof SKILL_RUNES = [];
                   for (let i = 0; i < dropCount; i++) {
                     const tierRoll = Math.random();
@@ -846,8 +852,15 @@ export function BattleScreen() {
                   }
                   addRunes(drops);
                   // 素材ドロップ
-                  if (Math.random() < 0.5) { addMaterial('forge-stone', 1); addLog('  鍛冶石 x1'); }
-                  if (Math.random() < 0.1) { addMaterial('rare-ore', 1); addLog('  レア鉱石 x1'); }
+                  const stoneCount = Math.round(1 * eventMatMult);
+                  if (Math.random() < 0.5) { addMaterial('forge-stone', stoneCount); addLog(`  鍛冶石 x${stoneCount}`); }
+                  if (Math.random() < 0.1 * eventMatMult) { addMaterial('rare-ore', 1); addLog('  レア鉱石 x1'); }
+                  // ジェムかけら（イベント倍率）
+                  if (isEvent && eventGemMult > 1) {
+                    const gemBonus = Math.round(2 * eventGemMult);
+                    addGemFragments(gemBonus);
+                    addLog(`  ジェムのかけら x${gemBonus}`);
+                  }
                   // 初回ウロボロス撃破 → エンディング
                   if (enemyDiceList[0].id === 'ouroboros' || (enemyDiceList[0] as any).baseId === 'ouroboros') {
                     const { bossesDefeated: prevBosses, endingShown: alreadyShown } = useGameStore.getState();
@@ -871,6 +884,11 @@ export function BattleScreen() {
                     defeatBoss(enemyDiceList[0].id);
                     addLog('  ボス撃破！');
                   }
+                  // イベントバトル完了記録
+                  if (isEvent) {
+                    completeEvent('completed');
+                    useGameStore.setState({ isEventBattle: false, eventRewardMult: {} });
+                  }
                 }
               } else {
                 sfx.defeat();
@@ -879,6 +897,9 @@ export function BattleScreen() {
                 if (isPvpBattle) {
                   addPvpResult(false);
                   addLog('  PVP敗北... +1pt');
+                }
+                if (useGameStore.getState().isEventBattle) {
+                  useGameStore.setState({ isEventBattle: false, eventRewardMult: {} });
                 }
               }
             } else {
@@ -1201,7 +1222,7 @@ export function BattleScreen() {
             {isRolling ? '...' : '...'}
           </div>
         )}
-        {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && (
+        {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && !isEventBattle && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
             <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
@@ -1213,8 +1234,14 @@ export function BattleScreen() {
             <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('pvp'); }} style={{ margin: 0, padding: '10px 12px' }}>決闘場に戻る</button>
           </div>
         )}
+        {phase === 'result' && battle?.status === 'player-win' && isEventBattle && (
+          <div>
+            <div style={{ textAlign: 'center', color: '#705828', fontSize: 11, marginBottom: 4 }}>イベントクリア！</div>
+            <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('event'); }} style={{ margin: 0, padding: '10px 12px' }}>依頼に戻る</button>
+          </div>
+        )}
         {phase === 'result' && battle && battle.status !== 'player-win' && (
-          <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo(isPvpBattle ? 'pvp' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
+          <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo(isPvpBattle ? 'pvp' : isEventBattle ? 'event' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
         )}
         {phase === 'capture' && (<div style={{ textAlign: 'center', fontSize: 11, color: '#6a5a4a' }}>封印中...</div>)}
       </div>
