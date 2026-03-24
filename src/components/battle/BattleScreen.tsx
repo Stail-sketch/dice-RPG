@@ -29,6 +29,8 @@ interface Popup { id: number; text: string; color: string; side: 'enemy' | 'play
 export function BattleScreen() {
   const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, completeEvent } = useGameStore();
   const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
+    // バトル種別stateをリセットしてから遷移
+    useGameStore.setState({ isEventBattle: false, eventRewardMult: {}, isPvpBattle: false });
     save().then(() => setScreen(screen));
   }, [save, setScreen]);
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
@@ -884,10 +886,9 @@ export function BattleScreen() {
                     defeatBoss(enemyDiceList[0].id);
                     addLog('  ボス撃破！');
                   }
-                  // イベントバトル完了記録
+                  // イベントバトル完了記録（stateリセットは画面遷移時に行う）
                   if (isEvent) {
                     completeEvent('completed');
-                    useGameStore.setState({ isEventBattle: false, eventRewardMult: {} });
                   }
                 }
               } else {
@@ -898,9 +899,7 @@ export function BattleScreen() {
                   addPvpResult(false);
                   addLog('  PVP敗北... +1pt');
                 }
-                if (useGameStore.getState().isEventBattle) {
-                  useGameStore.setState({ isEventBattle: false, eventRewardMult: {} });
-                }
+                // イベントstateリセットは画面遷移時に行う
               }
             } else {
               setPhase('turn-end');
