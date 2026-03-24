@@ -194,14 +194,14 @@ function drawEvent(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 const BUILDINGS: Building[] = [
-  { id: 'dungeon', label: 'DUNGEON', sub: 'ダンジョン', screen: 'dungeon', x: 16, y: 50, w: 56, h: 48, draw: drawDungeon },
-  { id: 'arena', label: 'ARENA', sub: '決闘場', screen: 'pvp', x: 192, y: 40, w: 64, h: 52, draw: drawArena },
-  { id: 'forge', label: 'FORGE', sub: '鍛冶屋', screen: 'forge', x: 36, y: 170, w: 54, h: 44, draw: drawForge },
-  { id: 'dice', label: 'DICE', sub: 'ダイス装備', screen: 'dice-editor', x: 200, y: 168, w: 54, h: 44, draw: drawDiceShop },
-  { id: 'shop', label: 'SHOP', sub: 'ショップ', screen: 'shop', x: 16, y: 288, w: 56, h: 42, draw: drawShop },
-  { id: 'gacha', label: 'GACHA', sub: 'ガチャ', screen: 'gacha', x: 200, y: 286, w: 52, h: 44, draw: drawGacha },
-  { id: 'codex', label: 'BOOK', sub: '図鑑', screen: 'codex', x: 40, y: 400, w: 48, h: 38, draw: drawCodex },
-  { id: 'event', label: 'EVENT', sub: 'イベント', screen: 'event', x: 204, y: 398, w: 48, h: 38, draw: drawEvent },
+  { id: 'dungeon', label: '探索', sub: 'ダンジョン', screen: 'dungeon', x: 16, y: 50, w: 56, h: 48, draw: drawDungeon },
+  { id: 'arena', label: '闘技場', sub: '決闘場', screen: 'pvp', x: 192, y: 40, w: 64, h: 52, draw: drawArena },
+  { id: 'forge', label: '鍛冶', sub: '鍛冶屋', screen: 'forge', x: 36, y: 170, w: 54, h: 44, draw: drawForge },
+  { id: 'dice', label: '装備', sub: 'ダイス装備', screen: 'dice-editor', x: 200, y: 168, w: 54, h: 44, draw: drawDiceShop },
+  { id: 'shop', label: '商店', sub: 'ショップ', screen: 'shop', x: 16, y: 288, w: 56, h: 42, draw: drawShop },
+  { id: 'gacha', label: '召喚', sub: 'ガチャ', screen: 'gacha', x: 200, y: 286, w: 52, h: 44, draw: drawGacha },
+  { id: 'codex', label: '図鑑', sub: '図鑑', screen: 'codex', x: 40, y: 400, w: 48, h: 38, draw: drawCodex },
+  { id: 'event', label: '依頼', sub: 'イベント', screen: 'event', x: 204, y: 398, w: 48, h: 38, draw: drawEvent },
 ];
 
 // ==============================
@@ -592,7 +592,7 @@ export function TownScreen() {
             color: saveMsg ? '#305028' : '#605838', fontWeight: 'bold',
           }}
         >
-          {saveMsg ? 'OK!' : 'SAVE'}
+          {saveMsg ? 'OK!' : '保存'}
         </span>
         <span
           onClick={() => setShowAchievements(true)}
