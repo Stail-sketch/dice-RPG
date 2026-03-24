@@ -17,7 +17,7 @@ import {
 import type { MonsterDice, SkillRune } from '../../types';
 
 type GachaTab = 'dice' | 'rune';
-type AnimPhase = 'idle' | 'darken' | 'spin' | 'burst' | 'reveal' | 'rarity-reveal';
+type AnimPhase = 'idle' | 'darken' | 'spin' | 'burst' | 'reveal';
 
 interface DiceResult {
   type: 'dice';
@@ -67,12 +67,11 @@ export function GachaScreen() {
   const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
   const [crystalLevel, setCrystalLevel] = useState(0); // 0=common,1=rare,2=epic,3=legendary
   const [crystalMsg, setCrystalMsg] = useState('');
-  const [rarityReveal, setRarityReveal] = useState<null | 'rare' | 'epic' | 'legendary'>(null);
   const animating = animPhase !== 'idle';
   const skipTimers = useState<number[]>([])[0];
 
   const CRYSTAL_COLORS = ['#998a78', '#4070a0', '#9060d0', '#d4a020'];
-  const CRYSTAL_LABELS = ['', '— レア —', '— ◆ エピック ◆ —', '— ★ レジェンド ★ —'];
+  const CRYSTAL_LABELS = ['', '— Rare —', '— ◆ Epic ◆ —', '— ★ LEGENDARY ★ —'];
   const CRYSTAL_MSGS = ['運命のダイスが回る...', '何かが光る...！', '強い力を感じる...！', '運命が...揺れている...！！'];
   const currentCrystalColor = CRYSTAL_COLORS[crystalLevel] || CRYSTAL_COLORS[0];
 
@@ -82,14 +81,12 @@ export function GachaScreen() {
     setAnimPhase('idle');
     setCrystalLevel(0);
     setCrystalMsg('');
-    setRarityReveal(null);
     setShowResults(true);
   };
 
   const runAnimation = (newResults: GachaResult[]) => {
     setResults(newResults);
     setShowResults(false);
-    setRarityReveal(null);
     const bestRarity = getHighestRarity(newResults);
     const maxLevel = bestRarity === 'legendary' ? 3 : bestRarity === 'epic' ? 2 : bestRarity === 'rare' ? 1 : 0;
 
@@ -122,47 +119,18 @@ export function GachaScreen() {
         delay += lvl === 1 ? 800 : lvl === 2 ? 1000 : 1200;
       }
 
-      // スピン終了→バースト→レアリティリビール→結果
+      // スピン終了→バースト
       const spinDuration = delay + (maxLevel === 0 ? 1500 : 800);
       const t2 = window.setTimeout(() => {
         setAnimPhase('burst');
         sfx.gachaBurst();
-
-        const burstDuration = maxLevel >= 3 ? 2000 : maxLevel >= 2 ? 1500 : 800;
         const t3 = window.setTimeout(() => {
-          // レアリティリビール演出
-          const revealRarity = bestRarity === 'legendary' ? 'legendary'
-            : bestRarity === 'epic' ? 'epic'
-            : bestRarity === 'rare' ? 'rare'
-            : null;
-
-          if (revealRarity) {
-            setRarityReveal(revealRarity);
-            setAnimPhase('rarity-reveal');
-            if (revealRarity === 'epic') sfx.gachaEpic();
-            if (revealRarity === 'legendary') sfx.gachaLegendary();
-
-            const revealDelay = revealRarity === 'legendary' ? 1000
-              : revealRarity === 'epic' ? 600
-              : 300;
-            const t4 = window.setTimeout(() => {
-              setAnimPhase('idle');
-              setCrystalLevel(0);
-              setCrystalMsg('');
-              setRarityReveal(null);
-              setShowResults(true);
-              sfx.gachaReveal();
-            }, revealDelay);
-            skipTimers.push(t4);
-          } else {
-            // コモン: そのまま結果表示
-            setAnimPhase('idle');
-            setCrystalLevel(0);
-            setCrystalMsg('');
-            setShowResults(true);
-            sfx.gachaReveal();
-          }
-        }, burstDuration);
+          setAnimPhase('idle');
+          setCrystalLevel(0);
+          setCrystalMsg('');
+          setShowResults(true);
+          sfx.gachaReveal();
+        }, maxLevel >= 3 ? 2000 : maxLevel >= 2 ? 1500 : 800);
         skipTimers.push(t3);
       }, spinDuration);
       skipTimers.push(t2);
@@ -354,11 +322,8 @@ export function GachaScreen() {
                 <div style={{ fontSize: 9 }}>{RUNE_GACHA_10_COST} Gem</div>
               </button>
             </div>
-          )}
-          {/* 天井カウンター */}
-          {tab === 'dice' && (
             <div style={{ fontSize: 9, color: '#998a78', textAlign: 'center', marginTop: 4 }}>
-              天井まで ★4: あと{50 - gachaPityDice}回 / ★5: あと{100 - gachaPityDice}回
+              天井: {gachaPityRune}回目
             </div>
           )}
         </div>
@@ -544,7 +509,7 @@ export function GachaScreen() {
                   animation: isLeg ? 'legendaryTextPulse 0.5s ease infinite' : 'fadeIn 0.5s ease',
                   letterSpacing: isLeg ? 6 : isEpic ? 4 : 2,
                 }}>
-                  {isLeg ? '★ レジェンド ★' : isEpic ? '◆ エピック ◆' : bestRarity === 'rare' ? '◇ レア ◇' : ''}
+                  {isLeg ? '★ LEGENDARY ★' : isEpic ? '◆ EPIC ◆' : bestRarity === 'rare' ? '◇ RARE ◇' : ''}
                 </div>
                 {isLeg && (
                   <div style={{
@@ -558,75 +523,6 @@ export function GachaScreen() {
               </div>
             );
           })()}
-          {/* レアリティリビール演出 */}
-          {animPhase === 'rarity-reveal' && rarityReveal && (() => {
-            const isLeg = rarityReveal === 'legendary';
-            const isEpic = rarityReveal === 'epic';
-            const textColor = isLeg ? '#d4a020' : isEpic ? '#d0a030' : '#6080c0';
-            const textLabel = isLeg ? 'LEGENDARY!!!' : isEpic ? 'EPIC!!' : 'RARE!';
-            const fontSize = isLeg ? 32 : isEpic ? 26 : 20;
-            return (
-              <div style={{ textAlign: 'center', position: 'relative' }}>
-                {/* レジェンダリー: 全画面ゴールデンフラッシュ */}
-                {isLeg && (
-                  <div style={{
-                    position: 'fixed', inset: 0,
-                    background: 'radial-gradient(circle, rgba(212,160,32,0.4) 0%, transparent 70%)',
-                    animation: 'gachaGoldenFlash 1s ease forwards',
-                    pointerEvents: 'none',
-                  }} />
-                )}
-                {/* エピック: 画面シェイク */}
-                <div style={{
-                  animation: isEpic ? 'gachaScreenShake 0.5s ease' : isLeg ? 'gachaScreenShake 0.8s ease' : 'none',
-                }}>
-                  <div style={{
-                    fontSize,
-                    fontWeight: 'bold',
-                    color: textColor,
-                    textShadow: isLeg
-                      ? '0 0 12px #d4a020, 0 0 24px #d4a020, 0 0 48px #d4a020'
-                      : isEpic ? '0 0 10px #d0a030, 0 0 20px #d0a030' : '0 0 8px #6080c0',
-                    animation: isLeg ? 'gachaRarityRevealPulse 0.5s ease infinite' : 'gachaRarityRevealFlash 0.8s ease forwards',
-                    letterSpacing: isLeg ? 8 : isEpic ? 5 : 3,
-                  }}>
-                    {textLabel}
-                  </div>
-                </div>
-                {/* スパークルパーティクル */}
-                {Array.from({ length: isLeg ? 20 : isEpic ? 12 : 6 }).map((_, i) => {
-                  const angle = (i / (isLeg ? 20 : isEpic ? 12 : 6)) * Math.PI * 2;
-                  const dist = 40 + Math.random() * 60;
-                  const sparkColor = isLeg ? '#d4a020' : isEpic ? '#d0a030' : '#6080c0';
-                  return (
-                    <div key={`sp${i}`} style={{
-                      position: 'absolute',
-                      left: `calc(50% + ${Math.cos(angle) * dist}px)`,
-                      top: `calc(50% + ${Math.sin(angle) * dist}px)`,
-                      width: isLeg ? 6 : 4, height: isLeg ? 6 : 4,
-                      background: sparkColor,
-                      borderRadius: '50%',
-                      animation: `gachaSparkleReveal ${0.6 + Math.random() * 0.4}s ease ${Math.random() * 0.3}s both`,
-                      boxShadow: `0 0 ${isLeg ? 8 : 4}px ${sparkColor}`,
-                    }} />
-                  );
-                })}
-                {/* レジェンダリー: 連続バースト */}
-                {isLeg && [0, 1, 2].map(i => (
-                  <div key={`lb${i}`} style={{
-                    position: 'absolute', left: '50%', top: '50%',
-                    width: 80 + i * 40, height: 80 + i * 40,
-                    marginLeft: -(80 + i * 40) / 2,
-                    marginTop: -(80 + i * 40) / 2,
-                    borderRadius: '50%',
-                    border: '2px solid #d4a020',
-                    opacity: 0.3,
-                    animation: `gachaBurstRing ${0.5 + i * 0.2}s ease ${i * 0.15}s forwards`,
-                  }} />
-                ))}
-              </div>
-            );
-          })()}
           <div style={{ position: 'absolute', bottom: 30, fontSize: 10, color: '#998a78' }}>
             タップでスキップ
           </div>
@@ -634,76 +530,41 @@ export function GachaScreen() {
       )}
 
       {/* 結果表示 */}
-      {showResults && results.length > 0 && (() => {
-        const bestRarity = getHighestRarity(results);
-        const isEpicResult = bestRarity === 'epic';
-        const isLegResult = bestRarity === 'legendary';
-        const panelBorder = isLegResult
-          ? '2px solid #d0a030'
-          : isEpicResult ? '2px solid #d0a030' : undefined;
-        const panelShadow = isLegResult
-          ? '0 0 8px rgba(208,160,48,0.4)'
-          : undefined;
-        const panelAnimation = isLegResult
-          ? 'gachaResultBorderPulse 1.5s ease infinite'
-          : undefined;
-        return (
-          <div style={{ marginTop: 4 }}>
-            <div className="rpg-panel" style={{
-              border: panelBorder,
-              boxShadow: panelShadow,
-              animation: panelAnimation,
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              <div style={{ fontSize: 11, color: '#705828', textAlign: 'center', marginBottom: 6, fontWeight: 'bold' }}>
-                結果
-              </div>
-              {/* スパークルパーティクル（レア以上） */}
-              {(isEpicResult || isLegResult) && Array.from({ length: isLegResult ? 8 : 4 }).map((_, i) => (
-                <div key={`rsp${i}`} style={{
-                  position: 'absolute',
-                  left: `${10 + Math.random() * 80}%`,
-                  top: `${10 + Math.random() * 80}%`,
-                  width: 4, height: 4,
-                  background: isLegResult ? '#d4a020' : '#d0a030',
-                  borderRadius: '50%',
-                  animation: `gachaSparkleReveal ${1 + Math.random()}s ease ${Math.random()}s infinite`,
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }} />
-              ))}
-              <div style={{
-                display: 'flex', flexWrap: 'wrap', gap: 6,
-                justifyContent: 'center',
-                position: 'relative', zIndex: 2,
-              }}>
-                {results.map((r, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      animation: `gachaFadeIn 0.3s ease-out ${i * 0.08}s both`,
-                    }}
-                  >
-                    {r.type === 'dice' ? (
-                      <DiceResultCard monster={r.monster} />
-                    ) : (
-                      <RuneResultCard rune={r.rune} />
-                    )}
-                  </div>
-                ))}
-              </div>
+      {showResults && results.length > 0 && (
+        <div style={{ marginTop: 4 }}>
+          <div className="rpg-panel">
+            <div style={{ fontSize: 11, color: '#705828', textAlign: 'center', marginBottom: 6, fontWeight: 'bold' }}>
+              結果
             </div>
-            <button
-              className="rpg-btn"
-              onClick={closeResults}
-              style={{ marginTop: 4 }}
-            >
-              閉じる
-            </button>
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 6,
+              justifyContent: 'center',
+            }}>
+              {results.map((r, i) => (
+                <div
+                  key={i}
+                  style={{
+                    animation: `gachaFadeIn 0.3s ease-out ${i * 0.08}s both`,
+                  }}
+                >
+                  {r.type === 'dice' ? (
+                    <DiceResultCard monster={r.monster} />
+                  ) : (
+                    <RuneResultCard rune={r.rune} />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        );
-      })()}
+          <button
+            className="rpg-btn"
+            onClick={closeResults}
+            style={{ marginTop: 4 }}
+          >
+            閉じる
+          </button>
+        </div>
+      )}
 
       {/* アニメーション用スタイル */}
       <style>{`
