@@ -94,6 +94,18 @@ export function MonsterDetailModal({ monster, onClose }: MonsterDetailModalProps
           <span style={{ marginLeft: 16 }}>カスタム面: <b>{customFaces.length}</b></span>
         </div>
 
+        {/* レアリティ固有スキルボーナス */}
+        {monster.rarity >= 2 && fixedFaces.length > 0 && (
+          <div style={{
+            background: '#f0e8d0', borderRadius: 6, padding: '6px 10px', marginBottom: 10,
+            fontSize: 11, color: '#705828', border: '1px solid #d8c8a0',
+          }}>
+            {'★'.repeat(monster.rarity)} 固有スキル威力 x{
+              ({ 2: '1.3', 3: '1.7', 4: '2.2', 5: '3.0' } as Record<number, string>)[monster.rarity] ?? '1.0'
+            }
+          </div>
+        )}
+
         {/* 固有面セクション */}
         {fixedFaces.length > 0 && (
           <div style={{ marginBottom: 10 }}>

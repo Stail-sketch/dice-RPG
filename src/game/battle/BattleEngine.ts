@@ -41,9 +41,24 @@ export function createBattleState(
 // ==============================
 // 同面スキル威力減衰
 // ==============================
-function calcDecayMultiplier(totalPips: number): number {
-  return Math.max(0.1, 1 - (totalPips - 1) * PIP_DECAY_RATE);
+function calcDecayMultiplier(totalPips: number, decayRate: number = PIP_DECAY_RATE): number {
+  return Math.max(0.1, 1 - (totalPips - 1) * decayRate);
 }
+
+// ==============================
+// レアリティ別固有面威力倍率
+// ==============================
+const RARITY_FIXED_MULTIPLIER: Record<number, number> = {
+  0: 1.0,  // 主人公
+  1: 1.0,  // ★1 - ボーナスなし
+  2: 1.3,  // ★2
+  3: 1.7,  // ★3
+  4: 2.2,  // ★4
+  5: 3.0,  // ★5
+};
+
+// 固有面の減衰率（カスタム面より低い＝多スキルでもペナルティ少）
+const FIXED_FACE_DECAY_RATE = 0.05;
 
 // ==============================
 // 面からスキルアクション生成
@@ -52,6 +67,7 @@ function getSkillsFromFace(
   face: DiceFace,
   targetElement: Element | null,
   targetIsPlayer: boolean,
+  rarity: number = 0,
 ): SkillAction[] {
   const actions: SkillAction[] = [];
   const { multiplier: synergyMult } = calcSameFaceSynergyMultiplier(face);
@@ -59,15 +75,16 @@ function getSkillsFromFace(
   if (isFixedFace(face)) {
     const fixed = face as FixedFace;
     const totalPips = fixed.sockets.length;
-    const decayMult = calcDecayMultiplier(totalPips);
+    const decayMult = calcDecayMultiplier(totalPips, FIXED_FACE_DECAY_RATE);
     const tierMult = SOCKET_TIER_MULTIPLIER['gold'];
+    const rarityMult = RARITY_FIXED_MULTIPLIER[rarity] ?? 1.0;
 
     for (const socket of fixed.sockets) {
       const skill = FIXED_SKILLS[socket.skillId];
       if (!skill) continue;
       const elementMult = targetElement ? ELEMENT_CHART[socket.element][targetElement] : 1.0;
       const rawDmg = skill.effect.power;
-      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult);
+      const finalDmg = Math.round(rawDmg * tierMult * decayMult * elementMult * synergyMult * rarityMult);
 
       actions.push({
         skillId: socket.skillId, skillName: skill.name, element: socket.element,
@@ -516,11 +533,13 @@ export function executeTurnFull(
   // スキルアクション生成（発動2個のみ、チャージボーナスなし）
   const playerActions: SkillAction[] = [];
   for (const roll of playerActiveRolls) {
-    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false));
+    const diceRarity = state.player.dice[roll.diceIndex]?.rarity ?? 0;
+    playerActions.push(...getSkillsFromFace(roll.face, enemyMainElement, false, diceRarity));
   }
   const enemyActions: SkillAction[] = [];
   for (const roll of enemyActiveRolls) {
-    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true));
+    const diceRarity = state.enemy.dice[roll.diceIndex]?.rarity ?? 0;
+    enemyActions.push(...getSkillsFromFace(roll.face, playerMainElement, true, diceRarity));
   }
 
   // クロスダイスシナジー（属性一致は3個全部で判定）

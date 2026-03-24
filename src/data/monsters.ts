@@ -1,4 +1,4 @@
-import type { MonsterDice, Element, CustomSocket, CustomFace } from '../types';
+import type { MonsterDice, Element, CustomSocket, CustomFace, SocketTier } from '../types';
 
 // カスタム面生成ヘルパー: 各面の先頭1-2ソケットにlocked属性ルーンをプリセット
 const ELEMENT_RUNES: Record<Element, [string, string]> = {
@@ -10,8 +10,11 @@ const ELEMENT_RUNES: Record<Element, [string, string]> = {
   mirage: ['illusion', 'drain'],
 };
 
-function makeCustomFaces(element: Element, startFace: number): CustomFace[] {
+function makeCustomFaces(element: Element, startFace: number, rarity: number = 1): CustomFace[] {
   const [rune1, rune2] = ELEMENT_RUNES[element];
+  // レアリティに応じたベースソケット品質
+  const baseTier: SocketTier = rarity >= 3 ? 'silver' : 'bronze';
+  const lockedTier: SocketTier = rarity >= 4 ? 'gold' : rarity >= 2 ? 'silver' : 'bronze';
   const faces: CustomFace[] = [];
   for (let f = startFace; f <= 6; f++) {
     const sockets: CustomSocket[] = [];
@@ -19,12 +22,12 @@ function makeCustomFaces(element: Element, startFace: number): CustomFace[] {
     for (let s = 0; s < f; s++) {
       if (s === 0) {
         // 先頭ソケット: locked属性ダメージルーン
-        sockets.push({ skillRuneId: rune1, socketTier: 'bronze', locked: true });
+        sockets.push({ skillRuneId: rune1, socketTier: lockedTier, locked: true });
       } else if (s === 1 && f >= 4) {
         // 面4以上の2番目: locked属性補助ルーン
-        sockets.push({ skillRuneId: rune2, socketTier: 'bronze', locked: true });
+        sockets.push({ skillRuneId: rune2, socketTier: lockedTier, locked: true });
       } else {
-        sockets.push({ skillRuneId: null, socketTier: 'bronze' });
+        sockets.push({ skillRuneId: null, socketTier: baseTier });
       }
     }
     faces.push({ faceNumber: f, sockets });
@@ -42,11 +45,11 @@ function makeBossCustomFaces(element: Element, startFace: number): CustomFace[] 
       if (s === 0) {
         sockets.push({ skillRuneId: rune1, socketTier: 'gold', locked: true });
       } else if (s === 1) {
-        sockets.push({ skillRuneId: rune2, socketTier: 'silver', locked: true });
+        sockets.push({ skillRuneId: rune2, socketTier: 'gold', locked: true });
       } else if (s < 3) {
         sockets.push({ skillRuneId: null, socketTier: 'silver' });
       } else {
-        sockets.push({ skillRuneId: null, socketTier: 'bronze' });
+        sockets.push({ skillRuneId: null, socketTier: 'silver' });
       }
     }
     faces.push({ faceNumber: f, sockets });
@@ -125,7 +128,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'soul-drain', element: 'mirage' }] },
       { faceNumber: 2, sockets: [{ skillId: 'phase-shift', element: 'mirage' }, { skillId: 'haunt', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 3),
+    customFaces: makeCustomFaces('mirage', 3, 2),
     baseStats: { captureRate: 50 },
     description: '虚ろな亡霊。魂を吸い取り、位相をずらして攻撃を避ける。',
   },
@@ -137,7 +140,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'shield-bash-v2', element: 'alloy' }] },
       { faceNumber: 2, sockets: [{ skillId: 'iron-guard', element: 'alloy' }, { skillId: 'war-cry', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 3),
+    customFaces: makeCustomFaces('alloy', 3, 2),
     baseStats: { captureRate: 50 },
     description: '鎧を纏ったゴブリン騎士。盾と雄叫びで戦場を制する。',
   },
@@ -149,7 +152,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'flame-v2', element: 'blaze' }] },
       { faceNumber: 2, sockets: [{ skillId: 'combustion-v2', element: 'blaze' }, { skillId: 'scorch-v2', element: 'blaze' }] },
     ],
-    customFaces: makeCustomFaces('blaze', 3),
+    customFaces: makeCustomFaces('blaze', 3, 2),
     baseStats: { captureRate: 50 },
     description: '炎を纏うトカゲ。攻撃的な炎属性の中級モンスター。',
   },
@@ -162,7 +165,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'fortify', element: 'alloy' }, { skillId: 'wall', element: 'alloy' }] },
       { faceNumber: 3, sockets: [{ skillId: 'crush', element: 'alloy' }, { skillId: 'counter-v2', element: 'alloy' }, { skillId: 'war-roar', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 4),
+    customFaces: makeCustomFaces('alloy', 4, 3),
     baseStats: { captureRate: 25 },
     description: '鋼鉄の巨人。鉄拳と鉄壁で敵を圧倒する。',
   },
@@ -175,7 +178,7 @@ export const CHAPTER1_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'poison-mist', element: 'venom' }, { skillId: 'constrict', element: 'venom' }] },
       { faceNumber: 3, sockets: [{ skillId: 'death-coil', element: 'venom' }, { skillId: 'toxic-cloud', element: 'venom' }, { skillId: 'shed-skin', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 4),
+    customFaces: makeCustomFaces('venom', 4, 3),
     baseStats: { captureRate: 25 },
     description: '影に潜む毒蛇。猛毒と締め付けで獲物を逃さない。',
   },
@@ -228,7 +231,7 @@ export const CHAPTER2_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'frost-punch', element: 'alloy' }] },
       { faceNumber: 2, sockets: [{ skillId: 'ice-wall', element: 'alloy' }, { skillId: 'frost-armor', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 3),
+    customFaces: makeCustomFaces('alloy', 3, 2),
     baseStats: { captureRate: 50 },
     description: '氷と鋼で出来た巨人。防御力が極めて高い。',
   },
@@ -240,7 +243,7 @@ export const CHAPTER2_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'cold-breath', element: 'frost' }] },
       { faceNumber: 2, sockets: [{ skillId: 'snow-bind', element: 'frost' }, { skillId: 'frost-kiss', element: 'frost' }] },
     ],
-    customFaces: makeCustomFaces('frost', 3),
+    customFaces: makeCustomFaces('frost', 3, 2),
     baseStats: { captureRate: 50 },
     description: '雪の中に佇む氷の女。凍結デバフが得意。',
   },
@@ -253,7 +256,7 @@ export const CHAPTER2_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'ice-claw', element: 'frost' }, { skillId: 'hail-storm', element: 'frost' }] },
       { faceNumber: 3, sockets: [{ skillId: 'glacial-roar', element: 'frost' }, { skillId: 'permafrost', element: 'frost' }, { skillId: 'frost-wing', element: 'frost' }] },
     ],
-    customFaces: makeCustomFaces('frost', 4),
+    customFaces: makeCustomFaces('frost', 4, 3),
     baseStats: { captureRate: 25 },
     description: '吹雪を纏うドレイク。広範囲の氷攻撃が得意。',
   },
@@ -306,7 +309,7 @@ export const CHAPTER3_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'thunder-wing', element: 'volt' }] },
       { faceNumber: 2, sockets: [{ skillId: 'volt-dive', element: 'volt' }, { skillId: 'spark-feather', element: 'volt' }] },
     ],
-    customFaces: makeCustomFaces('volt', 3),
+    customFaces: makeCustomFaces('volt', 3, 2),
     baseStats: { captureRate: 50 },
     description: '雷雲を呼ぶ大鳥。翼から電撃を放つ。',
   },
@@ -318,7 +321,7 @@ export const CHAPTER3_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'ball-lightning', element: 'volt' }] },
       { faceNumber: 2, sockets: [{ skillId: 'discharge', element: 'volt' }, { skillId: 'overcharge', element: 'volt' }] },
     ],
-    customFaces: makeCustomFaces('volt', 3),
+    customFaces: makeCustomFaces('volt', 3, 2),
     baseStats: { captureRate: 50 },
     description: '純粋な雷の精霊。強力な放電で敵を焼く。',
   },
@@ -331,7 +334,7 @@ export const CHAPTER3_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'chain-lightning', element: 'volt' }, { skillId: 'magnetic-field', element: 'volt' }] },
       { faceNumber: 3, sockets: [{ skillId: 'tempest', element: 'volt' }, { skillId: 'volt-barrier', element: 'volt' }, { skillId: 'overclock', element: 'volt' }] },
     ],
-    customFaces: makeCustomFaces('volt', 4),
+    customFaces: makeCustomFaces('volt', 4, 3),
     baseStats: { captureRate: 25 },
     description: '嵐を操る魔術師。連鎖雷と結界の達人。',
   },
@@ -402,7 +405,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'scorpion-sting', element: 'venom' }] },
       { faceNumber: 2, sockets: [{ skillId: 'venom-spray', element: 'venom' }, { skillId: 'weaken', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 3),
+    customFaces: makeCustomFaces('venom', 3, 2),
     baseStats: { captureRate: 50 },
     description: '蠍の尾を持つ獅子。毒針と毒噴射で敵を弱らせる。',
   },
@@ -413,7 +416,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'petrify-gaze', element: 'venom' }] },
       { faceNumber: 2, sockets: [{ skillId: 'fang-strike', element: 'venom' }, { skillId: 'toxic-scale', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 3),
+    customFaces: makeCustomFaces('venom', 3, 2),
     baseStats: { captureRate: 50 },
     description: '石化の瞳を持つ大蛇。見つめられると動けなくなる。',
   },
@@ -424,7 +427,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'chimera-bite', element: 'venom' }] },
       { faceNumber: 2, sockets: [{ skillId: 'poison-breath', element: 'venom' }, { skillId: 'acid-armor', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 3),
+    customFaces: makeCustomFaces('venom', 3, 2),
     baseStats: { captureRate: 50 },
     description: '3つの頭を持つ合成獣。毒息と酸の外殻で攻防一体。',
   },
@@ -436,7 +439,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'pollen-cloud', element: 'venom' }, { skillId: 'root-bind', element: 'venom' }] },
       { faceNumber: 3, sockets: [{ skillId: 'nectar-heal', element: 'venom' }, { skillId: 'thorn-whip', element: 'venom' }, { skillId: 'decay-aura', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 4),
+    customFaces: makeCustomFaces('venom', 4, 3),
     baseStats: { captureRate: 25 },
     description: '死を撒く巨大な毒花。美しくも恐ろしい。',
   },
@@ -448,7 +451,7 @@ export const CHAPTER4_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'regen-head', element: 'venom' }, { skillId: 'multi-poison', element: 'venom' }] },
       { faceNumber: 3, sockets: [{ skillId: 'acid-blood', element: 'venom' }, { skillId: 'hydra-roar', element: 'venom' }, { skillId: 'serpent-coil', element: 'venom' }] },
     ],
-    customFaces: makeCustomFaces('venom', 4),
+    customFaces: makeCustomFaces('venom', 4, 3),
     baseStats: { captureRate: 25 },
     description: '首を切っても再生する多頭蛇。毒と回復を兼ね備える。',
   },
@@ -519,7 +522,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'heavy-slash', element: 'alloy' }] },
       { faceNumber: 2, sockets: [{ skillId: 'tower-shield', element: 'alloy' }, { skillId: 'armor-up', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 3),
+    customFaces: makeCustomFaces('alloy', 3, 2),
     baseStats: { captureRate: 50 },
     description: '重装の騎士。大盾で味方を守りつつ重い一撃を放つ。',
   },
@@ -530,7 +533,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'steam-punch', element: 'alloy' }] },
       { faceNumber: 2, sockets: [{ skillId: 'boiler-guard', element: 'alloy' }, { skillId: 'overheat', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 3),
+    customFaces: makeCustomFaces('alloy', 3, 2),
     baseStats: { captureRate: 50 },
     description: '蒸気で動くゴーレム。オーバーヒートで瞬間火力を出す。',
   },
@@ -541,7 +544,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'mithril-slash', element: 'alloy' }] },
       { faceNumber: 2, sockets: [{ skillId: 'mithril-guard', element: 'alloy' }, { skillId: 'sentinel-stance', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 3),
+    customFaces: makeCustomFaces('alloy', 3, 2),
     baseStats: { captureRate: 50 },
     description: 'ミスリル製の衛兵。攻守のバランスに優れる。',
   },
@@ -553,7 +556,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'adamant-wall', element: 'alloy' }, { skillId: 'quake-stomp', element: 'alloy' }] },
       { faceNumber: 3, sockets: [{ skillId: 'titan-roar', element: 'alloy' }, { skillId: 'fortress', element: 'alloy' }, { skillId: 'iron-maiden', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 4),
+    customFaces: makeCustomFaces('alloy', 4, 3),
     baseStats: { captureRate: 25 },
     description: 'アダマンタイト製の巨人。圧倒的な防御力を誇る。',
   },
@@ -565,7 +568,7 @@ export const CHAPTER5_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'metal-breath', element: 'alloy' }, { skillId: 'chrome-shield', element: 'alloy' }] },
       { faceNumber: 3, sockets: [{ skillId: 'alloy-roar', element: 'alloy' }, { skillId: 'magnetize', element: 'alloy' }, { skillId: 'heavy-tail', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 4),
+    customFaces: makeCustomFaces('alloy', 4, 3),
     baseStats: { captureRate: 25 },
     description: 'オリハルコンの鱗を持つ龍。金属のブレスが強力。',
   },
@@ -636,7 +639,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'mind-blast', element: 'mirage' }] },
       { faceNumber: 2, sockets: [{ skillId: 'confusion', element: 'mirage' }, { skillId: 'mirror-image', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 3),
+    customFaces: makeCustomFaces('mirage', 3, 2),
     baseStats: { captureRate: 50 },
     description: '幻術を操る魔術師。混乱と回避を駆使する。',
   },
@@ -647,7 +650,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'nightmare-scream', element: 'mirage' }] },
       { faceNumber: 2, sockets: [{ skillId: 'sleep-curse', element: 'mirage' }, { skillId: 'dream-drain', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 3),
+    customFaces: makeCustomFaces('mirage', 3, 2),
     baseStats: { captureRate: 50 },
     description: '悪夢を具現化した存在。眠りの呪いが恐ろしい。',
   },
@@ -658,7 +661,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'ghost-blade', element: 'mirage' }] },
       { faceNumber: 2, sockets: [{ skillId: 'phase-guard', element: 'mirage' }, { skillId: 'specter-strike', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 3),
+    customFaces: makeCustomFaces('mirage', 3, 2),
     baseStats: { captureRate: 50 },
     description: '幽霊の騎士。位相をずらして攻撃を避ける。',
   },
@@ -670,7 +673,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'soul-rend', element: 'mirage' }, { skillId: 'death-wail', element: 'mirage' }] },
       { faceNumber: 3, sockets: [{ skillId: 'spirit-shield', element: 'mirage' }, { skillId: 'banshee-cry', element: 'mirage' }, { skillId: 'life-drain', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 4),
+    customFaces: makeCustomFaces('mirage', 4, 3),
     baseStats: { captureRate: 25 },
     description: '嘆きの亡霊。慟哭は生者の魂を震わせる。',
   },
@@ -682,7 +685,7 @@ export const CHAPTER6_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'riddle-curse', element: 'mirage' }, { skillId: 'sphinx-wisdom', element: 'mirage' }] },
       { faceNumber: 3, sockets: [{ skillId: 'void-shield', element: 'mirage' }, { skillId: 'dimension-rift', element: 'mirage' }, { skillId: 'enigma-heal', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('mirage', 4),
+    customFaces: makeCustomFaces('mirage', 4, 3),
     baseStats: { captureRate: 25 },
     description: '虚空に座すスフィンクス。謎かけに答えられぬ者は滅ぶ。',
   },
@@ -713,7 +716,7 @@ export const CHAPTER7_MONSTERS: MonsterDice[] = [
       { faceNumber: 1, sockets: [{ skillId: 'chaos-fang', element: 'blaze' }] },
       { faceNumber: 2, sockets: [{ skillId: 'chaos-ice', element: 'frost' }, { skillId: 'chaos-bolt', element: 'volt' }] },
     ],
-    customFaces: makeCustomFaces('blaze', 3),
+    customFaces: makeCustomFaces('blaze', 3, 2),
     baseStats: { captureRate: 50 },
     description: '3属性の力を持つ合成獣。炎・氷・雷を自在に操る。',
   },
@@ -725,7 +728,7 @@ export const CHAPTER7_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'ancient-shield', element: 'alloy' }, { skillId: 'ancient-roar', element: 'alloy' }] },
       { faceNumber: 3, sockets: [{ skillId: 'time-slash', element: 'mirage' }, { skillId: 'fate-guard', element: 'mirage' }, { skillId: 'epoch-strike', element: 'alloy' }] },
     ],
-    customFaces: makeCustomFaces('alloy', 4),
+    customFaces: makeCustomFaces('alloy', 4, 3),
     baseStats: { captureRate: 25 },
     description: '太古の守護者。時を超えて回廊を守り続ける。',
   },
@@ -737,7 +740,7 @@ export const CHAPTER7_MONSTERS: MonsterDice[] = [
       { faceNumber: 2, sockets: [{ skillId: 'primal-ice', element: 'frost' }, { skillId: 'primal-thunder', element: 'volt' }] },
       { faceNumber: 3, sockets: [{ skillId: 'primal-venom', element: 'venom' }, { skillId: 'primal-shield', element: 'alloy' }, { skillId: 'primal-illusion', element: 'mirage' }] },
     ],
-    customFaces: makeCustomFaces('blaze', 4),
+    customFaces: makeCustomFaces('blaze', 4, 3),
     baseStats: { captureRate: 15 },
     description: '6属性全ての力を持つ原初の龍。カオスの具現。',
   },
