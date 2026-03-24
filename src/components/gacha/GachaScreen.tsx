@@ -296,6 +296,7 @@ export function GachaScreen() {
               </button>
             </div>
           ) : (
+            <>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 className="rpg-btn rpg-btn-primary"
@@ -325,6 +326,7 @@ export function GachaScreen() {
             <div style={{ fontSize: 9, color: '#998a78', textAlign: 'center', marginTop: 4 }}>
               天井: {gachaPityRune}回目
             </div>
+            </>
           )}
         </div>
       )}
