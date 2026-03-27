@@ -82,6 +82,7 @@ interface GameState {
   pvpWins: number;
   pvpLosses: number;
   isPvpBattle: boolean;
+  isTutorialBattle: boolean;
   isHardMode: boolean;
   battleChapter: number; // 実際に戦っている章（表示用チャプター）
   addPvpResult: (won: boolean) => void;
@@ -298,6 +299,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpWins: 0,
   pvpLosses: 0,
   isPvpBattle: false,
+  isTutorialBattle: false,
   isHardMode: false,
   battleChapter: 1,
   addPvpResult: (won) => {

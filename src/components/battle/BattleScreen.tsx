@@ -27,10 +27,10 @@ let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
 
 export function BattleScreen() {
-  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, completeEvent } = useGameStore();
+  const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, isTutorialBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, completeEvent } = useGameStore();
   const autoSaveAndGo = useCallback((screen: Parameters<typeof setScreen>[0]) => {
     // バトル種別stateをリセットしてから遷移
-    useGameStore.setState({ isEventBattle: false, eventRewardMult: {}, isPvpBattle: false });
+    useGameStore.setState({ isEventBattle: false, eventRewardMult: {}, isPvpBattle: false, isTutorialBattle: false });
     save().then(() => setScreen(screen));
   }, [save, setScreen]);
   const magicData = equippedMagicDice ? getMagicDice(equippedMagicDice) : undefined;
@@ -810,7 +810,9 @@ export function BattleScreen() {
                 sfx.victory();
                 bgm.playOnce('victory');
                 addLog('══ 勝利！ ══'); flash('勝利！', 1500);
-                if (isPvpBattle) {
+                if (isTutorialBattle) {
+                  addLog('  チュートリアルバトル勝利！');
+                } else if (isPvpBattle) {
                   addPvpResult(true);
                   addGold(300);
                   addLog('  PVP勝利！ +3pt +300G');
@@ -1221,7 +1223,10 @@ export function BattleScreen() {
             {isRolling ? '...' : '...'}
           </div>
         )}
-        {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && !isEventBattle && (
+        {phase === 'result' && battle?.status === 'player-win' && isTutorialBattle && (
+          <button className="rpg-btn rpg-btn-primary" onClick={() => { sfx.click(); autoSaveAndGo('tutorial'); }} style={{ margin: 0, padding: '10px 12px' }}>チュートリアルに戻る</button>
+        )}
+        {phase === 'result' && battle?.status === 'player-win' && !isPvpBattle && !isEventBattle && !isTutorialBattle && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="rpg-btn rpg-btn-primary" onClick={startCapture} style={{ flex: 2, margin: 0, padding: '10px 12px' }}>封印する</button>
             <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo('dungeon'); }} style={{ flex: 1, margin: 0, padding: '10px 12px' }}>スキップ</button>
@@ -1240,7 +1245,7 @@ export function BattleScreen() {
           </div>
         )}
         {phase === 'result' && battle && battle.status !== 'player-win' && (
-          <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo(isPvpBattle ? 'pvp' : isEventBattle ? 'event' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>戻る</button>
+          <button className="rpg-btn" onClick={() => { sfx.click(); autoSaveAndGo(isTutorialBattle ? 'tutorial' : isPvpBattle ? 'pvp' : isEventBattle ? 'event' : 'dungeon'); }} style={{ margin: 0, padding: '10px 12px' }}>{isTutorialBattle ? 'もう一回！' : '戻る'}</button>
         )}
         {phase === 'capture' && (<div style={{ textAlign: 'center', fontSize: 11, color: '#6a5a4a' }}>封印中...</div>)}
       </div>
@@ -1248,6 +1253,59 @@ export function BattleScreen() {
       {phase === 'capture' && currentEnemy && currentEnemy[0] && (
         <CaptureScene monster={currentEnemy[0]} onComplete={onCaptureComplete} onSkip={() => autoSaveAndGo('dungeon')} captureBonus={getPartyBonus().captureBonus} />
       )}
+
+      {/* チュートリアル Pip ヒント */}
+      {isTutorialBattle && <TutorialPipOverlay phase={phase} turnCount={turnCount} />}
+    </div>
+  );
+}
+
+// ===== チュートリアル用Pipヒント =====
+function TutorialPipOverlay({ phase, turnCount }: { phase: Phase; turnCount: number }) {
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const dismiss = (key: string) => setDismissed(prev => new Set(prev).add(key));
+
+  // 表示するヒントを決定
+  let tipKey = '';
+  let tipText = '';
+  if (phase === 'selecting' && turnCount <= 1 && !dismissed.has('select-1')) {
+    tipKey = 'select-1';
+    tipText = '2個タップしてACT(攻撃)に！残り1個はCHG(チャージ)に回るよ。大きい目をCHGに回すとゲージが速く溜まる！';
+  } else if (phase === 'selecting' && turnCount === 2 && !dismissed.has('select-2')) {
+    tipKey = 'select-2';
+    tipText = '属性の有利不利も大事！炎→氷・鋼に強い、雷・毒に弱い...パーティの属性で戦略を変えよう！';
+  } else if (phase === 'turn-end' && turnCount <= 1 && !dismissed.has('turn-end-1')) {
+    tipKey = 'turn-end-1';
+    tipText = 'いいね！チャージゲージが溜まってきた！MAXになると攻撃が1.5倍だよ！';
+  } else if (phase === 'result' && !dismissed.has('result')) {
+    tipKey = 'result';
+    tipText = 'お見事！ACTとCHGの使い分けがバトルの鍵だよ。シナジーやレシピコンボも狙ってみてね！';
+  }
+
+  if (!tipKey) return null;
+
+  return (
+    <div style={{
+      position: 'absolute', bottom: 70, left: 12, right: 12, zIndex: 400,
+      background: '#ffffff', border: '1.5px solid #b09050',
+      borderRadius: 2, padding: '8px 10px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+        <div style={{
+          width: 24, height: 24, background: '#b09050',
+          borderRadius: 2, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontSize: 14, flexShrink: 0,
+        }}>&#9856;</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 9, color: '#a07020', fontWeight: 'bold', marginBottom: 2 }}>ピップ</div>
+          <div style={{ fontSize: 11, color: '#3a2a1a', lineHeight: 1.5 }}>{tipText}</div>
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', marginTop: 4 }}>
+        <button className="rpg-btn" style={{ width: 'auto', padding: '3px 12px', margin: 0, fontSize: 9 }}
+          onClick={() => dismiss(tipKey)}>OK</button>
+      </div>
     </div>
   );
 }
