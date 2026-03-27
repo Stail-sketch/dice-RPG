@@ -221,7 +221,6 @@ export function TutorialScreen() {
   // ==============================
   const renderStep2 = () => {
     const pipColors1 = getPipColorsForDiceFace(protagonistDice, 1);
-    const pipColors3 = getPipColorsForDiceFace(protagonistDice, 3);
     const pipColors6 = getPipColorsForDiceFace(protagonistDice, 6);
 
     const showAllFaces = subStep >= 2;
