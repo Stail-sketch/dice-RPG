@@ -24,10 +24,26 @@ export function rollMonsterDice(dice: MonsterDice, diceIndex: number): DiceRollR
 }
 
 /**
+ * 指定された出目でモンスターダイス1個の結果を生成する
+ */
+export function rollMonsterDiceFixed(dice: MonsterDice, diceIndex: number, faceNumber: number): DiceRollResult {
+  const faces = getAllFaces(dice);
+  const face = faces[faceNumber - 1];
+  return { diceIndex, faceNumber, face };
+}
+
+/**
  * 3個のモンスターダイスを同時に振る
  */
 export function rollParty(party: MonsterDice[]): DiceRollResult[] {
   return party.map((dice, index) => rollMonsterDice(dice, index));
+}
+
+/**
+ * 固定出目で3個のモンスターダイスの結果を生成する
+ */
+export function rollPartyFixed(party: MonsterDice[], faceNumbers: number[]): DiceRollResult[] {
+  return party.map((dice, index) => rollMonsterDiceFixed(dice, index, faceNumbers[index]));
 }
 
 /**

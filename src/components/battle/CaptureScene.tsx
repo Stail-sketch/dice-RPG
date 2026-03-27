@@ -22,8 +22,9 @@ type CapturePhase =
 interface CaptureSceneProps {
   monster: MonsterDice;
   onComplete: (result: CaptureResult) => void;
-  onSkip: () => void;
+  onSkip?: () => void;
   captureBonus?: number; // ヒーローダイスボーナス等
+  forceSuccess?: boolean; // チュートリアル用: 必ず成功 + スキップ非表示
 }
 
 // パーティクル
@@ -40,7 +41,7 @@ interface Particle {
 
 let pid = 0;
 
-export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: CaptureSceneProps) {
+export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0, forceSuccess = false }: CaptureSceneProps) {
   const [phase, setPhase] = useState<CapturePhase>('intro');
   const [result, setResult] = useState<CaptureResult | null>(null);
   const [diceDisplay, setDiceDisplay] = useState(1);
@@ -105,7 +106,12 @@ export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: 
     }, 60);
     const timer = setTimeout(() => {
       clearInterval(interval);
-      const captureResult = attemptCapture(monster, captureBonus);
+      let captureResult: CaptureResult;
+      if (forceSuccess) {
+        captureResult = { success: true, roll: 6, captureRate: 100, effectiveRate: 100 };
+      } else {
+        captureResult = attemptCapture(monster, captureBonus);
+      }
       setResult(captureResult);
       setDiceDisplay(captureResult.roll);
       setPhase('slam');
@@ -470,10 +476,12 @@ export function CaptureScene({ monster, onComplete, onSkip, captureBonus = 0 }: 
               onClick={() => setPhase('charging')}>
               封印のダイスを振る！
             </button>
-            <button className="rpg-btn" style={{ margin: 0, padding: '10px 12px' }}
-              onClick={onSkip}>
-              スキップ
-            </button>
+            {!forceSuccess && onSkip && (
+              <button className="rpg-btn" style={{ margin: 0, padding: '10px 12px' }}
+                onClick={onSkip}>
+                スキップ
+              </button>
+            )}
           </div>
         )}
         {(phase === 'success' || phase === 'fail') && (

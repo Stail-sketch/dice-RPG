@@ -310,7 +310,7 @@ export function TutorialScreen() {
           <CaptureScene
             monster={tutorialMonster}
             onComplete={() => { setSubStep(2); }}
-            onSkip={() => setSubStep(2)}
+            forceSuccess
           />
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { createBattleState, executeTurnFull, rollParty, aiSelectDice } from '../../game/battle/BattleEngine';
+import { rollPartyFixed } from '../../game/dice/DiceEngine';
 import type { BattleState, TurnResult, MonsterDice, SkillAction, DiceRollResult, TurnSelection, Element } from '../../types';
 import { ELEMENT_NAMES, ELEMENT_CHART } from '../../types';
 import { getMagicDice, type MagicDiceData } from '../../data/magic-dice';
@@ -25,6 +26,20 @@ type Phase =
 
 let popupId = 0;
 interface Popup { id: number; text: string; color: string; side: 'enemy' | 'player'; idx: number; big?: boolean; }
+
+// チュートリアル戦闘用の固定出目シーケンス
+// [プレイヤーダイス1, ダイス2, ダイス3] — 主人公(alloy), ロットビートル(venom), フロストジェリー(frost)
+const TUTORIAL_PLAYER_ROLLS: number[][] = [
+  [3, 4, 3],   // T1: 面3(炎撃+氷礫+電撃)と面4(炎撃+電撃)が発動 → 高火力
+  [4, 3, 5],   // T2: 面4と面3 → 追撃で倒しきる
+  [3, 5, 4],   // T3: 予備（ここまで来ないはず）
+];
+// 敵は弱い出目で固定
+const TUTORIAL_ENEMY_ROLLS: number[][] = [
+  [1, 1, 2],   // T1: 最低出目
+  [2, 1, 1],   // T2
+  [1, 2, 1],   // T3
+];
 
 export function BattleScreen() {
   const { currentEnemy, ownedDice, party, protagonistDice, setScreen, addDice, addRunes, captureMonster, addGold, addMaterial, getPartyBonus, equippedMagicDice, currentChapter, isPvpBattle, isTutorialBattle, addPvpResult, addGemFragments, addExp, save, defeatBoss, isEventBattle, completeEvent } = useGameStore();
@@ -57,6 +72,9 @@ export function BattleScreen() {
   const [diceLanded, setDiceLanded] = useState(false);
   const [screenFlash, setScreenFlash] = useState<string | null>(null);
   const [filmBars, setFilmBars] = useState(false);
+
+  // チュートリアル戦闘ターンカウンタ
+  const tutorialTurnRef = useRef(0);
 
   // ボス演出用
   const [bossEntrance, setBossEntrance] = useState(false);
@@ -190,8 +208,19 @@ export function BattleScreen() {
       }, 100);
 
       setTimeout(() => {
-        const pRolls = rollParty(state.player.dice);
-        const eRolls = rollParty(state.enemy.dice);
+        let pRolls: DiceRollResult[];
+        let eRolls: DiceRollResult[];
+        if (isTutorialBattle) {
+          const t = tutorialTurnRef.current;
+          tutorialTurnRef.current = t + 1;
+          const pFixed = TUTORIAL_PLAYER_ROLLS[t] || TUTORIAL_PLAYER_ROLLS[TUTORIAL_PLAYER_ROLLS.length - 1];
+          const eFixed = TUTORIAL_ENEMY_ROLLS[t] || TUTORIAL_ENEMY_ROLLS[TUTORIAL_ENEMY_ROLLS.length - 1];
+          pRolls = rollPartyFixed(state.player.dice, pFixed);
+          eRolls = rollPartyFixed(state.enemy.dice, eFixed);
+        } else {
+          pRolls = rollParty(state.player.dice);
+          eRolls = rollParty(state.enemy.dice);
+        }
         setCurrentRolls(pRolls);
         setEnemyRolls(eRolls);
         setSelectedDice(new Set());
@@ -201,7 +230,7 @@ export function BattleScreen() {
         addLog(`── Turn ${state.turn + 1} ──`);
       }, 800);
     }, bossDelay);
-  }, [playerDice, enemyDiceList, flash, addLog, isBoss]);
+  }, [playerDice, enemyDiceList, flash, addLog, isBoss, isTutorialBattle]);
 
   // ===== ダイス選択トグル =====
   const toggleDiceSelection = useCallback((idx: number) => {
@@ -923,8 +952,19 @@ export function BattleScreen() {
     setPhase('rolling');
     setTimeout(() => sfx.diceRoll(), 100);
     setTimeout(() => {
-      const pRolls = rollParty(battle.player.dice);
-      const eRolls = rollParty(battle.enemy.dice);
+      let pRolls: DiceRollResult[];
+      let eRolls: DiceRollResult[];
+      if (isTutorialBattle) {
+        const t = tutorialTurnRef.current;
+        tutorialTurnRef.current = t + 1;
+        const pFixed = TUTORIAL_PLAYER_ROLLS[t] || TUTORIAL_PLAYER_ROLLS[TUTORIAL_PLAYER_ROLLS.length - 1];
+        const eFixed = TUTORIAL_ENEMY_ROLLS[t] || TUTORIAL_ENEMY_ROLLS[TUTORIAL_ENEMY_ROLLS.length - 1];
+        pRolls = rollPartyFixed(battle.player.dice, pFixed);
+        eRolls = rollPartyFixed(battle.enemy.dice, eFixed);
+      } else {
+        pRolls = rollParty(battle.player.dice);
+        eRolls = rollParty(battle.enemy.dice);
+      }
       setCurrentRolls(pRolls);
       setEnemyRolls(eRolls);
       setSelectedDice(new Set());
@@ -935,7 +975,7 @@ export function BattleScreen() {
       setPhase('selecting');
       addLog(`── Turn ${battle.turn + 1} ──`);
     }, 600);
-  }, [battle, addLog]);
+  }, [battle, addLog, isTutorialBattle]);
 
   // ===== 封印 =====
   const startCapture = useCallback(() => { sfx.click(); setPhase('capture'); }, []);
