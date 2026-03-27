@@ -138,11 +138,14 @@ export function TutorialScreen() {
     }
   }, [step, subStep, addDice]);
 
-  // ---- Step 2 sub-step 4: set party ----
+  // ---- Step 2 sub-step 4: set party (look up actual instance IDs) ----
   useEffect(() => {
     if (step === 2 && subStep === 4 && !effectsDone.current.has('set-party')) {
       effectsDone.current.add('set-party');
-      setParty(['protagonist', 'rot-beetle_001', 'frost-jelly_001']);
+      const currentOwned = useGameStore.getState().ownedDice;
+      const rbId = currentOwned.find(d => (d.baseId || d.id) === 'rot-beetle')?.id || '';
+      const fjId = currentOwned.find(d => (d.baseId || d.id) === 'frost-jelly')?.id || '';
+      setParty(['protagonist', rbId, fjId]);
     }
   }, [step, subStep, setParty]);
 
