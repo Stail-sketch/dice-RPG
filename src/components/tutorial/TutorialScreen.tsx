@@ -591,13 +591,10 @@ export function TutorialScreen() {
               .flatMap(r => [{ ...r }, { ...r }]);
             store.addRunes(starterRunes);
             const pyrachnid = CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')!;
-            const salamander = CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')!;
             store.addDice(applyDefaultSocketTiers({ ...pyrachnid }));
-            store.addDice(applyDefaultSocketTiers({ ...salamander }));
             store.captureMonster('rot-beetle');
             store.captureMonster('frost-jelly');
             store.captureMonster('pyrachnid');
-            store.captureMonster('salamander-v2');
             nextStep();
           }} buttonLabel="次へ！" />
         )}

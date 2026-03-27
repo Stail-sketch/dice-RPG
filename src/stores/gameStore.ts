@@ -775,7 +775,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     const starterDice = [
       applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'pyrachnid')!, id: 'pyrachnid_001', baseId: 'pyrachnid' }),
       applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'frost-jelly')!, id: 'frost-jelly_001', baseId: 'frost-jelly' }),
-      applyDefaultSocketTiers({ ...CHAPTER1_MONSTERS.find(m => m.id === 'salamander-v2')!, id: 'salamander-v2_001', baseId: 'salamander-v2' }),
     ];
     const starterRunes = SKILL_RUNES
       .filter(r => r.tier === 'common')
