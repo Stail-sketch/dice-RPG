@@ -113,19 +113,28 @@ export function TutorialScreen() {
     if (step === 2 && subStep === 6 && !effectsDone.current.has('equip-runes')) {
       effectsDone.current.add('equip-runes');
       const ironBash = SKILL_RUNES.find(r => r.id === 'iron-bash')!;
+      const guard = SKILL_RUNES.find(r => r.id === 'guard')!;
       const blazeStrike = SKILL_RUNES.find(r => r.id === 'blaze-strike')!;
       const iceShard = SKILL_RUNES.find(r => r.id === 'ice-shard')!;
       const spark = SKILL_RUNES.find(r => r.id === 'spark')!;
 
       addRune({ ...ironBash });
+      addRune({ ...guard });
       addRune({ ...blazeStrike });
       addRune({ ...iceShard });
       addRune({ ...spark });
+      addRune({ ...ironBash });  // 面4用の追加ルーン
+      addRune({ ...blazeStrike });
+      addRune({ ...spark });
 
       setTimeout(() => { equipRune('protagonist', 1, 0, 'iron-bash'); }, 300);
-      setTimeout(() => { equipRune('protagonist', 3, 0, 'blaze-strike'); }, 600);
+      setTimeout(() => { equipRune('protagonist', 2, 0, 'guard'); }, 450);
+      setTimeout(() => { equipRune('protagonist', 2, 1, 'iron-bash'); }, 600);
+      setTimeout(() => { equipRune('protagonist', 3, 0, 'blaze-strike'); }, 750);
       setTimeout(() => { equipRune('protagonist', 3, 1, 'ice-shard'); }, 900);
-      setTimeout(() => { equipRune('protagonist', 3, 2, 'spark'); }, 1200);
+      setTimeout(() => { equipRune('protagonist', 3, 2, 'spark'); }, 1050);
+      setTimeout(() => { equipRune('protagonist', 4, 0, 'blaze-strike'); }, 1200);
+      setTimeout(() => { equipRune('protagonist', 4, 1, 'spark'); }, 1350);
     }
   }, [step, subStep, addRune, equipRune]);
 
@@ -277,7 +286,7 @@ export function TutorialScreen() {
         {subStep === 3 && <PipDialogue text="1の面は出やすいけどスキル1個。6の面はスキル6個入るけど滅多に出ない...リスクとリターンだね！" onNext={advance} />}
         {subStep === 4 && <PipDialogue text="穴にはスキルルーンをはめるよ。ルーンをはめるとバトルでその面が出た時にスキルが発動するんだ！" onNext={advance} />}
         {subStep === 5 && <PipDialogue text="HEROダイスは全部の面を自由にカスタムできる特別なダイス！モンスターダイスは最初からスキルがロックされてる面があるよ。" onNext={advance} />}
-        {subStep === 6 && <PipDialogue text="試しにいくつかルーンをはめてみたよ！1の面に「鉄バッシュ」、3の面に「炎撃」「氷片」「スパーク」だ。" onNext={advance} mood="excited" />}
+        {subStep === 6 && <PipDialogue text="試しにルーンをたくさんはめてみたよ！1〜4の面にバランスよくセットしたから、どの目が出てもそこそこ戦えるはず！" onNext={advance} mood="excited" />}
         {subStep === 7 && <PipDialogue text="スキルには種類があるよ。ダメージ、回復、シールド、バフ、デバフ、継続ダメージ...組み合わせが大事！" onNext={advance} mood="thinking" />}
         {subStep === 8 && <PipDialogue text="同じ面に同属性のスキルを集めるとシナジーで威力UP！異なる属性を組み合わせるとレシピコンボも発動するよ！" onNext={advance} />}
         {subStep === 9 && <PipDialogue text="よし、ダイスの基本はバッチリ！次は仲間を集めよう！" onNext={nextStep} buttonLabel="次へ！" mood="excited" />}

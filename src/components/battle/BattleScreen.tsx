@@ -154,6 +154,10 @@ export function BattleScreen() {
     const maxRarity = Math.max(...enemyDiceList.map(d => d.rarity));
     const hpEntry = ENEMY_HP_TABLE[currentChapter] || ENEMY_HP_TABLE[7];
     let enemyMaxHp = hpEntry.base + maxRarity * hpEntry.rarityMult;
+    // チュートリアル戦闘: 敵HPを大幅に下げて確実に勝てるように
+    if (isTutorialBattle) {
+      enemyMaxHp = 30;
+    }
     // 高難度: 敵HP×2 + 敵ダメージ倍率が初期1.3
     if (isHardMode) {
       enemyMaxHp = Math.round(enemyMaxHp * 2);
